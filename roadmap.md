@@ -6,3 +6,6 @@
 - [x] Add external Supabase schema, RLS, seed, adapters, and setup documentation
 - [x] Add PWA metadata, service worker, offline page, and branded icons
 - [x] Validate build and responsive previews
+- [ ] Connect shopper navigation, authentication, checkout, orders, and account data
+- [ ] Make all admin controls interactive and persist settings
+- [ ] Revalidate every route on desktop and mobile
