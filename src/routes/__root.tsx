@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CartProvider } from "@/components/delight/cart-context";
+import { AuthProvider } from "@/components/delight/auth-context";
+import { CheckoutProvider } from "@/components/delight/checkout-context";
 import { PwaRegister } from "@/components/delight/pwa-register";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -124,7 +126,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <CartProvider><Outlet /></CartProvider>
+      <AuthProvider><CartProvider><CheckoutProvider><Outlet /></CheckoutProvider></CartProvider></AuthProvider>
       <PwaRegister />
       <Toaster richColors position="top-center" />
     </QueryClientProvider>
