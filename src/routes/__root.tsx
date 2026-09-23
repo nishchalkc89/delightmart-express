@@ -11,6 +11,9 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { CartProvider } from "@/components/delight/cart-context";
+import { PwaRegister } from "@/components/delight/pwa-register";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -77,21 +80,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Delight Shopping Mart — Tulsipur's One-Stop Shop" },
+      { name: "description", content: "Shop groceries, fashion, baby care, home essentials and more from Delight Shopping Mart in Tulsipur, Dang." },
+      { name: "author", content: "Delight Shopping Mart Pvt. Ltd." },
+      { name: "theme-color", content: "#0b6b3a" },
+      { property: "og:title", content: "Delight Shopping Mart" },
+      { property: "og:description", content: "Everything you need under one roof in Tulsipur." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
@@ -120,7 +124,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <CartProvider><Outlet /></CartProvider>
+      <PwaRegister />
+      <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
 }
