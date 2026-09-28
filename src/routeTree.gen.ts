@@ -23,6 +23,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as AccountAddressesRouteImport } from './routes/account/addresses'
+import { Route as AccountNotificationsRouteImport } from './routes/account/notifications'
 import { Route as AccountOrdersRouteImport } from './routes/account/orders'
 import { Route as AccountProfileRouteImport } from './routes/account/profile'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
@@ -114,6 +115,11 @@ const AccountIndexRoute = AccountIndexRouteImport.update({
 const AccountAddressesRoute = AccountAddressesRouteImport.update({
   id: '/addresses',
   path: '/addresses',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountNotificationsRoute = AccountNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AccountRoute,
 } as any)
 const AccountOrdersRoute = AccountOrdersRouteImport.update({
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/account/addresses': typeof AccountAddressesRoute
+  '/account/notifications': typeof AccountNotificationsRoute
   '/account/orders': typeof AccountOrdersRoute
   '/account/profile': typeof AccountProfileRoute
   '/admin/banners': typeof AdminBannersRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/account/addresses': typeof AccountAddressesRoute
+  '/account/notifications': typeof AccountNotificationsRoute
   '/account/orders': typeof AccountOrdersRoute
   '/account/profile': typeof AccountProfileRoute
   '/admin/banners': typeof AdminBannersRoute
@@ -316,6 +324,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/account/addresses': typeof AccountAddressesRoute
+  '/account/notifications': typeof AccountNotificationsRoute
   '/account/orders': typeof AccountOrdersRoute
   '/account/profile': typeof AccountProfileRoute
   '/admin/banners': typeof AdminBannersRoute
@@ -356,6 +365,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/signup'
     | '/account/addresses'
+    | '/account/notifications'
     | '/account/orders'
     | '/account/profile'
     | '/admin/banners'
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/signup'
     | '/account/addresses'
+    | '/account/notifications'
     | '/account/orders'
     | '/account/profile'
     | '/admin/banners'
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/signup'
     | '/account/addresses'
+    | '/account/notifications'
     | '/account/orders'
     | '/account/profile'
     | '/admin/banners'
@@ -574,6 +586,13 @@ declare module '@tanstack/react-router' {
       path: '/addresses'
       fullPath: '/account/addresses'
       preLoaderRoute: typeof AccountAddressesRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/notifications': {
+      id: '/account/notifications'
+      path: '/notifications'
+      fullPath: '/account/notifications'
+      preLoaderRoute: typeof AccountNotificationsRouteImport
       parentRoute: typeof AccountRoute
     }
     '/account/orders': {
@@ -735,6 +754,7 @@ declare module '@tanstack/react-router' {
 
 interface AccountRouteChildren {
   AccountAddressesRoute: typeof AccountAddressesRoute
+  AccountNotificationsRoute: typeof AccountNotificationsRoute
   AccountOrdersRoute: typeof AccountOrdersRoute
   AccountProfileRoute: typeof AccountProfileRoute
   AccountIndexRoute: typeof AccountIndexRoute
@@ -742,6 +762,7 @@ interface AccountRouteChildren {
 
 const AccountRouteChildren: AccountRouteChildren = {
   AccountAddressesRoute: AccountAddressesRoute,
+  AccountNotificationsRoute: AccountNotificationsRoute,
   AccountOrdersRoute: AccountOrdersRoute,
   AccountProfileRoute: AccountProfileRoute,
   AccountIndexRoute: AccountIndexRoute,
