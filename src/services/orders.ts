@@ -3,7 +3,11 @@ import type {DeliveryDetails,PaymentMethod} from '@/components/delight/checkout-
 import {supabase} from './supabase';
 
 export type StoredOrder={id:string;orderNumber:string;status:string;subtotal:number;discount:number;total:number;paymentMethod:PaymentMethod;details:DeliveryDetails;lines:CartLine[];createdAt:string};
-const KEY='delight-orders';
-export function getLocalOrders(){if(typeof window==='undefined')return [] as StoredOrder[];try{return JSON.parse(localStorage.getItem(KEY)??'[]') as StoredOrder[]}catch{return []}}
-function saveLocalOrder(order:StoredOrder){localStorage.setItem(KEY,JSON.stringify([order,...getLocalOrders()]));}
-export async function placeOrder(input:{userId:string;lines:CartLine[];subtotal:number;discount:number;paymentMethod:PaymentMethod;details:DeliveryDetails}){const id=crypto.randomUUID();const orderNumber=`DLT-${Date.now().toString().slice(-8)}`;const order:StoredOrder={id,orderNumber,status:'PENDING',subtotal:input.subtotal,discount:input.discount,total:Math.max(0,input.subtotal-input.discount),paymentMethod:input.paymentMethod,details:input.details,lines:input.lines,createdAt:new Date().toISOString()};if(supabase){const {data,error}=await supabase.from('orders').insert({id,order_number:orderNumber,user_id:input.userId,status:'PENDING',subtotal:input.subtotal,discount:input.discount,delivery_fee:0,platform_fee:0,total:order.total,payment_method:input.paymentMethod,delivery_instructions:input.details.instructions||null,estimated_delivery_at:new Date(Date.now()+20*60*1000).toISOString()}).select('id').single();if(error)throw error;const rows=input.lines.map(line=>({order_id:data.id,product_name:line.product.name,sku:`DEMO-${line.product.id}`,quantity:line.quantity,unit_price:line.product.price,line_total:line.product.price*line.quantity}));const {error:itemError}=await supabase.from('order_items').insert(rows);if(itemError)throw itemError}saveLocalOrder(order);return order}
+export async function placeOrder(input:{userId:string;lines:CartLine[];subtotal:number;discount:number;paymentMethod:PaymentMethod;details:DeliveryDetails;coupon?:string}){
+  if(input.paymentMethod!=='COD')throw new Error('Online payment is not available yet');
+  const {data,error}=await supabase.rpc('place_cod_order',{p_items:input.lines.map(line=>({slug:line.product.slug,quantity:line.quantity})),p_address:input.details,p_coupon:input.coupon||null});
+  if(error)throw new Error(error.message);
+  if(!data)throw new Error('Unable to place your order');
+  return {id:data};
+}
+export async function getMyOrders(userId:string){const {data,error}=await supabase.from('orders').select('id,order_number,status,subtotal,discount,delivery_fee,total,payment_method,delivery_instructions,created_at,estimated_delivery_at,order_items(product_name,quantity,unit_price,line_total,product_id)').eq('user_id',userId).order('created_at',{ascending:false});if(error)throw error;return data??[]}

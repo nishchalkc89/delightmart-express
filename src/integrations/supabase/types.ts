@@ -866,7 +866,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      place_cod_order: {
+        Args: { p_address: Json; p_coupon?: string; p_items: Json }
+        Returns: string
+      }
     }
     Enums: {
       app_role:
