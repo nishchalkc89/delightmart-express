@@ -8,6 +8,7 @@ import { ProductReviews } from '@/components/delight/product-reviews';
 import { useCart } from '@/components/delight/cart-context';
 import { formatNpr } from '@/services/catalog';
 import { productQuery } from '@/hooks/use-catalog';
+import { ART_BACKGROUND } from '@/lib/product-art';
 
 export const Route = createFileRoute('/products/$slug')({
   loader: async ({ params, context }) => {
@@ -43,13 +44,15 @@ function ProductPage() {
           <div className="flex flex-col gap-2 lg:gap-3">
             {gallery.map((src, i) => (
               <button key={src + i} onClick={() => setActive(i)} aria-label={`Show image ${i + 1}`} className={`relative aspect-square overflow-hidden rounded-md border-2 lg:rounded-lg ${active === i ? 'border-brand' : 'border-transparent'}`}>
-                <img src={src} alt="" className="h-full w-full object-cover" />
+                <img src={src} alt="" className={p.art ? "h-full w-full object-contain p-1.5" : "h-full w-full object-cover"} />
                 {i === 3 && <span className="absolute inset-0 grid place-items-center"><span className="grid size-5 place-items-center rounded-full bg-ink/80 lg:size-9"><Play className="size-2.5 fill-white text-white lg:size-4" /></span></span>}
               </button>
             ))}
           </div>
           <div className="flex items-start justify-center pt-2">
-            <img src={gallery[active]} alt={p.name} className="w-full max-w-[480px] object-contain drop-shadow-sm" />
+            {p.art
+              ? <div className="grid aspect-square w-full max-w-[480px] place-items-center rounded-2xl" style={{ background: ART_BACKGROUND[p.categorySlug ?? ''] ?? '#f3f6f8' }}><img src={p.image} alt={p.name} className="w-[55%]" /></div>
+              : <img src={gallery[active]} alt={p.name} className="w-full max-w-[480px] object-contain drop-shadow-sm" />}
           </div>
           <div className="min-w-0">
             <div className="flex items-center justify-between">

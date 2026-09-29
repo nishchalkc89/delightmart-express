@@ -10,6 +10,8 @@ export type Product = {
   price: number;
   oldPrice?: number | undefined;
   image: string;
+  /** True when `image` is a product-type illustration rather than a photo of the product. */
+  art?: boolean | undefined;
   gallery?: string[] | undefined;
   discount?: number | undefined;
   stock: number;

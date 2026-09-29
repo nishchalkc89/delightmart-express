@@ -1,6 +1,6 @@
 import type { Product } from '@/types/store';
 import { asset } from '@/lib/assets';
-import { productPlaceholder } from '@/lib/placeholder';
+import { productArt } from '@/lib/product-art';
 
 export type Category = {
   name: string;
@@ -157,7 +157,8 @@ function fromDb(row: DbProduct): Product {
     price: selling,
     oldPrice: onSale ? Number(row.price) : undefined,
     discount: onSale ? Math.round((1 - selling / Number(row.price)) * 100) : undefined,
-    image: images[0] ?? demo?.image ?? productPlaceholder(row.name, row.unit ?? '', categorySlug),
+    image: images[0] ?? demo?.image ?? productArt(row.name, spec.subcategory, categorySlug),
+    art: !images[0] && !demo?.image,
     gallery: images.length > 1 ? images : demo?.gallery,
     stock: inv ? Math.max(0, inv.current_stock - inv.reserved_stock) : 0,
     rating: demo?.rating ?? 0,
