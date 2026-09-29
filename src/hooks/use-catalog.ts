@@ -1,7 +1,7 @@
 import { useRouterState } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query';
-import { categories as designedCategories, dealsCategory, fetchCategories, fetchProduct, fetchProducts, fetchStorefront, fetchSubcategories, type ProductFilter } from '@/services/catalog';
+import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { categories as designedCategories, dealsCategory, fetchCategories, fetchProduct, fetchProducts, fetchStorefront, fetchSubcategories, type ProductFilter, type ProductPage } from '@/services/catalog';
 
 const minutes = (n: number) => n * 60_000;
 
@@ -24,4 +24,29 @@ export function useLoadingPage() {
   useEffect(() => setMounted(true), []);
   const pending = useRouterState({ select: (s) => s.status === 'pending' });
   return mounted && pending;
+}
+
+/**
+ * Product listing that keeps loading the next page as the shopper scrolls.
+ * The first page comes from the route loader (so the server HTML already has products).
+ */
+export function useInfiniteProducts(filter: ProductFilter, first: ProductPage | null | undefined) {
+  const base = { ...filter, page: undefined };
+  const query = useInfiniteQuery({
+    queryKey: ['products-infinite', base],
+    queryFn: ({ pageParam }) => fetchProducts({ ...base, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page < last.pages ? last.page + 1 : undefined),
+    enabled: Boolean(first),
+    staleTime: minutes(2),
+    ...(first ? { initialData: { pages: [first], pageParams: [1] } } : {}),
+  });
+  const pages = query.data?.pages ?? (first ? [first] : []);
+  return {
+    products: pages.flatMap((p) => p.products),
+    total: pages[0]?.total ?? 0,
+    hasMore: Boolean(query.hasNextPage),
+    loadingMore: query.isFetchingNextPage,
+    loadMore: () => { if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage(); },
+  };
 }

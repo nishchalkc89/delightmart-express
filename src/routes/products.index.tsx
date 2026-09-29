@@ -1,18 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { StorePage } from '@/components/delight/store-shell';
-import { ProductGridPage, ResetButton, ToolbarSelect } from '@/components/delight/product-grid-page';
-import { productsQuery, useCategories, useLoadingPage } from '@/hooks/use-catalog';
+import { InfiniteLoader, ProductGridPage, ResetButton, ToolbarSelect } from '@/components/delight/product-grid-page';
+import { productsQuery, useCategories, useInfiniteProducts, useLoadingPage } from '@/hooks/use-catalog';
 import type { ProductSort } from '@/services/catalog';
 
 const sorts: Array<[ProductSort, string]> = [['featured', 'Featured'], ['price-asc', 'Price: Low to High'], ['price-desc', 'Price: High to Low'], ['name', 'Name: A to Z']];
-type Search = { category?: string | undefined; sort?: ProductSort | undefined; stock?: boolean | undefined; page?: number | undefined };
+type Search = { category?: string | undefined; sort?: ProductSort | undefined; stock?: boolean | undefined };
 
 export const Route = createFileRoute('/products/')({
   validateSearch: (s: Record<string, unknown>): Search => ({
     category: typeof s['category'] === 'string' && s['category'] ? s['category'] : undefined,
     sort: sorts.some(([k]) => k === s['sort']) ? (s['sort'] as ProductSort) : undefined,
     stock: s['stock'] === true || s['stock'] === 'true' ? true : undefined,
-    page: Number(s['page']) > 1 ? Math.floor(Number(s['page'])) : undefined,
   }),
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) => context.queryClient.ensureQueryData(productsQuery(filterOf(deps))),
@@ -20,7 +19,7 @@ export const Route = createFileRoute('/products/')({
   component: ProductsPage,
 });
 
-const filterOf = (s: Search) => ({ category: s.category, sort: s.sort ?? 'featured', inStock: s.stock, page: s.page ?? 1 });
+const filterOf = (s: Search) => ({ category: s.category, sort: s.sort ?? 'featured', inStock: s.stock, page: 1 });
 
 function ProductsPage() {
   const search = Route.useSearch();
@@ -28,7 +27,8 @@ function ProductsPage() {
   const categories = useCategories();
   const data = Route.useLoaderData();
   const isFetching = useLoadingPage();
-  const set = (patch: Partial<Search>) => void nav({ search: (s: Search) => ({ ...s, page: undefined, ...patch }) });
+  const set = (patch: Partial<Search>) => void nav({ search: (s: Search) => ({ ...s, ...patch }) });
+  const list = useInfiniteProducts(filterOf(search), data);
   const byName = (name: string) => categories.find((c) => c.name === name)?.slug;
   const current = categories.find((c) => c.slug === search.category)?.name ?? 'All Categories';
 
@@ -38,11 +38,9 @@ function ProductsPage() {
         crumb="All Products"
         title={search.category ? current : 'All Products'}
         subtitle={`${(data?.total ?? 0).toLocaleString('en-US')} products · Fresh choices and everyday essentials`}
-        products={data?.products ?? []}
+        products={list.products}
         loading={isFetching}
-        page={data?.page ?? 1}
-        pages={data?.pages ?? 1}
-        onPage={(page) => { set({ page: page > 1 ? page : undefined }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+        footer={<InfiniteLoader hasMore={list.hasMore} loading={list.loadingMore} onMore={list.loadMore} shown={list.products.length} total={list.total} columns="grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" />}
         toolbar={<>
           <ToolbarSelect label="Category" value={current} onChange={(v) => set({ category: byName(v) })} options={['All Categories', ...categories.map((c) => c.name)]} />
           <ToolbarSelect label="Availability" value={search.stock ? 'In Stock Only' : 'All Products'} onChange={(v) => set({ stock: v === 'In Stock Only' ? true : undefined })} options={['All Products', 'In Stock Only']} />

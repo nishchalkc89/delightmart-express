@@ -2,18 +2,17 @@ import { createFileRoute } from '@tanstack/react-router';
 import { Search } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { StorePage } from '@/components/delight/store-shell';
-import { ProductGridPage } from '@/components/delight/product-grid-page';
-import { productsQuery, useLoadingPage } from '@/hooks/use-catalog';
+import { InfiniteLoader, ProductGridPage } from '@/components/delight/product-grid-page';
+import { productsQuery, useInfiniteProducts, useLoadingPage } from '@/hooks/use-catalog';
 
-type SearchParams = { q: string; page?: number | undefined };
+type SearchParams = { q: string };
 
 export const Route = createFileRoute('/search')({
   validateSearch: (s: Record<string, unknown>): SearchParams => ({
     q: typeof s['q'] === 'string' ? s['q'] : '',
-    page: Number(s['page']) > 1 ? Math.floor(Number(s['page'])) : undefined,
   }),
   loaderDeps: ({ search }) => search,
-  loader: ({ context, deps }) => (deps.q.trim() ? context.queryClient.ensureQueryData(productsQuery({ q: deps.q.trim(), page: deps.page ?? 1 })) : null),
+  loader: ({ context, deps }) => (deps.q.trim() ? context.queryClient.ensureQueryData(productsQuery({ q: deps.q.trim(), page: 1 })) : null),
   head: () => ({ meta: [{ title: 'Search — Delight Shopping Mart' }, { name: 'description', content: 'Search products at Delight Shopping Mart.' }, { property: 'og:title', content: 'Search Delight Shopping Mart' }, { property: 'og:description', content: 'Find products quickly.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
   component: Page,
 });
@@ -28,6 +27,7 @@ function Page() {
   useEffect(() => setValue(search.q), [search.q]);
   const data = Route.useLoaderData();
   const isFetching = useLoadingPage();
+  const list = useInfiniteProducts({ q, page: 1 }, q ? data : null);
 
   function go(text: string) {
     void nav({ search: { q: text.trim() } });
@@ -55,11 +55,9 @@ function Page() {
         crumb="Search"
         title={q ? `Results for “${q}”` : 'Search Products'}
         subtitle={q ? `${total.toLocaleString('en-US')} product${total === 1 ? '' : 's'} found` : 'Type a product, brand or category, e.g. “Dairy Milk” or “shampoo”.'}
-        products={q ? data?.products ?? [] : []}
+        products={q ? list.products : []}
         loading={isFetching}
-        page={data?.page ?? 1}
-        pages={q ? data?.pages ?? 1 : 1}
-        onPage={(page) => { void nav({ search: { q, page: page > 1 ? page : undefined } }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+        footer={q ? <InfiniteLoader hasMore={list.hasMore} loading={list.loadingMore} onMore={list.loadMore} shown={list.products.length} total={list.total} columns="grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" /> : null}
         empty={q ? undefined : <div />}
       />
     </StorePage>

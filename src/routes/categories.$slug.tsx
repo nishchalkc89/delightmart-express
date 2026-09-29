@@ -3,24 +3,23 @@ import { ChevronRight } from 'lucide-react';
 import { StorePage } from '@/components/delight/store-shell';
 import { ProductCard } from '@/components/delight/product-card';
 import { CategorySidebar } from '@/components/delight/category-sidebar';
-import { Pager, ToolbarSelect } from '@/components/delight/product-grid-page';
+import { InfiniteLoader, ToolbarSelect } from '@/components/delight/product-grid-page';
 import { categories as knownCategories, dealsCategory, subcategoryImages, type ProductSort } from '@/services/catalog';
-import { productsQuery, subcategoriesQuery, useCategories, useLoadingPage } from '@/hooks/use-catalog';
+import { productsQuery, subcategoriesQuery, useCategories, useInfiniteProducts, useLoadingPage } from '@/hooks/use-catalog';
 import { asset } from '@/lib/assets';
 import type { ReactNode } from 'react';
 
-type Search = { sub?: string | undefined; sort?: ProductSort | undefined; page?: number | undefined };
+type Search = { sub?: string | undefined; sort?: ProductSort | undefined };
 const sorts: Array<[ProductSort, string]> = [['featured', 'Popular'], ['price-asc', 'Price: Low to High'], ['price-desc', 'Price: High to Low'], ['name', 'Name: A to Z']];
 const PAGE_SIZE = 30;
-const filterOf = (slug: string, s: Search) => ({ category: slug, sub: s.sub, sort: s.sort ?? 'featured', page: s.page ?? 1, size: PAGE_SIZE });
+const filterOf = (slug: string, s: Search) => ({ category: slug, sub: s.sub, sort: s.sort ?? 'featured', page: 1, size: PAGE_SIZE });
 
 export const Route = createFileRoute('/categories/$slug')({
   validateSearch: (s: Record<string, unknown>): Search => ({
     sub: typeof s['sub'] === 'string' && s['sub'] ? s['sub'] : undefined,
     sort: sorts.some(([k]) => k === s['sort']) ? (s['sort'] as ProductSort) : undefined,
-    page: Number(s['page']) > 1 ? Math.floor(Number(s['page'])) : undefined,
   }),
-  loaderDeps: ({ search }) => search,
+  loaderDeps: ({ search }) => ({ sub: search.sub, sort: search.sort }),
   loader: ({ context, params, deps }) => Promise.all([
     context.queryClient.ensureQueryData(productsQuery(filterOf(params.slug, deps))),
     context.queryClient.ensureQueryData(subcategoriesQuery(params.slug)),
@@ -41,7 +40,8 @@ function Page() {
   const [data, subs] = Route.useLoaderData();
   const isFetching = useLoadingPage();
   const isGroceries = slug === 'groceries';
-  const set = (patch: Partial<Search>) => void nav({ search: (s: Search) => ({ ...s, page: undefined, ...patch }), resetScroll: false });
+  const set = (patch: Partial<Search>) => void nav({ search: (s: Search) => ({ ...s, ...patch }), resetScroll: false });
+  const list = useInfiniteProducts(filterOf(slug, search), data);
   const withImages = isGroceries ? subs.filter((s) => subcategoryImages[s.name]) : [];
   const chips = subs.filter((s) => !withImages.includes(s));
 
@@ -103,10 +103,10 @@ function Page() {
                 <ToolbarSelect label="Sort by" value={sorts.find(([k]) => k === (search.sort ?? 'featured'))![1]} onChange={(v) => set({ sort: sorts.find(([, l]) => l === v)?.[0] })} options={sorts.map(([, l]) => l)} />
               </div>
               <div className={`grid grid-cols-2 gap-1.5 transition-opacity min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-3 xl:grid-cols-6 ${isFetching ? 'opacity-60' : ''}`}>
-                {(data?.products ?? []).map((p) => <ProductCard key={p.id} product={p} variant="grid" button="Add to Cart" />)}
+                {list.products.map((p) => <ProductCard key={p.id} product={p} variant="grid" button="Add to Cart" />)}
               </div>
               {data && !data.products.length && <p className="mt-6 rounded-xl border border-line bg-white p-8 text-center text-slate">No products here yet.</p>}
-              <Pager page={data?.page ?? 1} pages={data?.pages ?? 1} onPage={(page) => { set({ page: page > 1 ? page : undefined }); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+              <InfiniteLoader hasMore={list.hasMore} loading={list.loadingMore} onMore={list.loadMore} shown={list.products.length} total={list.total} />
             </section>
           </div>
         </div>
