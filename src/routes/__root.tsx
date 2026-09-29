@@ -85,13 +85,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Delight Shopping Mart — Tulsipur's One-Stop Shop" },
       { name: "description", content: "Shop groceries, fashion, baby care, home essentials and more from Delight Shopping Mart in Tulsipur, Dang." },
       { name: "author", content: "Delight Shopping Mart Pvt. Ltd." },
-      { name: "theme-color", content: "#0b6b3a" },
+      { name: "theme-color", content: "#08704c" },
       { property: "og:title", content: "Delight Shopping Mart" },
       { property: "og:description", content: "Everything you need under one roof in Tulsipur." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Kaushan+Script&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,

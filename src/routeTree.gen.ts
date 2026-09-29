@@ -21,6 +21,8 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReviewOrderRouteImport } from './routes/review-order'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as AccountAddressesRouteImport } from './routes/account/addresses'
 import { Route as AccountNotificationsRouteImport } from './routes/account/notifications'
@@ -105,6 +107,16 @@ const SearchRoute = SearchRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountIndexRoute = AccountIndexRouteImport.update({
@@ -246,6 +258,8 @@ export interface FileRoutesByFullPath {
   '/review-order': typeof ReviewOrderRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/verify': typeof VerifyRoute
+  '/welcome': typeof WelcomeRoute
   '/account/addresses': typeof AccountAddressesRoute
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/orders': typeof AccountOrdersRoute
@@ -283,6 +297,8 @@ export interface FileRoutesByTo {
   '/review-order': typeof ReviewOrderRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/verify': typeof VerifyRoute
+  '/welcome': typeof WelcomeRoute
   '/account/addresses': typeof AccountAddressesRoute
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/orders': typeof AccountOrdersRoute
@@ -323,6 +339,8 @@ export interface FileRoutesById {
   '/review-order': typeof ReviewOrderRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/verify': typeof VerifyRoute
+  '/welcome': typeof WelcomeRoute
   '/account/addresses': typeof AccountAddressesRoute
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/orders': typeof AccountOrdersRoute
@@ -364,6 +382,8 @@ export interface FileRouteTypes {
     | '/review-order'
     | '/search'
     | '/signup'
+    | '/verify'
+    | '/welcome'
     | '/account/addresses'
     | '/account/notifications'
     | '/account/orders'
@@ -401,6 +421,8 @@ export interface FileRouteTypes {
     | '/review-order'
     | '/search'
     | '/signup'
+    | '/verify'
+    | '/welcome'
     | '/account/addresses'
     | '/account/notifications'
     | '/account/orders'
@@ -440,6 +462,8 @@ export interface FileRouteTypes {
     | '/review-order'
     | '/search'
     | '/signup'
+    | '/verify'
+    | '/welcome'
     | '/account/addresses'
     | '/account/notifications'
     | '/account/orders'
@@ -480,6 +504,8 @@ export interface RootRouteChildren {
   ReviewOrderRoute: typeof ReviewOrderRoute
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
+  VerifyRoute: typeof VerifyRoute
+  WelcomeRoute: typeof WelcomeRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   OrdersIdRoute: typeof OrdersIdRoute
   ProductsSlugRoute: typeof ProductsSlugRoute
@@ -572,6 +598,20 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/': {
@@ -820,6 +860,8 @@ const rootRouteChildren: RootRouteChildren = {
   ReviewOrderRoute: ReviewOrderRoute,
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
+  VerifyRoute: VerifyRoute,
+  WelcomeRoute: WelcomeRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   OrdersIdRoute: OrdersIdRoute,
   ProductsSlugRoute: ProductsSlugRoute,

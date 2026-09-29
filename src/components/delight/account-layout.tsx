@@ -1,3 +1,36 @@
-import {Link,Outlet,useNavigate,useRouterState} from '@tanstack/react-router';import {UserRound,MapPin,ShoppingBag,LogOut,ChevronRight,Ticket,HelpCircle,Bell} from 'lucide-react';import {StorePage} from './store-shell';import {useAuth} from './auth-context';import {Button} from '@/components/ui/button';
-const links=[['/account',UserRound,'Overview'],['/account/profile',UserRound,'Personal Information'],['/account/addresses',MapPin,'Manage Addresses'],['/account/orders',ShoppingBag,'My Orders']] as const;
-export function AccountLayout(){const path=useRouterState({select:s=>s.location.pathname});const nav=useNavigate();const {user,loading,displayName,signOut}=useAuth();async function logout(){await signOut();void nav({to:'/login',replace:true})}return <StorePage><div className="site-width grid gap-6 py-8 lg:grid-cols-[260px_1fr]"><aside><div className="rounded-lg bg-primary p-5 text-primary-foreground"><div className="grid size-14 place-items-center rounded-full bg-primary-foreground/15 text-xl font-bold">{user?displayName.slice(0,2).toUpperCase():'DS'}</div><h2 className="mt-3 font-bold">{user?displayName:'Welcome to Delight'}</h2><p className="text-xs text-primary-foreground/75">{user?.email??'Sign in to view your account'}</p></div><nav className="mt-3 overflow-hidden rounded-lg border bg-card">{links.map(([to,Icon,label])=><Link key={to} to={to} className={`flex items-center gap-3 border-b p-3 text-sm ${path===to?'bg-accent font-semibold text-primary':''}`}><Icon className="size-4"/>{label}<ChevronRight className="ml-auto size-4"/></Link>)}<Link to="/categories/$slug" params={{slug:'deals-offers'}} className="flex items-center gap-3 border-b p-3 text-sm"><Ticket className="size-4"/>Offers & Coupons<ChevronRight className="ml-auto size-4"/></Link><Link to="/account/notifications" className="flex items-center gap-3 border-b p-3 text-sm"><Bell className="size-4"/>Notifications<ChevronRight className="ml-auto size-4"/></Link><a href="mailto:info@delightmart.com.np" className="flex items-center gap-3 border-b p-3 text-sm"><HelpCircle className="size-4"/>Help & Support<ChevronRight className="ml-auto size-4"/></a>{user&&<Button variant="ghost" onClick={logout} className="flex h-11 w-full justify-start gap-3 rounded-none px-3 text-sm"><LogOut className="size-4"/>Logout<ChevronRight className="ml-auto size-4"/></Button>}</nav></aside><main>{!user&&!loading?<div className="rounded-lg border bg-card p-8 text-center"><h1 className="text-2xl font-bold">Sign in to your account</h1><p className="mt-2 text-muted-foreground">Your orders, addresses and account details will appear here.</p><Button asChild className="mt-5"><Link to="/login">Sign In</Link></Button></div>:user?<Outlet/>:<p className="p-5 text-muted-foreground">Loading your account…</p>}</main></div></StorePage>}
+import { Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { StorePage } from './store-shell';
+import { useAuth } from './auth-context';
+
+/**
+ * `/account` renders the approved My Account screen full-width.
+ * Sub-pages (profile, addresses, orders, notifications) get a back header and a centred column.
+ */
+export function AccountLayout() {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const { user, loading } = useAuth();
+  const isHome = path === '/account' || path === '/account/';
+
+  if (isHome) {
+    return (
+      <StorePage mobile={{ variant: 'account', actions: ['bell'], search: false }} nav="account">
+        <Outlet />
+      </StorePage>
+    );
+  }
+
+  return (
+    <StorePage mobile={{ variant: 'back', actions: ['bell'], search: false }} nav="account">
+      <div className="mx-auto max-w-[860px] px-4 py-4 lg:py-8">
+        <p className="mb-4 hidden text-[14px] text-slate lg:block"><Link to="/">Home</Link> / <Link to="/account">My Account</Link></p>
+        {!user && !loading ? (
+          <div className="rounded-xl border border-line bg-white p-8 text-center">
+            <h1 className="text-[24px] font-extrabold text-navy">Sign in to your account</h1>
+            <p className="mt-2 text-slate">Your orders, addresses and account details will appear here.</p>
+            <Link to="/login" className="mt-5 inline-flex h-12 items-center rounded-lg bg-brand px-8 font-semibold text-white">Sign In</Link>
+          </div>
+        ) : user ? <Outlet /> : <p className="p-5 text-slate">Loading your account…</p>}
+      </div>
+    </StorePage>
+  );
+}
