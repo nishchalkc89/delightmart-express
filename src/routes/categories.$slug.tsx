@@ -62,7 +62,7 @@ function Page() {
         </section>
 
         <div className="grid grid-cols-[108px_1fr] gap-0 min-[400px]:grid-cols-[118px_1fr] lg:grid-cols-[260px_1fr] lg:gap-6">
-          <aside className="lg:sticky lg:top-4 lg:self-start"><CategorySidebar active={slug} /></aside>
+          <aside className="no-scrollbar sticky top-[132px] max-h-[calc(100dvh-132px-84px)] self-start overflow-y-auto lg:top-[130px] lg:max-h-[calc(100vh-150px)]"><CategorySidebar active={slug} /></aside>
 
           <div className="min-w-0 px-2.5 lg:px-0">
             {isGroceries && !search.sub && (

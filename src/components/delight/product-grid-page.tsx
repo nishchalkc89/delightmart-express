@@ -12,7 +12,7 @@ export function ProductGridPage({ title, subtitle, crumb, toolbar, products, emp
     <div className="lg:site-width px-4 py-3 lg:px-0 lg:py-6">
       <p className="mb-3 hidden text-[14px] text-slate lg:block"><Link to="/">Home</Link> / <span className="text-ink">{crumb}</span></p>
       <div className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-6">
-        <aside className="hidden lg:sticky lg:top-4 lg:block lg:self-start"><CategorySidebar /></aside>
+        <aside className="hidden lg:sticky lg:top-[130px] lg:block lg:self-start"><CategorySidebar /></aside>
         <div className="min-w-0">
           <h1 className="text-[28px] font-extrabold tracking-tight text-navy lg:text-[36px]">{title}</h1>
           <p className="text-[14px] text-slate lg:text-[16px]">{subtitle}</p>

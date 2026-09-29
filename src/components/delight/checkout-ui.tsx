@@ -80,7 +80,7 @@ export function CheckoutShell({ title, children, aside, footer }: { title: strin
           <div className="lg:grid lg:grid-cols-[1fr_390px] lg:items-start lg:gap-6">
             <div className="space-y-3">{children}</div>
             {(aside || footer) && (
-              <aside className="mt-3 space-y-3 lg:sticky lg:top-4 lg:mt-0">
+              <aside className="mt-3 space-y-3 lg:sticky lg:top-[130px] lg:mt-0">
                 {aside}
                 {footer && <div className="hidden rounded-2xl border border-line bg-white p-4 lg:block">{footer}</div>}
               </aside>

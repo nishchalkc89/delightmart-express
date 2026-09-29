@@ -3,7 +3,7 @@ import {
   Bell, ChevronDown, ChevronLeft, ChevronRight, Facebook, Heart, Home, Instagram, LayoutGrid, Linkedin, MapPin,
   Menu, Music2, ScanLine, Search, ShoppingBag, ShoppingCart, UserRound, Youtube,
 } from 'lucide-react';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Logo } from './logo';
 import { SmartSearch } from './smart-search';
 import { useQuery } from '@tanstack/react-query';
@@ -61,13 +61,13 @@ function HeaderAction({ to, icon: Icon, label, count }: { to: string; icon: type
   );
 }
 
-function DesktopHeader() {
+function DesktopHeader({ compact }: { compact: boolean }) {
   const { count } = useCart();
   const { user } = useAuth();
   return (
-    <header className="hidden bg-white lg:block">
-      <div className="site-width flex h-[92px] items-center justify-between gap-10">
-        <Link to="/" aria-label="Delight Shopping Mart home"><Logo className="h-[60px] w-auto" /></Link>
+    <header className="bg-white">
+      <div className={`site-width flex items-center justify-between gap-10 transition-[height] duration-200 ${compact ? 'h-[64px]' : 'h-[92px]'}`}>
+        <Link to="/" aria-label="Delight Shopping Mart home"><Logo className={`w-auto transition-[height] duration-200 ${compact ? 'h-[44px]' : 'h-[60px]'}`} /></Link>
         <SmartSearch variant="desktop" />
         <div className="flex items-center gap-9 pr-2">
           <HeaderAction to={user ? '/account' : '/login'} icon={UserRound} label="Account" />
@@ -79,25 +79,46 @@ function DesktopHeader() {
   );
 }
 
-function CategoryNav() {
+function CategoryNav({ compact }: { compact: boolean }) {
   const all = useCategories();
   const shown = [...NAV_CATEGORIES, 'deals-offers'].map((slug) => all.find((c) => c.slug === slug)).filter((c): c is Category => Boolean(c));
   return (
-    <nav className="hidden bg-white lg:block">
-      <div className="site-width flex h-[72px] items-stretch border-b border-line pb-1.5">
-        <Link to="/categories" className="my-auto mr-5 flex h-[46px] shrink-0 items-center gap-2.5 rounded-lg bg-brand px-5 text-[15px] font-semibold text-white shadow-sm hover:bg-brand-dark">
+    <nav className="bg-white">
+      <div className={`site-width flex items-stretch border-b border-line transition-[height] duration-200 ${compact ? 'h-[50px] pb-1' : 'h-[72px] pb-1.5'}`}>
+        <Link to="/categories" className={`my-auto mr-5 flex shrink-0 ${compact ? 'h-[38px]' : 'h-[46px]'} items-center gap-2.5 rounded-lg bg-brand px-5 text-[15px] font-semibold text-white shadow-sm hover:bg-brand-dark`}>
           <Menu className="size-5" /> All Categories <ChevronDown className="size-4" />
         </Link>
         <div className="flex flex-1 items-stretch justify-between">
           {shown.map((c, i) => (
-            <Link key={c.slug} to="/categories/$slug" params={{ slug: c.slug }} className={`group flex flex-1 flex-col items-center justify-center gap-1 px-2 text-[13.5px] text-ink hover:text-brand ${i ? 'border-l border-line' : ''}`}>
-              <img src={c.icon} alt="" className="size-8 object-contain transition-transform group-hover:-translate-y-0.5" />
+            <Link key={c.slug} to="/categories/$slug" params={{ slug: c.slug }} className={`group flex flex-1 items-center justify-center px-2 text-[13.5px] text-ink hover:text-brand ${compact ? 'flex-row gap-1.5' : 'flex-col gap-1'} ${i ? 'border-l border-line' : ''}`}>
+              <img src={c.icon} alt="" className={`object-contain transition-transform group-hover:-translate-y-0.5 ${compact ? 'size-6' : 'size-8'}`} />
               <span className="whitespace-nowrap">{c.short}</span>
             </Link>
           ))}
         </div>
       </div>
     </nav>
+  );
+}
+
+/**
+ * Desktop header + category bar stay at the top while scrolling and shrink a little once the page is scrolled.
+ * (The address/opening-hours strip above scrolls away.)
+ */
+function StickyDesktopNav() {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    // Shrinks after 160px and grows back only near the top, so the size change itself can't make it flicker.
+    const onScroll = () => setCompact((was) => (was ? window.scrollY > 40 : window.scrollY > 160));
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return (
+    <div className={`sticky top-0 z-40 hidden bg-white lg:block ${compact ? 'shadow-[0_4px_16px_rgb(16_24_40/0.08)]' : ''}`}>
+      <DesktopHeader compact={compact} />
+      <CategoryNav compact={compact} />
+    </div>
   );
 }
 
@@ -297,8 +318,7 @@ export function StorePage({ children, mobile, nav = 'default', hideMobileNav = f
   return (
     <div className={`min-h-screen bg-white ${hideMobileNav ? '' : count ? 'pb-[150px] lg:pb-0' : 'pb-[84px] lg:pb-0'}`}>
       <TopBar />
-      <DesktopHeader />
-      <CategoryNav />
+      <StickyDesktopNav />
       {mobile !== false && (appScreen ? <div className="standalone:hidden"><MobileHeader {...mobile} /></div> : <MobileHeader {...mobile} />)}
       <main>{children}</main>
       <StoreFooter />
