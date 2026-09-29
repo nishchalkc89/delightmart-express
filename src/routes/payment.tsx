@@ -42,9 +42,9 @@ function Page() {
     }
   }
 
-  function apply() {
-    const ok = checkout.applyCoupon();
-    toast[ok ? 'success' : 'error'](ok ? 'Promo code applied' : 'Invalid promo code');
+  async function apply() {
+    const result = await checkout.applyCoupon(cart.subtotal);
+    toast[result.ok ? 'success' : 'error'](result.message);
   }
 
   return (
@@ -65,7 +65,7 @@ function Page() {
           <b className="block text-[18px] font-bold text-brand">Have a promo code?</b>
           <div className="mt-2 flex gap-3">
             <input value={checkout.coupon} onChange={(e) => checkout.setCoupon(e.target.value)} placeholder="Enter promo code" className="h-12 min-w-0 flex-1 rounded-lg border border-line bg-white px-4 text-[16px] outline-none focus:border-brand" aria-label="Promo code" />
-            <button onClick={apply} className="h-12 rounded-lg bg-[#d6efe2] px-7 text-[17px] font-semibold text-brand">Apply</button>
+            <button onClick={() => void apply()} className="h-12 rounded-lg bg-[#d6efe2] px-7 text-[17px] font-semibold text-brand">Apply</button>
           </div>
         </div>
       </section>

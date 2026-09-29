@@ -5,7 +5,7 @@ import { StorePage } from '@/components/delight/store-shell';
 import { MobileHead, SectionHead } from '@/components/delight/section';
 import { ProductCard } from '@/components/delight/product-card';
 import { AppPromo, BannerLink, CarouselArrow, CommunityNewsletter, DealTimer, JustArrivedTitle, Newsletter } from '@/components/delight/home-parts';
-import { brands, type Category, type Collections } from '@/services/catalog';
+import { brands, type Category, type Collections, type StoreBanner } from '@/services/catalog';
 import { catalogQuery, useStorefront } from '@/hooks/use-catalog';
 import { asset } from '@/lib/assets';
 import { shouldOnboard } from '@/lib/onboarding';
@@ -21,11 +21,11 @@ function Index() {
   useEffect(() => {
     if (shouldOnboard()) void nav({ to: '/welcome', replace: true });
   }, [nav]);
-  const { categories, collections } = useStorefront();
+  const { categories, collections, banners } = useStorefront();
   return (
     <StorePage mobile={{ variant: 'home', actions: ['wishlist', 'cart'] }}>
-      <div className="hidden lg:block"><DesktopHome categories={categories} collections={collections} /></div>
-      <div className="lg:hidden"><MobileHome categories={categories} collections={collections} /></div>
+      <div className="hidden lg:block"><DesktopHome categories={categories} collections={collections} banners={banners} /></div>
+      <div className="lg:hidden"><MobileHome categories={categories} collections={collections} banners={banners} /></div>
     </StorePage>
   );
 }
@@ -112,7 +112,29 @@ function WhyShop() {
   );
 }
 
-type Data = { categories: Category[]; collections: Collections };
+type Data = { categories: Category[]; collections: Collections; banners: StoreBanner[] };
+
+/** Admin-managed banner slider; replaces the designed hero when banners exist. */
+function BannerSlider({ items, className }: { items: StoreBanner[]; className: string }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (items.length < 2) return;
+    const t = setInterval(() => setI((v) => (v + 1) % items.length), 5000);
+    return () => clearInterval(t);
+  }, [items.length]);
+  const b = items[i % items.length]!;
+  return (
+    <section className={`relative overflow-hidden rounded-2xl bg-[#f3f7f3] ${className}`}>
+      <a href={b.link}><img src={b.image} alt={b.title} className="h-full w-full object-cover" /></a>
+      {items.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2.5 rounded-full bg-white/90 px-4 py-2 shadow-sm">
+          {items.map((x, k) => <button key={x.image + k} aria-label={`Banner ${k + 1}`} onClick={() => setI(k)} className={`size-2.5 rounded-full ${k === i % items.length ? 'bg-red' : 'bg-[#9aa3ad]'}`} />)}
+        </div>
+      )}
+    </section>
+  );
+}
+const at = (banners: StoreBanner[], position: string) => banners.filter((b) => b.position === position);
 
 function PopularCategories({ categories }: Pick<Data, 'categories'>) {
   return (
@@ -182,21 +204,30 @@ function TrustStrip() {
   );
 }
 
-function DesktopHome({ categories, collections }: Data) {
+function DesktopHome({ categories, collections, banners }: Data) {
+  const slider = at(banners, 'Homepage Slider');
+  const below = at(banners, 'Below Slider');
+  const shopMore = at(banners, 'Shop More Row');
   return (
     <>
-      <DesktopHero />
+      {slider.length ? <div className="site-width mt-5"><BannerSlider items={slider} className="h-[444px]" /></div> : <DesktopHero />}
       <Services />
       <PopularCategories categories={categories} />
       <section className="site-width mt-12">
         <SectionHead eyebrow="Today's Best Deals" title="Today's" accent="Special Offers" link="View All Deals" to="/categories/deals-offers" extra={<DealTimer />} />
         <div className="grid grid-cols-6 gap-3.5">{collections.specialOffers.map((p) => <ProductCard key={p.id} product={p} />)}</div>
       </section>
-      <section className="site-width mt-3 grid grid-cols-[1.03fr_1fr_1.03fr] gap-3.5">
-        <BannerLink src={asset('promo-groceries')} alt="Groceries for a Better Tomorrow" to="/categories/groceries" />
-        <BannerLink src={asset('promo-fashion')} alt="Fashion for Every You" to="/categories/ladies-wear" />
-        <BannerLink src={asset('promo-stationery')} alt="Stationery & School Essentials" to="/categories/stationery" />
-      </section>
+      {below.length ? (
+        <section className="site-width mt-3 grid gap-3.5" style={{ gridTemplateColumns: `repeat(${Math.min(below.length, 3)}, minmax(0, 1fr))` }}>
+          {below.slice(0, 3).map((b) => <a key={b.image} href={b.link} className="block overflow-hidden rounded-xl"><img src={b.image} alt={b.title} className="h-[185px] w-full object-cover" /></a>)}
+        </section>
+      ) : (
+        <section className="site-width mt-3 grid grid-cols-[1.03fr_1fr_1.03fr] gap-3.5">
+          <BannerLink src={asset('promo-groceries')} alt="Groceries for a Better Tomorrow" to="/categories/groceries" />
+          <BannerLink src={asset('promo-fashion')} alt="Fashion for Every You" to="/categories/ladies-wear" />
+          <BannerLink src={asset('promo-stationery')} alt="Stationery & School Essentials" to="/categories/stationery" />
+        </section>
+      )}
       <section className="site-width mt-8">
         <SectionHead eyebrow="Featured Products" title="Popular Products" link="View All Products" />
         <div className="grid grid-cols-6 gap-3.5">{collections.popular.map((p) => <ProductCard key={p.id} product={p} badge="none" />)}</div>
@@ -218,12 +249,18 @@ function DesktopHome({ categories, collections }: Data) {
       </section>
       <section className="site-width mt-10">
         <SectionHead eyebrow="Special Offers" title="Shop More," accent="Save More" link="View All Offers" to="/categories/deals-offers" />
+        {shopMore.length ? (
+          <div className="grid gap-3.5" style={{ gridTemplateColumns: `repeat(${Math.min(shopMore.length, 4)}, minmax(0, 1fr))` }}>
+            {shopMore.slice(0, 4).map((b) => <a key={b.image} href={b.link} className="block overflow-hidden rounded-xl"><img src={b.image} alt={b.title} className="h-[171px] w-full object-cover" /></a>)}
+          </div>
+        ) : (
         <div className="grid grid-cols-[1.04fr_1fr_1fr_1.04fr] gap-3.5">
           <BannerLink src={asset('save-groceries')} alt="Up to 30% off daily essentials" to="/categories/groceries" />
           <BannerLink src={asset('save-fashion')} alt="Trendy styles for every you" to="/categories/ladies-wear" />
           <BannerLink src={asset('save-baby')} alt="Baby care" to="/categories/baby-care" />
           <BannerLink src={asset('save-kitchen')} alt="Make home better" to="/categories/kitchen-household" />
         </div>
+        )}
       </section>
       <Brands />
       <section className="site-width mt-8"><CommunityNewsletter /></section>
@@ -236,8 +273,10 @@ function DesktopHome({ categories, collections }: Data) {
 /* Mobile                                                              */
 /* ------------------------------------------------------------------ */
 
-function MobileHome({ categories, collections }: Data) {
+function MobileHome({ categories, collections, banners }: Data) {
   const [slide, setSlide] = useState(0);
+  const slider = at(banners, 'Homepage Slider');
+  const below = at(banners, 'Below Slider');
   const services = [['service-3', 'Fast & Reliable', 'Delivery'], ['service-4', 'Quality', 'Products'], ['service-1', 'Great', 'Offers'], ['service-5', '24/7', 'Support']] as const;
   return (
     <div className="px-4">
@@ -253,6 +292,7 @@ function MobileHome({ categories, collections }: Data) {
         </Link>
       </div>
 
+      {slider.length ? <BannerSlider items={slider} className="mt-4 h-[170px] min-[480px]:h-[230px]" /> : (
       <section className="relative mt-4 h-[196px] overflow-hidden rounded-2xl bg-[#eef6ee] min-[480px]:h-[240px]">
         <img src={asset('hero-mobile')} alt="Shopper with fresh groceries" className="absolute inset-y-0 right-0 h-full w-[54%] object-cover object-left" />
         <div className="absolute inset-y-0 left-[44%] w-10 bg-gradient-to-r from-[#eef6ee] to-transparent" />
@@ -266,6 +306,7 @@ function MobileHome({ categories, collections }: Data) {
           {[0, 1, 2].map((i) => <button key={i} aria-label={`Slide ${i + 1}`} onClick={() => setSlide(i)} className={`size-2 rounded-full ${slide === i ? 'bg-red' : 'bg-[#c3c9cf]'}`} />)}
         </div>
       </section>
+      )}
 
       <section className="mt-3 grid grid-cols-4 rounded-xl bg-[#f3f9fb] py-3">
         {services.map(([icon, a, b], i) => (
@@ -299,8 +340,12 @@ function MobileHome({ categories, collections }: Data) {
       </section>
 
       <section className="mt-3 grid grid-cols-2 gap-2.5">
-        <BannerLink src={asset('m-banner-groceries')} alt="Healthy Living Everyday" to="/categories/groceries" />
-        <BannerLink src={asset('m-banner-fashion')} alt="Style for Every You" to="/categories/ladies-wear" />
+        {below.length ? below.slice(0, 2).map((b) => <a key={b.image} href={b.link} className="block overflow-hidden rounded-xl"><img src={b.image} alt={b.title} className="aspect-[2/1] w-full object-cover" /></a>) : (
+          <>
+            <BannerLink src={asset('m-banner-groceries')} alt="Healthy Living Everyday" to="/categories/groceries" />
+            <BannerLink src={asset('m-banner-fashion')} alt="Style for Every You" to="/categories/ladies-wear" />
+          </>
+        )}
       </section>
 
       <section className="mt-6">

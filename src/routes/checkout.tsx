@@ -6,32 +6,41 @@ import { useCart } from '@/components/delight/cart-context';
 import { useCheckout, type DeliveryDetails } from '@/components/delight/checkout-context';
 import { CheckoutPage, EmptyCartNotice, FastNote, OrderSummaryCard, PaymentOptions, PrimaryButton, Radio } from '@/components/delight/checkout-ui';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/components/delight/auth-context';
+import { supabase } from '@/services/supabase';
 
 export const Route = createFileRoute('/checkout')({
   head: () => ({ meta: [{ title: 'Checkout — Delight Shopping Mart' }, { name: 'description', content: 'Choose delivery and payment details for your Delight order.' }, { property: 'og:title', content: 'Checkout — Delight' }, { property: 'og:description', content: 'Complete your Delight order.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
   component: Page,
 });
 
-type Saved = DeliveryDetails & { id: string; label: string; isDefault?: boolean };
-
-// Demo saved addresses shown in the approved checkout screen.
-const savedAddresses: Saved[] = [
-  { id: 'a1', label: 'Nishchal Kc', isDefault: true, recipientName: 'Nishchal Kc', phone: '9801234567', addressLine: 'Ward No. 6, Tulsipur Sub-Metropolitan City', city: 'Dang', province: 'Lumbini Province, Nepal', instructions: '' },
-  { id: 'a2', label: 'Home', recipientName: 'Nishchal Kc', phone: '9801234567', addressLine: 'Ward No. 3, Tulsipur', city: 'Dang', province: '', instructions: '' },
-];
+type Saved = DeliveryDetails & { id: string; label: string; isDefault: boolean };
 
 function Page() {
   const cart = useCart();
   const checkout = useCheckout();
+  const { user, loading: authLoading } = useAuth();
   const nav = useNavigate();
   const { details } = checkout;
-  const [selected, setSelected] = useState<string>('a1');
+  const [saved, setSaved] = useState<Saved[]>([]);
+  const [selected, setSelected] = useState<string>('');
   const [adding, setAdding] = useState(false);
+  const [saveNew, setSaveNew] = useState(true);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!details.addressLine) checkout.setDetails(savedAddresses[0]!);
+    if (!user) return;
+    void supabase.from('addresses').select('id,label,recipient_name,phone,address_line,city,province,is_default').eq('user_id', user.id).order('is_default', { ascending: false }).order('created_at', { ascending: false }).then(({ data }) => {
+      const list = (data ?? []).map((a) => ({ id: a.id, label: a.label, isDefault: a.is_default, recipientName: a.recipient_name, phone: a.phone, addressLine: a.address_line, city: a.city, province: a.province, instructions: '' }));
+      setSaved(list);
+      if (list[0]) choose(list[0]);
+      else {
+        setAdding(true);
+        checkout.setDetails({ ...details, recipientName: details.recipientName || String(user.user_metadata['full_name'] ?? ''), phone: details.phone || String(user.user_metadata['phone'] ?? '') });
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   function choose(a: Saved) {
     setSelected(a.id);
@@ -41,10 +50,34 @@ function Page() {
   function update(key: keyof DeliveryDetails, value: string) {
     checkout.setDetails({ ...details, [key]: value });
   }
-  function next() {
+  async function next() {
+    if (!user) { toast.error('Sign in to place your order'); void nav({ to: '/login' }); return; }
     if (!cart.lines.length) { toast.error('Add items to your cart first'); return; }
-    if (!details.recipientName.trim() || !details.phone.trim() || !details.addressLine.trim()) { toast.error('Enter your name, phone, and delivery address'); return; }
+    if (details.recipientName.trim().length < 2 || details.phone.trim().length < 7 || details.addressLine.trim().length < 5) { toast.error('Enter your name, a valid phone number and your full address'); return; }
+    if (adding && saveNew) {
+      setBusy(true);
+      const { error } = await supabase.from('addresses').insert({ user_id: user.id, label: saved.length ? 'Other' : 'Home', recipient_name: details.recipientName.trim(), phone: details.phone.trim(), address_line: details.addressLine.trim(), city: details.city.trim() || 'Tulsipur', province: details.province.trim() || 'Lumbini Province', is_default: saved.length === 0 });
+      setBusy(false);
+      if (error) toast.error(`Address not saved: ${error.message}`);
+    }
     void nav({ to: '/review-order' });
+  }
+
+  if (authLoading) return <CheckoutPage step={2}><div className="mt-8 h-72 animate-pulse rounded-xl bg-[#f1f4f7]" /></CheckoutPage>;
+
+  if (!user) {
+    return (
+      <CheckoutPage step={2}>
+        <div className="mt-8 rounded-xl border border-line bg-white p-8 text-center">
+          <h1 className="text-[24px] font-extrabold text-navy">Sign in to checkout</h1>
+          <p className="mt-2 text-[15px] text-slate">Your cart is saved. Sign in or create an account to choose a delivery address and place your order.</p>
+          <div className="mt-5 flex justify-center gap-3">
+            <Link to="/login" className="inline-flex h-12 items-center rounded-lg bg-brand px-7 font-semibold text-white">Login</Link>
+            <Link to="/signup" className="inline-flex h-12 items-center rounded-lg border border-line px-7 font-semibold text-navy">Create Account</Link>
+          </div>
+        </div>
+      </CheckoutPage>
+    );
   }
 
   return (
@@ -57,7 +90,7 @@ function Page() {
         <button onClick={() => { setAdding(true); setSelected(''); }} className="flex items-center gap-1 text-[14.5px] font-medium text-brand lg:text-[16px]"><Plus className="size-4" /> Add New Address</button>
       </div>
       <div className="mt-3 space-y-2.5">
-        {savedAddresses.map((a) => {
+        {saved.map((a) => {
           const on = selected === a.id;
           return (
             <div key={a.id} role="button" tabIndex={0} onClick={() => choose(a)} onKeyDown={(e) => e.key === 'Enter' && choose(a)} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3.5 py-3 lg:gap-4 lg:px-4 ${on ? 'border-brand/40 bg-[#effaf4]' : 'border-line bg-white'}`}>
@@ -71,7 +104,7 @@ function Page() {
                   {!a.province && <>, {a.city}</>}
                 </p>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); choose(a); setAdding(true); }} className={`flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-[14px] font-medium lg:px-3.5 lg:py-2 lg:text-[15px] ${on ? 'bg-[#dcf2e6] text-brand' : 'bg-[#eef1f4] text-navy'}`}><Pencil className="size-4" /> Edit</button>
+              <button onClick={(e) => { e.stopPropagation(); choose(a); setAdding(true); setSaveNew(false); }} className={`flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-[14px] font-medium lg:px-3.5 lg:py-2 lg:text-[15px] ${on ? 'bg-[#dcf2e6] text-brand' : 'bg-[#eef1f4] text-navy'}`}><Pencil className="size-4" /> Edit</button>
             </div>
           );
         })}
@@ -79,12 +112,14 @@ function Page() {
 
       {adding && (
         <div className="mt-3 grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-2">
+          {saved.length > 0 && <p className="text-[14px] font-semibold text-navy sm:col-span-2">New delivery address</p>}
           <label className="text-[14px] font-semibold text-navy">Full Name<Input value={details.recipientName} onChange={(e) => update('recipientName', e.target.value)} className="mt-1 h-11" /></label>
           <label className="text-[14px] font-semibold text-navy">Phone<Input type="tel" value={details.phone} onChange={(e) => update('phone', e.target.value)} className="mt-1 h-11" /></label>
           <label className="text-[14px] font-semibold text-navy sm:col-span-2">Street / Ward / Landmark<Input value={details.addressLine} onChange={(e) => update('addressLine', e.target.value)} placeholder="Ward No. 6, Tulsipur" className="mt-1 h-11" /></label>
           <label className="text-[14px] font-semibold text-navy">City<Input value={details.city} onChange={(e) => update('city', e.target.value)} className="mt-1 h-11" /></label>
           <label className="text-[14px] font-semibold text-navy">Province<Input value={details.province} onChange={(e) => update('province', e.target.value)} className="mt-1 h-11" /></label>
           <label className="text-[14px] font-semibold text-navy sm:col-span-2">Delivery Instructions (optional)<Input value={details.instructions} onChange={(e) => update('instructions', e.target.value)} className="mt-1 h-11" /></label>
+          <label className="flex items-center gap-2 text-[14px] text-navy sm:col-span-2"><input type="checkbox" checked={saveNew} onChange={(e) => setSaveNew(e.target.checked)} className="size-4 accent-[#08704c]" /> Save this address for next time</label>
         </div>
       )}
 
@@ -108,7 +143,7 @@ function Page() {
         </div>
       ) : <EmptyCartNotice />}
 
-      <PrimaryButton onClick={next}>Continue to Review Order <ArrowRight className="size-5" /></PrimaryButton>
+      <PrimaryButton onClick={() => void next()} disabled={busy}>Continue to Review Order <ArrowRight className="size-5" /></PrimaryButton>
     </CheckoutPage>
   );
 }

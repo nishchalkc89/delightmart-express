@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { StorePage } from '@/components/delight/store-shell';
 import { ProductCard, Stars } from '@/components/delight/product-card';
+import { ProductReviews } from '@/components/delight/product-reviews';
 import { useCart } from '@/components/delight/cart-context';
 import { buildCollections, formatNpr } from '@/services/catalog';
 import { catalogQuery } from '@/hooks/use-catalog';
@@ -113,6 +114,8 @@ function ProductPage() {
             ))}
           </div>
         </section>
+
+        <ProductReviews productId={p.id} />
 
         <section className="mt-5 lg:mt-10">
           <div className="mb-2.5 flex items-center justify-between">

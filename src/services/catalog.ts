@@ -103,7 +103,16 @@ export const formatNpr = (n: number) => `NPR ${n.toLocaleString('en-US')}`;
 /* Live catalogue (Supabase)                                           */
 /* ------------------------------------------------------------------ */
 
-export type Catalog = { products: Product[]; categories: Category[]; source: 'live' | 'demo' };
+export const BANNER_POSITIONS = ['Homepage Slider', 'Below Slider', 'Shop More Row'] as const;
+export type StoreBanner = { title: string; image: string; link: string; position: string };
+export type Catalog = { products: Product[]; categories: Category[]; banners: StoreBanner[]; source: 'live' | 'demo' };
+
+function liveBanners(rows: Array<{ title: string; image_url: string; link_url: string | null; position: string; starts_at: string | null; ends_at: string | null }> | null): StoreBanner[] {
+  const now = Date.now();
+  return (rows ?? [])
+    .filter((b) => (!b.starts_at || new Date(b.starts_at).getTime() <= now) && (!b.ends_at || new Date(b.ends_at).getTime() >= now))
+    .map((b) => ({ title: b.title, image: b.image_url, link: b.link_url || '/products', position: b.position }));
+}
 
 const demoBySlug = new Map(products.map((x) => [x.slug, x]));
 
@@ -146,19 +155,36 @@ function fromDb(row: DbProduct): Product {
 
 /** Loads the active catalogue from Supabase. Falls back to the demo catalogue when the database is unreachable or empty. */
 export async function fetchCatalog(): Promise<Catalog> {
-  const demo: Catalog = { products, categories, source: 'demo' };
+  const demo: Catalog = { products, categories, banners: [], source: 'demo' };
+  type Cat = { name: string; slug: string; description: string | null; image_url: string | null };
+  type Ban = { title: string; image_url: string; link_url: string | null; position: string; starts_at: string | null; ends_at: string | null };
   try {
     const { supabase } = await import('./supabase');
-    const [{ data: rows, error }, { data: cats }] = await Promise.all([
+    const [browser, browserCats, browserBanners] = await Promise.all([
       supabase.from('products').select('id,slug,name,brand,unit,price,sale_price,description,featured,created_at,categories(name,slug),inventory(current_stock,reserved_stock),product_images(url,is_primary,sort_order)').eq('status', 'ACTIVE').order('created_at', { ascending: true }),
       supabase.from('categories').select('name,slug,description,image_url,sort_order').eq('status', 'ACTIVE').is('parent_id', null).order('sort_order'),
+      supabase.from('banners').select('title,image_url,link_url,position,starts_at,ends_at').eq('status', 'ACTIVE').order('sort_order'),
     ]);
-    if (error || !rows?.length) return demo;
+    let bannerRows = (browserBanners.error ? null : browserBanners.data) as Ban[] | null;
+    let rows = browser.error ? null : (browser.data as unknown[] | null);
+    let cats = (browserCats.error ? null : browserCats.data) as Cat[] | null;
+    if (!rows?.length) {
+      // Anonymous reads can be blocked by row-level security; fall back to the server read.
+      const { getCatalogServer } = await import('./catalog.functions');
+      const { json } = await getCatalogServer();
+      if (json) {
+        const parsed = JSON.parse(json) as { products: unknown[]; categories: Cat[]; banners?: Ban[] };
+        rows = parsed.products;
+        cats = parsed.categories;
+        bannerRows = parsed.banners ?? bannerRows;
+      }
+    }
+    if (!rows?.length) return demo;
     const liveCategories = (cats ?? []).map((c) => {
       const visual = categories.find((x) => x.slug === c.slug);
       return visual ? { ...visual, name: c.name, image: c.image_url ?? visual.image } : { name: c.name, short: c.name, slug: c.slug, tagline: c.description ?? '', image: c.image_url ?? asset('tile-groceries'), icon: c.image_url ?? asset('nav-groceries'), side: c.image_url ?? asset('side-groceries') };
     });
-    return { products: (rows as unknown as DbProduct[]).map(fromDb), categories: liveCategories.length ? liveCategories : categories, source: 'live' };
+    return { products: (rows as unknown as DbProduct[]).map(fromDb), categories: liveCategories.length ? liveCategories : categories, banners: liveBanners(bannerRows), source: 'live' };
   } catch {
     return demo;
   }
