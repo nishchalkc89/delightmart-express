@@ -1,30 +1,59 @@
 import { useRouter } from '@tanstack/react-router';
-import { ChevronDown, ChevronLeft, Eye, EyeOff, type LucideIcon } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Eye, EyeOff, Leaf, Percent, Zap, type LucideIcon } from 'lucide-react';
+import { asset } from '@/lib/assets';
 import { useState, type ReactNode } from 'react';
 import { Logo } from './logo';
 import { StorePage } from './store-shell';
 
-/** Full-screen phone layout on mobile; centred card under the store header on desktop. */
-export function AuthShell({ children, back = true }: { children: ReactNode; back?: boolean }) {
+/**
+ * Login, sign-up and verify pages.
+ * - Installed app (PWA): full-screen app screen with its own back arrow, no website header or footer.
+ * - Website on a phone: normal page under the site header.
+ * - Website on desktop: two-panel card with a welcome panel next to the form.
+ */
+export function AuthShell({ children, back = true, app = false }: { children: ReactNode; back?: boolean; /** App-only page such as onboarding: no website side panel. */ app?: boolean }) {
   const router = useRouter();
   return (
-    <StorePage mobile={false} hideMobileNav>
-      <div className="min-h-screen bg-white lg:min-h-0 lg:bg-page lg:py-12">
-        <div className="relative mx-auto w-full max-w-[440px] px-6 pb-10 pt-4 lg:rounded-3xl lg:border lg:border-line lg:bg-white lg:px-9 lg:pt-8 lg:shadow-[0_10px_40px_rgb(16_24_40/0.06)]">
-          {back && (
-            <button aria-label="Go back" onClick={() => router.history.back()} className="absolute left-4 top-5 p-1 lg:left-6 lg:top-8">
-              <ChevronLeft className="size-7 text-ink" strokeWidth={1.8} />
-            </button>
-          )}
-          {children}
+    <StorePage mobile={{ variant: 'back', actions: ['cart'], search: false }} hideMobileNav appScreen>
+      <div className="bg-white lg:bg-page lg:py-12">
+        <div className={`mx-auto lg:overflow-hidden lg:rounded-3xl lg:border lg:border-line lg:bg-white lg:shadow-[0_10px_40px_rgb(16_24_40/0.06)] ${app ? 'lg:max-w-[460px]' : 'lg:grid lg:max-w-[1000px] lg:grid-cols-[1fr_460px]'}`}>
+          {!app && <WelcomePanel />}
+          <div className="relative mx-auto w-full max-w-[440px] px-6 pb-10 pt-4 lg:px-10 lg:py-10">
+            {back && (
+              <button aria-label="Go back" onClick={() => router.history.back()} className="absolute left-4 top-5 hidden p-1 standalone:block">
+                <ChevronLeft className="size-7 text-ink" strokeWidth={1.8} />
+              </button>
+            )}
+            {children}
+          </div>
         </div>
       </div>
     </StorePage>
   );
 }
 
+/** Desktop-only welcome side of the login card. */
+function WelcomePanel() {
+  return (
+    <aside className="relative hidden overflow-hidden bg-[#eef8f3] px-10 py-10 lg:block">
+      <p className="text-[13px] font-semibold tracking-[0.2em] text-brand">DELIGHT SHOPPING MART</p>
+      <h2 className="mt-3 text-[36px] font-extrabold leading-[1.12] tracking-tight text-navy">Groceries Delivered in<br /><span className="text-brand">15–20 Minutes</span></h2>
+      <p className="mt-3 max-w-[330px] text-[16px] leading-6 text-slate">Fresh groceries, daily essentials and more from your local store in Tulsipur.</p>
+      <ul className="relative z-10 mt-8 space-y-5">
+        {([[Zap, 'Super Fast Delivery', '15–20 minutes across Tulsipur'], [Leaf, 'Fresh & Quality Products', 'Daily essentials you trust'], [Percent, 'Best Offers', 'Save more every day']] as const).map(([Icon, a, b]) => (
+          <li key={a} className="flex items-center gap-4">
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white shadow-sm"><Icon className="size-5 fill-brand text-brand" strokeWidth={2.4} /></span>
+            <span className="text-[15px] leading-5"><b className="block font-semibold text-navy">{a}</b><span className="text-slate">{b}</span></span>
+          </li>
+        ))}
+      </ul>
+      <img src={asset('onboard-bag')} alt="" className="absolute -bottom-4 -right-10 h-[300px] w-auto opacity-95" />
+    </aside>
+  );
+}
+
 export function AuthLogo({ className = 'mt-6 h-[62px]' }: { className?: string }) {
-  return <Logo variant="mobile" className={`mx-auto w-auto ${className}`} />;
+  return <Logo variant="mobile" className={`mx-auto hidden w-auto standalone:block lg:block ${className}`} />;
 }
 
 export function NepalFlag() {

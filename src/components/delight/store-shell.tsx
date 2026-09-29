@@ -273,7 +273,7 @@ function MobileFooter({ socials }: { socials: Array<typeof Facebook> }) {
 export function StoreFooter() {
   const socials = [Facebook, Instagram, Youtube, Music2, Linkedin];
   return (
-    <footer className="bg-footer text-white">
+    <footer className="bg-footer text-white standalone:hidden">
       <MobileFooter socials={socials} />
       <div className="hidden lg:block">
       <div className="site-width grid grid-cols-[1.35fr_0.85fr_1fr_1fr_1.5fr] py-9">
@@ -319,14 +319,14 @@ export function StoreFooter() {
 /* Page wrapper                                                        */
 /* ------------------------------------------------------------------ */
 
-export function StorePage({ children, mobile, nav = 'default', hideMobileNav = false }: { children: ReactNode; mobile?: MobileHeaderProps | false; nav?: 'default' | 'account'; hideMobileNav?: boolean }) {
+export function StorePage({ children, mobile, nav = 'default', hideMobileNav = false, appScreen = false }: { children: ReactNode; mobile?: MobileHeaderProps | false; nav?: 'default' | 'account'; hideMobileNav?: boolean; /** Full-screen page in the installed app (no website header). */ appScreen?: boolean }) {
   const { count } = useCart();
   return (
     <div className={`min-h-screen bg-white ${hideMobileNav ? '' : count ? 'pb-[150px] lg:pb-0' : 'pb-[84px] lg:pb-0'}`}>
       <TopBar />
       <DesktopHeader />
       <CategoryNav />
-      {mobile !== false && <MobileHeader {...mobile} />}
+      {mobile !== false && (appScreen ? <div className="standalone:hidden"><MobileHeader {...mobile} /></div> : <MobileHeader {...mobile} />)}
       <main>{children}</main>
       <StoreFooter />
       {!hideMobileNav && <FloatingCart />}

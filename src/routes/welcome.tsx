@@ -20,7 +20,7 @@ function Page() {
   }
 
   return (
-    <AuthShell back={false}>
+    <AuthShell back={false} app>
       <div className="text-right"><button onClick={finish} className="text-[16px] text-slate">Skip</button></div>
       <AuthLogo className="mt-8 h-[62px]" />
       <h1 className="mt-10 text-[33px] font-extrabold leading-[1.15] tracking-tight text-navy">Groceries<br />Delivered in<br /><span className="text-brand">15-20 Minutes</span></h1>
