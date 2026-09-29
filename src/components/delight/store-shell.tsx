@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Logo } from './logo';
+import { SmartSearch } from './smart-search';
 import { useCart } from './cart-context';
 import { useAuth } from './auth-context';
 import { NAV_CATEGORIES, type Category } from '@/services/catalog';
@@ -46,24 +47,6 @@ function TopBar() {
   );
 }
 
-function DesktopSearch() {
-  const nav = useNavigate();
-  const [query, setQuery] = useState('');
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    void nav({ to: '/search', search: { q: query.trim() } });
-  }
-  return (
-    <form onSubmit={submit} className="flex h-[48px] w-full max-w-[720px] overflow-hidden rounded-lg border border-[#dfe3e8] bg-white shadow-[0_1px_2px_rgb(16_24_40/0.04)]">
-      <label className="flex flex-1 items-center gap-3 pl-5">
-        <Search className="size-5 text-ink" />
-        <input value={query} onChange={(e) => setQuery(e.target.value)} className="h-full flex-1 bg-transparent text-[15px] outline-none placeholder:text-slate" placeholder="Search for groceries, fashion, baby products, stationery..." aria-label="Search products" />
-      </label>
-      <button className="w-[112px] rounded-lg bg-red text-[16px] font-semibold text-white hover:bg-red/90">Search</button>
-    </form>
-  );
-}
-
 function HeaderAction({ to, icon: Icon, label, count }: { to: string; icon: typeof Heart; label: string; count?: number }) {
   return (
     <Link to={to} className="flex flex-col items-center gap-0.5 text-[13px] text-ink hover:text-brand">
@@ -83,7 +66,7 @@ function DesktopHeader() {
     <header className="hidden bg-white lg:block">
       <div className="site-width flex h-[92px] items-center justify-between gap-10">
         <Link to="/" aria-label="Delight Shopping Mart home"><Logo className="h-[60px] w-auto" /></Link>
-        <DesktopSearch />
+        <SmartSearch variant="desktop" />
         <div className="flex items-center gap-9 pr-2">
           <HeaderAction to={user ? '/account' : '/login'} icon={UserRound} label="Account" />
           <HeaderAction to="/account" icon={Heart} label="Wishlist" count={0} />
@@ -134,18 +117,6 @@ function Location() {
   );
 }
 
-function MobileSearch({ placeholder }: { placeholder: string }) {
-  const nav = useNavigate();
-  const [query, setQuery] = useState('');
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); void nav({ to: '/search', search: { q: query.trim() } }); }} className="mt-3 flex h-12 items-center gap-3 rounded-xl border border-[#dde6ea] bg-[#f5fbfc] px-4">
-      <Search className="size-5 text-ink" />
-      <input value={query} onChange={(e) => setQuery(e.target.value)} className="h-full min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-slate" placeholder={placeholder} aria-label="Search" />
-      <ScanLine className="size-5 text-ink" />
-    </form>
-  );
-}
-
 function MobileMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const close = () => onOpenChange(false);
   const categories = useCategories();
@@ -186,7 +157,7 @@ function MobileHeader({ variant = 'home', actions = ['wishlist', 'cart'], search
           {actions.includes('cart') && <Link to="/cart" aria-label="Cart" className="relative"><ShoppingCart className="size-6 text-ink" strokeWidth={1.7} /><span className="cart-count">{count}</span></Link>}
         </div>
       </div>
-      {search && <MobileSearch placeholder={search} />}
+      {search && <SmartSearch variant="mobile" placeholder={search} />}
       {variant === 'home' && <MobileMenu open={open} onOpenChange={setOpen} />}
     </header>
   );
