@@ -28,7 +28,7 @@ function matchProduct(fileName: string, products: AdminProduct[], index: { bySku
   let bestScore = 0;
   let tie = false;
   for (const p of products) {
-    const digits = p.name.match(/\d+(\.\d+)?/g) ?? [];
+    const digits: string[] = p.name.match(/\d+(\.\d+)?/g) ?? [];
     if (!numbers.every((n) => digits.includes(n))) continue;
     const have = tokens(p.name);
     let shared = 0;
