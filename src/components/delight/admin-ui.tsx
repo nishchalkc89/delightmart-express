@@ -211,17 +211,26 @@ export function Avatar({ src, name, size = 'size-9' }: { src?: string | undefine
   return <span className={`${size} grid shrink-0 place-items-center rounded-full text-[14px] font-bold ${palette[name.length % 3]}`}>{initials}</span>;
 }
 
-export function Pagination({ text, pages = [1, 2, 3, 4, 5, '…', 125], perPage = '10 per page' }: { text: string; pages?: Array<number | string> | undefined; perPage?: string }) {
-  const [page, setPage] = useState(1);
+/** Page numbers around the current page, e.g. 1 … 4 5 6 … 20. */
+export function pageList(page: number, count: number): Array<number | string> {
+  const nums = [...new Set([1, page - 1, page, page + 1, count])].filter((n) => n >= 1 && n <= count).sort((a, b) => a - b);
+  return nums.flatMap((n, i) => (i > 0 && n - nums[i - 1]! > 1 ? ['…', n] : [n]));
+}
+
+export function Pagination({ text, pages = [1, 2, 3, 4, 5, '…', 125], perPage = '10 per page', current, pageCount, onPage }: { text: string; pages?: Array<number | string> | undefined; perPage?: string; current?: number | undefined; pageCount?: number | undefined; onPage?: ((page: number) => void) | undefined }) {
+  const [own, setOwn] = useState(1);
+  const page = current ?? own;
+  const setPage = (n: number) => { if (pageCount && (n < 1 || n > pageCount)) return; setOwn(n); onPage?.(n); };
+  if (pageCount) pages = pageList(page, pageCount);
   return (
     <div className="flex items-center justify-between px-5 py-4 text-[14px] text-slate">
       <span>{text}</span>
       <div className="flex items-center gap-2">
-        <button aria-label="Previous page" className="grid size-8 place-items-center rounded-md text-navy"><ChevronLeft className="size-4" /></button>
+        <button aria-label="Previous page" onClick={() => setPage(page - 1)} className="grid size-8 place-items-center rounded-md text-navy"><ChevronLeft className="size-4" /></button>
         {pages.map((p, i) => typeof p === 'number'
           ? <button key={i} onClick={() => setPage(p)} className={`grid h-8 min-w-8 place-items-center rounded-md border px-2 text-[13.5px] ${page === p ? 'border-[#9dc9f5] bg-[#eaf4fe] text-[#2f73d9]' : 'border-line bg-white text-navy'}`}>{p}</button>
           : <span key={i} className="px-1">…</span>)}
-        <button aria-label="Next page" className="grid size-8 place-items-center rounded-md text-navy"><ChevronRight className="size-4" /></button>
+        <button aria-label="Next page" onClick={() => setPage(page + 1)} className="grid size-8 place-items-center rounded-md text-navy"><ChevronRight className="size-4" /></button>
       </div>
       <div className="flex items-center gap-3">Show <SelectBox label={perPage} className="w-[132px]" /></div>
     </div>

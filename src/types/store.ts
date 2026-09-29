@@ -3,6 +3,7 @@ export type Product = {
   slug: string;
   name: string;
   category: string;
+  categorySlug?: string | undefined;
   subcategory?: string | undefined;
   brand?: string | undefined;
   unit: string;

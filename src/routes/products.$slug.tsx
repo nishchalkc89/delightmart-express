@@ -6,17 +6,14 @@ import { StorePage } from '@/components/delight/store-shell';
 import { ProductCard, Stars } from '@/components/delight/product-card';
 import { ProductReviews } from '@/components/delight/product-reviews';
 import { useCart } from '@/components/delight/cart-context';
-import { buildCollections, formatNpr } from '@/services/catalog';
-import { catalogQuery } from '@/hooks/use-catalog';
+import { formatNpr } from '@/services/catalog';
+import { productQuery } from '@/hooks/use-catalog';
 
 export const Route = createFileRoute('/products/$slug')({
   loader: async ({ params, context }) => {
-    const catalog = await context.queryClient.ensureQueryData(catalogQuery);
-    const product = catalog.products.find((x) => x.slug === params.slug);
-    if (!product) throw notFound();
-    const related = buildCollections(catalog.products).related.filter((x) => x.id !== product.id);
-    const sameCategory = catalog.products.filter((x) => x.category === product.category && x.id !== product.id);
-    return { product, related: (related.length >= 4 ? related : [...sameCategory, ...related]).slice(0, 4) };
+    const found = await context.queryClient.ensureQueryData(productQuery(params.slug));
+    if (!found) throw notFound();
+    return { product: found.product, related: found.related.slice(0, 6) };
   },
   head: ({ loaderData }) => ({ meta: [{ title: `${loaderData?.product.name ?? 'Product'} — Delight Shopping Mart` }, { name: 'description', content: loaderData?.product.description ?? 'Product details at Delight Shopping Mart.' }, { property: 'og:title', content: `${loaderData?.product.name ?? 'Product'} — Delight` }, { property: 'og:description', content: loaderData?.product.description ?? 'Shop at Delight.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
   component: ProductPage,
@@ -39,7 +36,7 @@ function ProductPage() {
   return (
     <StorePage mobile={{ variant: 'back', actions: ['search', 'cart'], search: false }}>
       <div className="mx-auto max-w-[1180px] px-3 pt-2 lg:px-6 lg:pt-8">
-        <p className="mb-5 hidden text-[14px] text-slate lg:block"><Link to="/">Home</Link> / <Link to="/categories/$slug" params={{ slug: 'groceries' }}>{p.category}</Link> / <span className="text-ink">{p.name}</span></p>
+        <p className="mb-5 hidden text-[14px] text-slate lg:block"><Link to="/">Home</Link> / <Link to="/categories/$slug" params={{ slug: p.categorySlug ?? 'groceries' }}>{p.category}</Link> / <span className="text-ink">{p.name}</span></p>
 
         {/* Gallery + info */}
         <section className="grid grid-cols-[42px_1fr_1.08fr] gap-2 min-[400px]:grid-cols-[46px_1fr_1.08fr] lg:grid-cols-[96px_1fr_1fr] lg:gap-8">
@@ -64,9 +61,11 @@ function ProductPage() {
             </div>
             <h1 className="mt-2.5 text-[16.5px] font-extrabold leading-tight text-navy min-[400px]:text-[18px] lg:mt-4 lg:text-[34px]">{p.name}</h1>
             <p className="text-[12.5px] text-slate lg:text-[18px]">{p.unit}</p>
-            <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-ink lg:mt-2 lg:text-[16px]">
-              <Stars rating={p.rating} className="size-3 lg:size-5" /> <span>{p.rating}</span> <span className="text-slate">({p.reviews} reviews)</span>
-            </div>
+            {p.reviews > 0 && (
+              <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-ink lg:mt-2 lg:text-[16px]">
+                <Stars rating={p.rating} className="size-3 lg:size-5" /> <span>{p.rating}</span> <span className="text-slate">({p.reviews} reviews)</span>
+              </div>
+            )}
             <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 lg:mt-3 lg:gap-x-4">
               <strong className="text-[19px] font-extrabold text-red lg:text-[36px]">{formatNpr(p.price)}</strong>
               {p.oldPrice && <del className="text-[12px] text-slate lg:text-[20px]">{formatNpr(p.oldPrice)}</del>}
@@ -76,9 +75,9 @@ function ProductPage() {
             </span>
             <p className="mt-2 text-[11.5px] leading-[1.45] text-slate lg:mt-4 lg:text-[17px] lg:leading-7">{p.description}</p>
             <dl className="mt-2 space-y-0.5 text-[11.5px] lg:mt-4 lg:space-y-1.5 lg:text-[17px]">
-              <div className="flex gap-2"><dt className="font-semibold text-navy">Brand:</dt><dd className="text-slate">{p.brand ?? 'Delight Select'}</dd></div>
-              <div className="flex gap-2"><dt className="font-semibold text-navy">Weight:</dt><dd className="text-slate">{p.unit || '1 pc'}</dd></div>
-              <div className="flex gap-2"><dt className="font-semibold text-navy">Category:</dt><dd><Link to="/categories/$slug" params={{ slug: 'groceries' }} className="text-brand">{p.subcategory ?? p.category}</Link></dd></div>
+              {p.brand && <div className="flex gap-2"><dt className="font-semibold text-navy">Brand:</dt><dd className="text-slate">{p.brand}</dd></div>}
+              <div className="flex gap-2"><dt className="font-semibold text-navy">Size:</dt><dd className="text-slate">{p.unit || '1 pc'}</dd></div>
+              <div className="flex gap-2"><dt className="font-semibold text-navy">Category:</dt><dd><Link to="/categories/$slug" params={{ slug: p.categorySlug ?? 'groceries' }} search={p.subcategory ? { sub: p.subcategory } : {}} className="text-brand">{p.subcategory ?? p.category}</Link></dd></div>
             </dl>
             <div className="mt-2.5 flex items-center gap-4 lg:mt-5 lg:gap-8">
               <button aria-label="Decrease quantity" onClick={() => setQ(Math.max(1, q - 1))} className="grid size-7 place-items-center rounded-full bg-[#eef1f4] lg:size-12"><Minus className="size-3.5 lg:size-5" /></button>
@@ -106,7 +105,7 @@ function ProductPage() {
         <section className="mt-3 rounded-xl bg-[#eef8f3] px-3 py-3 lg:mt-5 lg:px-8 lg:py-6">
           <h2 className="flex items-center gap-2 text-[16px] font-extrabold text-navy lg:text-[24px]"><Leaf className="size-5 fill-brand text-brand lg:size-7" /> Product Highlights</h2>
           <div className="mt-2 grid grid-cols-4 text-center lg:mt-4">
-            {([[Leaf, 'Long Grain'], [Waves, 'Aromatic'], [Award, 'Premium Quality'], [Soup, 'Ideal for Daily Use']] as const).map(([Icon, label]) => (
+            {([[Award, 'Genuine Product'], [Leaf, 'Quality Checked'], [Percent, 'Best Local Price'], [Truck, 'Fast Delivery']] as const).map(([Icon, label]) => (
               <div key={label} className="flex flex-col items-center gap-1.5 px-1">
                 <span className="grid size-10 place-items-center rounded-full border border-line bg-white lg:size-16"><Icon className="size-5 text-brand lg:size-7" /></span>
                 <span className="text-[11.5px] leading-tight text-navy lg:text-[16px]">{label}</span>

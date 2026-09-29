@@ -61,10 +61,11 @@ export function ProductCard({ product, variant = 'desktop', badge = 'discount', 
           <strong className={`block font-bold text-red ${isMobile ? 'text-[14px]' : 'text-[17px]'}`}>{formatNpr(product.price)}</strong>
           {product.oldPrice && <del className={`block text-slate ${isMobile ? 'text-[12px]' : 'text-[14px]'}`}>{formatNpr(product.oldPrice)}</del>}
         </div>
-        <div className={`mt-1 ${isMobile ? 'text-[11px]' : 'text-[14px]'}`}><Stars rating={product.rating} reviews={product.reviews} className={isMobile ? 'size-3' : 'size-4'} /></div>
+        {product.reviews > 0 && <div className={`mt-1 ${isMobile ? 'text-[11px]' : 'text-[14px]'}`}><Stars rating={product.rating} reviews={product.reviews} className={isMobile ? 'size-3' : 'size-4'} /></div>}
       </Link>
       <button onClick={addToCart} aria-label={`Add ${product.name} to cart`} className={`mt-2.5 flex items-center justify-center rounded-md bg-brand font-semibold text-white hover:bg-brand-dark ${variant === 'grid' ? 'h-8 gap-1 whitespace-nowrap text-[11px]' : isMobile ? 'h-8 gap-2 text-[12.5px]' : 'h-[34px] gap-2 text-[14px]'}`}>
-        <ShoppingCart className={`${variant === 'grid' ? 'size-3.5' : 'size-4'} shrink-0 fill-white`} /> {label}
+        <ShoppingCart className={`${variant === 'grid' ? 'size-3.5' : 'size-4'} shrink-0 fill-white`} />
+        {variant === 'grid' && label !== 'Add' ? <><span className="sm:hidden">Add</span><span className="hidden sm:inline">{label}</span></> : label}
       </button>
     </article>
   );

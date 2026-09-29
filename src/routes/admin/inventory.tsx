@@ -18,6 +18,8 @@ const history = [
   ['Sold (Order #10240)', '17 Sep 2026, 02:30 PM', '-5', 'red'],
 ] as const;
 
+const PER_PAGE = 50;
+
 function Page() {
   const [tab, setTab] = useState(0);
   const [selId, setSelId] = useState<string | null>(null);
@@ -30,6 +32,10 @@ function Page() {
     .filter((x) => tab === 0 || (tab === 1 ? isLow(x) : x.stock <= 0))
     .filter((x) => `${x.name} ${x.sku}`.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => (live ? a.stock - b.stock : 0));
+  const [page, setPage] = useState(1);
+  const pageCount = Math.max(1, Math.ceil(rows.length / PER_PAGE));
+  const at = Math.min(page, pageCount);
+  const shown = rows.slice((at - 1) * PER_PAGE, at * PER_PAGE);
   const p = all.find((x) => x.id === selId) ?? rows[0] ?? all[0]!;
   const lowCount = all.filter(isLow).length;
   const outCount = all.filter((x) => x.stock <= 0).length;
@@ -79,7 +85,7 @@ function Page() {
                 <FiltersButton />
               </FilterBar>
               <Table head={[<Checkbox key="c" />, 'Product', 'SKU', 'Category', 'Current Stock', 'Threshold', 'Status', 'Last Updated', 'Actions']}>
-                {rows.map((x) => {
+                {shown.map((x) => {
                   const low = isLow(x);
                   return (
                     <Tr key={x.id} active={x.id === p.id} onClick={() => { setSelId(x.id); setQty(x.stock); }}>
@@ -96,7 +102,7 @@ function Page() {
                   );
                 })}
               </Table>
-              <Pagination text={`Showing 1-${rows.length} of ${live ? all.length : '1,248'} products`} pages={live ? [1] : undefined} />
+              <Pagination text={live ? `Showing ${rows.length ? (at - 1) * PER_PAGE + 1 : 0}-${(at - 1) * PER_PAGE + shown.length} of ${rows.length.toLocaleString('en-US')} products` : `Showing 1-${rows.length} of 1,248 products`} current={at} pageCount={live ? pageCount : undefined} onPage={setPage} perPage={`${PER_PAGE} per page`} />
             </Card>
           </>
         }

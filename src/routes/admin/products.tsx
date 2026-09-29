@@ -23,13 +23,18 @@ function stockLabel(stock: number, threshold: number) {
   return ['In Stock', 'green'] as const;
 }
 
+const PER_PAGE = 50;
+
 function Page() {
   const [editId, setEditId] = useState<string | null>(null);
   const [dupId, setDupId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [query, setQuery] = useState('');
   const { rows: all, setRows, live, loading, reload } = useAdminData<AdminProduct>(fetchAdminProducts, demoAdminProducts);
+  const [page, setPage] = useState(1);
   const rows = all.filter((p) => `${p.name} ${p.sku} ${p.category}`.toLowerCase().includes(query.toLowerCase()));
+  const pageCount = Math.max(1, Math.ceil(rows.length / PER_PAGE));
+  const shown = rows.slice((Math.min(page, pageCount) - 1) * PER_PAGE, Math.min(page, pageCount) * PER_PAGE);
   const outOfStock = all.filter((p) => p.stock <= 0).length;
   const low = all.filter((p) => p.stock > 0 && p.stock < p.threshold).length;
 
@@ -75,14 +80,14 @@ function Page() {
             </div>
             <Card className="mt-4">
               <FilterBar>
-                <SearchBox placeholder="Search products by name, SKU or category..." value={query} onChange={setQuery} className="w-[276px]" />
+                <SearchBox placeholder="Search products by name, SKU or category..." value={query} onChange={(v) => { setQuery(v); setPage(1); }} className="w-[276px]" />
                 <SelectBox label="All Categories" />
                 <SelectBox label="All Status" />
                 <SelectBox label="All Stock" />
                 <FiltersButton />
               </FilterBar>
               <Table head={[<Checkbox key="c" />, 'Image', <Sortable key="n">Product Name</Sortable>, 'Category', <Sortable key="p">Price</Sortable>, <Sortable key="s">Stock</Sortable>, 'Status', 'Actions']}>
-                {rows.map((p) => {
+                {shown.map((p) => {
                   const [label, tone] = stockLabel(p.stock, p.threshold);
                   return (
                     <Tr key={p.id}>
@@ -98,7 +103,7 @@ function Page() {
                   );
                 })}
               </Table>
-              <Pagination text={`Showing 1-${rows.length} of ${live ? all.length : '1,248'} products`} pages={live ? [1] : undefined} />
+              <Pagination text={live ? `Showing ${rows.length ? (Math.min(page, pageCount) - 1) * PER_PAGE + 1 : 0}-${(Math.min(page, pageCount) - 1) * PER_PAGE + shown.length} of ${rows.length.toLocaleString('en-US')} products` : `Showing 1-${rows.length} of 1,248 products`} current={Math.min(page, pageCount)} pageCount={live ? pageCount : undefined} onPage={setPage} perPage={`${PER_PAGE} per page`} />
             </Card>
           </>
         }

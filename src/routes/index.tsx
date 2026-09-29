@@ -5,15 +5,15 @@ import { StorePage } from '@/components/delight/store-shell';
 import { MobileHead, SectionHead } from '@/components/delight/section';
 import { ProductCard } from '@/components/delight/product-card';
 import { AppPromo, BannerLink, CarouselArrow, CommunityNewsletter, DealTimer, JustArrivedTitle, Newsletter } from '@/components/delight/home-parts';
-import { brands, type Category, type Collections, type StoreBanner } from '@/services/catalog';
-import { catalogQuery, useStorefront } from '@/hooks/use-catalog';
+import { brands, NAV_CATEGORIES, type Category, type Collections, type StoreBanner } from '@/services/catalog';
+import { storefrontQuery } from '@/hooks/use-catalog';
 import { asset } from '@/lib/assets';
 import { shouldOnboard } from '@/lib/onboarding';
 import storeHero from '@/assets/store-hero.jpg';
 
 export const Route = createFileRoute('/')({
   head: () => ({ meta: [{ title: 'Delight Shopping Mart — Tulsipur, Dang' }, { name: 'description', content: 'Shop groceries, fashion, baby care and home essentials locally in Tulsipur.' }, { property: 'og:title', content: 'Delight Shopping Mart — Tulsipur' }, { property: 'og:description', content: 'Everything you need under one roof.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(catalogQuery),
+  loader: ({ context }) => context.queryClient.ensureQueryData(storefrontQuery),
   component: Index,
 });
 
@@ -22,7 +22,7 @@ function Index() {
   useEffect(() => {
     if (shouldOnboard()) void nav({ to: '/welcome', replace: true });
   }, [nav]);
-  const { categories, collections, banners } = useStorefront();
+  const { categories, collections, banners } = Route.useLoaderData();
   return (
     <StorePage mobile={{ variant: 'home', actions: ['wishlist', 'cart'] }}>
       <div className="hidden lg:block"><DesktopHome categories={categories} collections={collections} banners={banners} /></div>
@@ -173,12 +173,15 @@ function BannerSlider({ items, className }: { items: StoreBanner[]; className: s
 }
 const at = (banners: StoreBanner[], position: string) => banners.filter((b) => b.position === position);
 
+/** The nine categories shown in the homepage grids (same as the desktop category bar). */
+const topNine = (categories: Category[]) => [...NAV_CATEGORIES, 'deals-offers'].map((slug) => categories.find((c) => c.slug === slug)).filter((c): c is Category => Boolean(c)).slice(0, 9);
+
 function PopularCategories({ categories }: Pick<Data, 'categories'>) {
   return (
     <section className="site-width mt-12">
       <SectionHead eyebrow="Shop by Category" title="Popular Categories" link="View All Categories" to="/categories" />
       <div className="grid grid-cols-9 gap-4">
-        {categories.map((c) => (
+        {topNine(categories).map((c) => (
           <Link key={c.slug} to="/categories/$slug" params={{ slug: c.slug }} className="group rounded-xl border border-line bg-[#f7f9fb] px-2 pb-3 pt-4 text-center hover:border-brand/40">
             <img src={c.image} alt="" className="mx-auto h-[70px] w-auto object-contain transition-transform group-hover:scale-105" />
             <p className="mt-2 text-[14px] font-semibold text-navy">{c.name}</p>
@@ -194,7 +197,7 @@ function ExploreCategories({ categories }: Pick<Data, 'categories'>) {
     <section className="site-width mt-10">
       <SectionHead eyebrow="Shop by Category" title="Explore Our" accent="Categories" link="View All Categories" to="/categories" />
       <div className="grid grid-cols-9 gap-3">
-        {categories.map((c) => (
+        {topNine(categories).map((c) => (
           <Link key={c.slug} to="/categories/$slug" params={{ slug: c.slug }} className="group rounded-xl bg-[#f6f8fb] px-2 pb-3 pt-2 text-center">
             <img src={c.image} alt="" className="mx-auto h-[88px] w-auto object-contain transition-transform group-hover:scale-105" />
             <p className="mt-2 text-[15px] font-semibold text-navy">{c.name}</p>
@@ -248,7 +251,7 @@ function DesktopHome({ categories, collections, banners }: Data) {
       <PopularCategories categories={categories} />
       <section className="site-width mt-12">
         <SectionHead eyebrow="Today's Best Deals" title="Today's" accent="Special Offers" link="View All Deals" to="/categories/deals-offers" extra={<DealTimer />} />
-        <div className="grid grid-cols-6 gap-3.5">{collections.specialOffers.map((p) => <ProductCard key={p.id} product={p} />)}</div>
+        <div className="grid grid-cols-6 gap-3.5">{collections.specialOffers.slice(0, 6).map((p) => <ProductCard key={p.id} product={p} />)}</div>
       </section>
       {below.length ? (
         <section className="site-width mt-3 grid gap-3.5" style={{ gridTemplateColumns: `repeat(${Math.min(below.length, 3)}, minmax(0, 1fr))` }}>
@@ -263,7 +266,7 @@ function DesktopHome({ categories, collections, banners }: Data) {
       )}
       <section className="site-width mt-8">
         <SectionHead eyebrow="Featured Products" title="Popular Products" link="View All Products" />
-        <div className="grid grid-cols-6 gap-3.5">{collections.popular.map((p) => <ProductCard key={p.id} product={p} badge="none" />)}</div>
+        <div className="grid grid-cols-6 gap-3.5">{collections.popular.slice(0, 6).map((p) => <ProductCard key={p.id} product={p} badge="none" />)}</div>
       </section>
       <WhyShop />
       <ExploreCategories categories={categories} />
@@ -274,7 +277,7 @@ function DesktopHome({ categories, collections, banners }: Data) {
       </section>
       <section className="site-width mt-8">
         <SectionHead eyebrow="New Arrivals" title="Just Arrived" link="View All New Arrivals" extra={<JustArrivedTitle />} />
-        <div className="grid grid-cols-6 gap-3.5">{collections.justArrived.map((p) => <ProductCard key={p.id} product={p} badge="new" showUnit={false} />)}</div>
+        <div className="grid grid-cols-6 gap-3.5">{collections.justArrived.slice(0, 6).map((p) => <ProductCard key={p.id} product={p} badge="new" showUnit={false} />)}</div>
       </section>
       <section className="site-width mt-8 grid grid-cols-[1.28fr_1fr] gap-3.5">
         <Newsletter />

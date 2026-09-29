@@ -52,12 +52,22 @@ export async function fetchAdminOrders(limit = 50): Promise<AdminOrder[]> {
   });
 }
 
-export async function fetchAdminProducts(): Promise<AdminProduct[]> {
-  const { data, error } = await supabase.from('products')
-    .select('id,name,slug,sku,price,sale_price,status,updated_at,categories(name),inventory(current_stock,reserved_stock,low_stock_threshold,last_updated),product_images(url,is_primary)')
-    .order('name');
+const ADMIN_PRODUCT_COLUMNS = 'id,name,slug,sku,price,sale_price,status,updated_at,categories(name),inventory(current_stock,reserved_stock,low_stock_threshold,last_updated),product_images(url,is_primary)';
+
+/** All products for the admin screens, read 1000 at a time (the database's page limit). */
+async function fetchAllProductRows() {
+  const { count, error } = await supabase.from('products').select('id', { count: 'exact', head: true });
   if (error) throw error;
-  return (data ?? []).map((p) => {
+  const pages = Math.max(1, Math.ceil((count ?? 0) / 1000));
+  const results = await Promise.all(Array.from({ length: pages }, (_, i) => supabase.from('products').select(ADMIN_PRODUCT_COLUMNS).order('name').order('id').range(i * 1000, i * 1000 + 999)));
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw failed.error;
+  return results.flatMap((r) => r.data ?? []);
+}
+
+export async function fetchAdminProducts(): Promise<AdminProduct[]> {
+  const data = await fetchAllProductRows();
+  return data.map((p) => {
     const inv = Array.isArray(p.inventory) ? p.inventory[0] : p.inventory;
     const img = p.product_images?.find((i) => i.is_primary)?.url ?? p.product_images?.[0]?.url ?? imageBySlug.get(p.slug) ?? '';
     const onSale = p.sale_price !== null && Number(p.sale_price) < Number(p.price);

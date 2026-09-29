@@ -48,5 +48,20 @@ Give other team members roles in **Admin → Users & Roles** after they sign up.
 - [ ] Admin: add a product with a photo → it appears in the store.
 - [ ] Admin: create a promo code → it works at checkout.
 
+## 7. Load the store's products
+The store's full product list lives in `data/store-products.csv` (exported from the shop's system).
+
+1. `npm run catalogue:prepare` sorts every product into a category and subcategory, reads the pack size and sets an **estimated** price. It writes `data/catalogue.csv`.
+2. Open `data/catalogue.csv` in Excel if you want to fix prices, sale prices, stock or categories, then save it (keep it as CSV).
+3. Add `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (Project Settings → API → secret key) to `.env`. This key stays on your computer; never put it in the website.
+4. `npm run catalogue:import` creates the categories and creates or updates every product.
+   - Stock is only set for new products, so stock you change in the admin is kept.
+   - Products that are no longer in the file are hidden, not deleted (old orders keep working).
+
+Careful: `catalogue:prepare` rebuilds `data/catalogue.csv` from scratch (your edits in it are lost), and `catalogue:import` sets name, category, price and sale price from the file (overwriting price changes made in the admin).
+
+When the shop's product list changes, replace `data/store-products.csv` with the new export and run both commands again.
+Category rules are in `scripts/catalogue/taxonomy.mjs`; estimated prices are in `scripts/catalogue/prepare.mjs`.
+
 ## Updating an existing database later
 New changes are added as files in `supabase/migrations/`. Run only the new file(s) in the SQL Editor, or use the Supabase CLI: `supabase link` then `supabase db push`.

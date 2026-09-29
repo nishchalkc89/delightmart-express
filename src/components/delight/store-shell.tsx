@@ -7,7 +7,8 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { Logo } from './logo';
 import { useCart } from './cart-context';
 import { useAuth } from './auth-context';
-import { categories } from '@/services/catalog';
+import { NAV_CATEGORIES, type Category } from '@/services/catalog';
+import { useCategories } from '@/hooks/use-catalog';
 import { asset } from '@/lib/assets';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
@@ -94,6 +95,8 @@ function DesktopHeader() {
 }
 
 function CategoryNav() {
+  const all = useCategories();
+  const shown = [...NAV_CATEGORIES, 'deals-offers'].map((slug) => all.find((c) => c.slug === slug)).filter((c): c is Category => Boolean(c));
   return (
     <nav className="hidden bg-white lg:block">
       <div className="site-width flex h-[72px] items-stretch border-b border-line pb-1.5">
@@ -101,10 +104,10 @@ function CategoryNav() {
           <Menu className="size-5" /> All Categories <ChevronDown className="size-4" />
         </Link>
         <div className="flex flex-1 items-stretch justify-between">
-          {categories.map((c, i) => (
+          {shown.map((c, i) => (
             <Link key={c.slug} to="/categories/$slug" params={{ slug: c.slug }} className={`group flex flex-1 flex-col items-center justify-center gap-1 px-2 text-[13.5px] text-ink hover:text-brand ${i ? 'border-l border-line' : ''}`}>
               <img src={c.icon} alt="" className="size-8 object-contain transition-transform group-hover:-translate-y-0.5" />
-              <span className="whitespace-nowrap">{c.name}</span>
+              <span className="whitespace-nowrap">{c.short}</span>
             </Link>
           ))}
         </div>
@@ -145,6 +148,7 @@ function MobileSearch({ placeholder }: { placeholder: string }) {
 
 function MobileMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const close = () => onOpenChange(false);
+  const categories = useCategories();
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-80 overflow-y-auto">

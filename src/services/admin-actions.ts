@@ -26,12 +26,10 @@ export async function uploadImage(bucket: 'product-images' | 'category-images' |
 export type CategoryRow = { id: string; name: string; slug: string; description: string | null; image_url: string | null; parent_id: string | null; status: string; sort_order: number; created_at: string; products: number };
 
 export async function fetchCategories(): Promise<CategoryRow[]> {
-  const [{ data, error }, { data: prods }] = await Promise.all([
-    supabase.from('categories').select('id,name,slug,description,image_url,parent_id,status,sort_order,created_at').order('sort_order'),
-    supabase.from('products').select('category_id'),
-  ]);
+  const { data, error } = await supabase.from('categories').select('id,name,slug,description,image_url,parent_id,status,sort_order,created_at').order('sort_order');
   fail(error);
-  return (data ?? []).map((c) => ({ ...c, products: (prods ?? []).filter((p) => p.category_id === c.id).length }));
+  const counts = await Promise.all((data ?? []).map((c) => supabase.from('products').select('id', { count: 'exact', head: true }).eq('category_id', c.id)));
+  return (data ?? []).map((c, i) => ({ ...c, products: counts[i]?.count ?? 0 }));
 }
 
 export async function saveCategory(input: { id?: string | undefined; name: string; description: string; parentId: string | null; status: 'ACTIVE' | 'INACTIVE'; imageUrl: string | null }) {
