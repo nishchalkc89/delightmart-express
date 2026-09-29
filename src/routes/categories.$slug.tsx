@@ -111,7 +111,7 @@ function Page() {
           </div>
         </div>
 
-        <Link to="/checkout" className="mx-4 mt-5 flex items-center gap-4 rounded-xl bg-[#eef8f3] px-5 py-3 lg:mx-0 lg:mt-8 lg:px-8 lg:py-4">
+        <Link to="/cart" className="mx-4 mt-5 flex items-center gap-4 rounded-xl bg-[#eef8f3] px-5 py-3 lg:mx-0 lg:mt-8 lg:px-8 lg:py-4">
           <img src={asset('free-delivery-truck')} alt="" className="h-10 w-auto lg:h-12" />
           <span className="flex-1"><b className="block text-[18px] font-bold text-brand lg:text-[22px]">Free Delivery</b><span className="text-[14px] text-ink lg:text-[16px]">on orders above NPR 1,000</span></span>
           <ChevronRight className="size-6 text-brand" />

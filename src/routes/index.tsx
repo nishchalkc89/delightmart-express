@@ -391,6 +391,62 @@ function MobileHome({ categories, collections, banners }: Data) {
         </div>
       </section>
 
+      <MobileRow title="Daily" accent="Essentials" to="/categories/groceries" products={collections.groceryPopular} />
+
+      <section className="mt-6">
+        <MobileHead title="Why Shop at" accent="Delight?" to="/categories" />
+        <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4">
+          {([['why-1', 'Fast & Reliable Delivery', 'Across Tulsipur'], ['why-2', 'Quality Products', 'Trusted by Families'], ['why-3', 'Exciting Offers', 'Every Week'], ['why-4', 'Friendly Support', "We're here to help"], ['why-5', 'Your Local Store', 'Shop Local, Grow Together']] as const).map(([icon, a, b]) => (
+            <div key={a} className="flex w-[150px] shrink-0 items-center gap-2 rounded-xl bg-[#eff8f3] px-3 py-3">
+              <img src={asset(icon)} alt="" className="h-9 w-auto" />
+              <span className="text-[11.5px] leading-4 text-ink"><b className="block text-[12.5px] font-semibold text-navy">{a}</b>{b}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-6">
+        <MobileHead title="Explore Our" accent="Categories" to="/categories" />
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+          {categories.map((c) => (
+            <Link key={c.slug} to="/categories/$slug" params={{ slug: c.slug }} className="rounded-xl bg-[#f6f8fb] px-1 pb-2 pt-2 text-center">
+              <img src={c.image} alt="" className="mx-auto h-[48px] w-auto object-contain" />
+              <span className="mt-1 block text-[11px] font-medium leading-tight text-navy">{c.short}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="no-scrollbar -mx-4 mt-6 flex gap-2.5 overflow-x-auto px-4">
+        {([['promo-groceries', 'Groceries for a Better Tomorrow', '/categories/groceries'], ['promo-fashion', 'Fashion for Every You', '/categories/ladies-wear'], ['promo-stationery', 'Stationery & School Essentials', '/categories/stationery'], ['season-monsoon', 'Monsoon Essentials', '/products'], ['season-school', 'Back to School', '/categories/stationery'], ['season-fresh', 'Fresh Food Everyday', '/categories/groceries']] as const).map(([img, alt, to]) => (
+          <BannerLink key={img} src={asset(img)} alt={alt} to={to} className="w-[78%] shrink-0 sm:w-[46%]" />
+        ))}
+      </section>
+
+      <MobileRow title="Just" accent="Arrived" to="/products" products={collections.justArrived} badge="new" />
+
+      <section className="mt-6">
+        <MobileHead title="Shop More," accent="Save More" to="/categories/deals-offers" />
+        <div className="grid grid-cols-2 gap-2.5">
+          <BannerLink src={asset('save-groceries')} alt="Up to 30% off daily essentials" to="/categories/groceries" />
+          <BannerLink src={asset('save-fashion')} alt="Trendy styles for every you" to="/categories/ladies-wear" />
+          <BannerLink src={asset('save-baby')} alt="Baby care" to="/categories/baby-care" />
+          <BannerLink src={asset('save-kitchen')} alt="Make home better" to="/categories/kitchen-household" />
+        </div>
+      </section>
+
+      <section className="mt-6 flex items-center gap-3 overflow-hidden rounded-2xl bg-[#eef7f2] px-4 py-4">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[17px] font-extrabold text-navy">Download Our App</h3>
+          <p className="text-[12.5px] text-ink">Shop Anytime, Anywhere</p>
+          <div className="mt-2.5 flex gap-2">
+            <img src={asset('google-play')} alt="Get it on Google Play" className="h-8 w-auto" />
+            <img src={asset('app-store')} alt="Download on the App Store" className="h-8 w-auto" />
+          </div>
+        </div>
+        <img src={asset('app-phone')} alt="" className="-mb-4 h-[112px] w-auto self-end" />
+      </section>
+
       <section className="mt-6 pb-2">
         <MobileHead title="Trusted" accent="Brands" />
         <div className="marquee relative -mx-4 overflow-hidden py-1 [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]">
@@ -403,6 +459,38 @@ function MobileHome({ categories, collections, banners }: Data) {
           </div>
         </div>
       </section>
+
+      <section className="mt-6 rounded-2xl bg-[#fdeef0] px-4 py-5">
+        <p className="text-[11px] font-semibold tracking-[0.18em] text-slate">JOIN OUR COMMUNITY</p>
+        <h3 className="mt-1 text-[19px] font-extrabold text-navy">Stay Updated with Delight</h3>
+        <p className="mt-1 text-[13px] text-slate">Latest offers, new arrivals and exclusive deals.</p>
+        <form onSubmit={(e) => e.preventDefault()} className="mt-3 flex h-11 overflow-hidden rounded-lg border border-line bg-white">
+          <input type="email" required className="min-w-0 flex-1 px-3 text-[14px] outline-none placeholder:text-slate" placeholder="Enter your email" aria-label="Email address" />
+          <button className="bg-red px-4 text-[14px] font-semibold text-white">Subscribe</button>
+        </form>
+      </section>
+
+      <section className="mt-5 grid grid-cols-2 gap-2.5 pb-4">
+        {([['trust-1', 'Free Delivery', 'Orders above NPR 1,000'], ['trust-2', 'Secure Payment', 'Safe & trusted'], ['trust-3', 'Easy Returns', 'Hassle-free returns'], ['trust-4', '24/7 Support', "We're here to help"]] as const).map(([icon, a, b]) => (
+          <div key={a} className="flex items-center gap-2.5 rounded-xl bg-[#f6f8fb] px-3 py-3">
+            <img src={asset(icon)} alt="" className="h-8 w-auto" />
+            <span className="text-[11.5px] leading-4 text-slate"><b className="block text-[12.5px] font-semibold text-navy">{a}</b>{b}</span>
+          </div>
+        ))}
+      </section>
     </div>
+  );
+}
+
+/** Horizontally scrolling product row used on the mobile homepage. */
+function MobileRow({ title, accent, to, products, badge = 'discount' }: { title: string; accent?: string; to: string; products: Collections['popular']; badge?: 'discount' | 'new' | 'none' }) {
+  if (!products.length) return null;
+  return (
+    <section className="mt-6">
+      <MobileHead title={title} {...(accent ? { accent } : {})} to={to} />
+      <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+        {products.map((p) => <div key={p.id} className="w-[31%] shrink-0 sm:w-[22%]"><ProductCard product={p} variant="mobile" badge={badge} /></div>)}
+      </div>
+    </section>
   );
 }

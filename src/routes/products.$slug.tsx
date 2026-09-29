@@ -92,7 +92,7 @@ function ProductPage() {
 
         <section className="mt-3 grid grid-cols-2 gap-2 lg:mt-8 lg:gap-4">
           <button onClick={addToCart} className="flex h-11 items-center justify-center gap-2 rounded-lg border border-brand/60 bg-[#f7fcfa] text-[15px] font-semibold text-brand lg:h-14 lg:text-[19px]"><ShoppingCart className="size-5 fill-brand lg:size-6" /> Add to Cart</button>
-          <button onClick={() => { add(p, q); void nav({ to: '/checkout' }); }} className="h-11 rounded-lg bg-red text-[15px] font-semibold text-white shadow-md shadow-red/20 lg:h-14 lg:text-[19px]">Buy Now</button>
+          <button onClick={() => { add(p, q); void nav({ to: '/cart' }); }} className="h-11 rounded-lg bg-red text-[15px] font-semibold text-white shadow-md shadow-red/20 lg:h-14 lg:text-[19px]">Buy Now</button>
         </section>
 
         <section className="mt-3 grid grid-cols-4 rounded-xl bg-[#f3f9fc] py-3 lg:mt-5 lg:py-5">

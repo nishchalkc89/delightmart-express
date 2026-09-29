@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouter, useRouterState } from '@tanstack/react-router';
 import {
-  Bell, ChevronDown, ChevronLeft, Facebook, Heart, Home, Instagram, LayoutGrid, Linkedin, MapPin,
+  Bell, ChevronDown, ChevronLeft, ChevronRight, Facebook, Heart, Home, Instagram, LayoutGrid, Linkedin, MapPin,
   Menu, Music2, ScanLine, Search, ShoppingBag, ShoppingCart, UserRound, Youtube,
 } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
@@ -320,16 +320,32 @@ export function StoreFooter() {
 /* ------------------------------------------------------------------ */
 
 export function StorePage({ children, mobile, nav = 'default', hideMobileNav = false }: { children: ReactNode; mobile?: MobileHeaderProps | false; nav?: 'default' | 'account'; hideMobileNav?: boolean }) {
+  const { count } = useCart();
   return (
-    <div className={`min-h-screen bg-white ${hideMobileNav ? '' : 'pb-[84px] lg:pb-0'}`}>
+    <div className={`min-h-screen bg-white ${hideMobileNav ? '' : count ? 'pb-[150px] lg:pb-0' : 'pb-[84px] lg:pb-0'}`}>
       <TopBar />
       <DesktopHeader />
       <CategoryNav />
       {mobile !== false && <MobileHeader {...mobile} />}
       <main>{children}</main>
       <StoreFooter />
+      {!hideMobileNav && <FloatingCart />}
       {!hideMobileNav && <MobileNav variant={nav} />}
     </div>
+  );
+}
+
+/** Phone-only "View cart" pill above the bottom menu while the cart has items. */
+function FloatingCart() {
+  const { count, subtotal, lines } = useCart();
+  if (!count) return null;
+  const last = lines[lines.length - 1]?.product;
+  return (
+    <Link to="/cart" className="fixed inset-x-3 bottom-[76px] z-40 flex items-center gap-3 rounded-2xl bg-brand px-3 py-2.5 text-white shadow-[0_8px_24px_rgb(8_112_76/0.35)] lg:hidden">
+      {last && <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-lg bg-white"><img src={last.image} alt="" className={last.art ? 'size-6' : 'size-full object-contain'} /></span>}
+      <span className="min-w-0 flex-1 leading-tight"><b className="block text-[14px] font-bold">{count} item{count === 1 ? '' : 's'} · NPR {subtotal.toLocaleString('en-US')}</b><span className="text-[11.5px] opacity-85">Delivery in 15–20 minutes</span></span>
+      <span className="flex items-center gap-1 text-[14.5px] font-bold">View Cart <ChevronRight className="size-4" /></span>
+    </Link>
   );
 }
 

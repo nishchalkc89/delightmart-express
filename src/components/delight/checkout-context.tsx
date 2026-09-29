@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { supabase } from '@/services/supabase';
 
 export type PaymentMethod = 'COD' | 'ESEWA' | 'KHALTI' | 'CARD';
-export type DeliveryDetails = { recipientName: string; phone: string; addressLine: string; city: string; province: string; instructions: string };
+export type DeliveryDetails = { recipientName: string; phone: string; addressLine: string; city: string; province: string; instructions: string; label?: string | undefined; addressId?: string | undefined };
 
 const initial: DeliveryDetails = { recipientName: '', phone: '', addressLine: '', city: 'Tulsipur', province: 'Lumbini Province', instructions: '' };
 
