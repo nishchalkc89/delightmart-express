@@ -80,12 +80,15 @@ export async function saveProduct(p: ProductInput) {
     id = data!.id;
   }
   fail((await supabase.from('inventory').upsert({ product_id: id, current_stock: p.stock, low_stock_threshold: p.threshold, last_updated: new Date().toISOString() }, { onConflict: 'product_id' })).error);
-  if (p.imageUrl) {
-    const { data: existing } = await supabase.from('product_images').select('id,url').eq('product_id', id).eq('is_primary', true).maybeSingle();
-    if (!existing) fail((await supabase.from('product_images').insert({ product_id: id, url: p.imageUrl, is_primary: true, alt_text: p.name })).error);
-    else if (existing.url !== p.imageUrl) fail((await supabase.from('product_images').update({ url: p.imageUrl, alt_text: p.name }).eq('id', existing.id)).error);
-  }
+  if (p.imageUrl) await setProductPhoto(id, p.imageUrl, p.name);
   return id;
+}
+
+/** Makes `url` the product's main photo (replacing the previous main photo, if any). */
+export async function setProductPhoto(productId: string, url: string, name: string) {
+  const { data: existing } = await supabase.from('product_images').select('id,url').eq('product_id', productId).eq('is_primary', true).maybeSingle();
+  if (!existing) fail((await supabase.from('product_images').insert({ product_id: productId, url, is_primary: true, alt_text: name })).error);
+  else if (existing.url !== url) fail((await supabase.from('product_images').update({ url, alt_text: name }).eq('id', existing.id)).error);
 }
 
 export async function deleteProduct(id: string) {

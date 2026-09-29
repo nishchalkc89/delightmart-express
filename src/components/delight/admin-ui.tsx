@@ -106,6 +106,18 @@ export function SelectBox({ label, className = 'w-[150px]' }: { label: string; c
   );
 }
 
+/** Working dropdown styled like SelectBox. */
+export function FilterSelect({ value, onChange, options, className = 'w-[150px]', label }: { value: string; onChange: (v: string) => void; options: Array<[string, string]>; className?: string; label: string }) {
+  return (
+    <span className={`relative flex h-[40px] items-center rounded-lg border border-line bg-white text-[13px] text-navy ${className}`}>
+      <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} className="h-full w-full cursor-pointer appearance-none truncate rounded-lg bg-transparent pl-3 pr-8 outline-none">
+        {options.map(([v, text]) => <option key={v} value={v}>{text}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 size-4 text-slate" />
+    </span>
+  );
+}
+
 export function DateRange({ label = '21 Sep 2026 - 21 Oct 2026', className = '' }: { label?: string; className?: string }) {
   return (
     <button className={`flex h-[40px] items-center gap-2 whitespace-nowrap rounded-lg border border-line bg-white px-3 text-[13px] text-navy ${className}`}>

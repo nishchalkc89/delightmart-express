@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ArrowUpDown, Box, CircleCheck, CircleX, Copy, Download, Package, Pencil, Plus, Trash2, TriangleAlert, Upload } from 'lucide-react';
+import { ArrowUpDown, Box, CircleCheck, CircleX, Copy, Download, ImagePlus, Package, Pencil, Plus, Trash2, TriangleAlert, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Badge, Card, Checkbox, DataBadge, FilterBar, FiltersButton, IconBtn, OutlineAction, PageHeader, Pagination, PrimaryAction, SearchBox, SelectBox, StatCard, Table, Td, Toggle, Tr, WithPanel } from '@/components/delight/admin-ui';
+import { Badge, Card, Checkbox, DataBadge, FilterBar, FilterSelect, IconBtn, OutlineAction, PageHeader, Pagination, PrimaryAction, SearchBox, StatCard, Table, Td, Toggle, Tr, WithPanel } from '@/components/delight/admin-ui';
+import { BulkPhotoUpload } from '@/components/delight/admin-bulk-photos';
 import { ProductForm } from '@/components/delight/admin-forms';
 import { deleteProduct } from '@/services/admin-actions';
 import { categoryTone, demoAdminProducts, npr } from '@/components/delight/admin-data';
@@ -32,7 +33,22 @@ function Page() {
   const [query, setQuery] = useState('');
   const { rows: all, setRows, live, loading, reload } = useAdminData<AdminProduct>(fetchAdminProducts, demoAdminProducts);
   const [page, setPage] = useState(1);
-  const rows = all.filter((p) => `${p.name} ${p.sku} ${p.category}`.toLowerCase().includes(query.toLowerCase()));
+  const [category, setCategory] = useState('');
+  const [status, setStatus] = useState('');
+  const [stockFilter, setStockFilter] = useState('');
+  const [photo, setPhoto] = useState('');
+  const [bulk, setBulk] = useState(false);
+  const categories = [...new Set(all.map((p) => p.category))].sort();
+  const needPhoto = all.filter((p) => !p.hasPhoto && p.active).length;
+  const rows = all
+    .filter((p) => `${p.name} ${p.sku} ${p.category}`.toLowerCase().includes(query.toLowerCase()))
+    .filter((p) => !category || p.category === category)
+    .filter((p) => !status || (status === 'active') === p.active)
+    .filter((p) => !stockFilter || (stockFilter === 'out' ? p.stock <= 0 : stockFilter === 'low' ? p.stock > 0 && p.stock < p.threshold : p.stock >= p.threshold))
+    .filter((p) => !photo || (photo === 'missing' ? !p.hasPhoto : Boolean(p.hasPhoto)))
+    // Products missing a photo: best sellers first, so the photos that matter most get done first.
+    .sort((a, b) => (photo === 'missing' ? (b.sold ?? 0) - (a.sold ?? 0) : 0));
+  const filter = (fn: (v: string) => void) => (v: string) => { fn(v); setPage(1); };
   const pageCount = Math.max(1, Math.ceil(rows.length / PER_PAGE));
   const shown = rows.slice((Math.min(page, pageCount) - 1) * PER_PAGE, Math.min(page, pageCount) * PER_PAGE);
   const outOfStock = all.filter((p) => p.stock <= 0).length;
@@ -49,7 +65,8 @@ function Page() {
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not delete the product'); }
   }
   function exportCsv() {
-    const lines = [['Name', 'SKU', 'Category', 'Price', 'Old Price', 'Stock', 'Status'], ...all.map((p) => [p.name, p.sku, p.category, String(p.price), String(p.oldPrice || ''), String(p.stock), p.active ? 'Active' : 'Inactive'])];
+    // Exports what the filters show, so "Needs photo" + Export gives staff a photo checklist with file names.
+    const lines = [['Name', 'SKU', 'Photo file name', 'Category', 'Price', 'Old Price', 'Stock', 'Status', 'Has photo'], ...rows.map((p) => [p.name, p.sku, `${p.sku}.jpg`, p.category, String(p.price), String(p.oldPrice || ''), String(p.stock), p.active ? 'Active' : 'Inactive', p.hasPhoto ? 'Yes' : 'No'])];
     const url = URL.createObjectURL(new Blob(['\ufeff', lines.map((r) => r.map((c) => `"${c.replaceAll('"', '""')}"`).join(',')).join('\r\n')], { type: 'text/csv' }));
     const a = document.createElement('a'); a.href = url; a.download = 'delight-products.csv'; a.click(); URL.revokeObjectURL(url);
   }
@@ -67,7 +84,7 @@ function Page() {
 
   return (
     <div>
-      <PageHeader title="Products" subtitle="Manage your product catalog, prices, stock and more." badge={<DataBadge live={live} loading={loading} />} actions={<><OutlineAction icon={Upload} onClick={() => toast.info('Bulk import from a spreadsheet is coming soon. Use Add Product for now.')}>Import</OutlineAction><OutlineAction icon={Download} onClick={exportCsv}>Export</OutlineAction><PrimaryAction icon={Plus} onClick={openNew}>Add Product</PrimaryAction></>} />
+      <PageHeader title="Products" subtitle="Manage your product catalog, prices, stock and more." badge={<DataBadge live={live} loading={loading} />} actions={<><OutlineAction icon={ImagePlus} onClick={() => (live ? setBulk(true) : toast.info('Sample data — sign in with a staff account to add photos.'))}>Bulk Photos</OutlineAction><OutlineAction icon={Upload} onClick={() => toast.info('To import products from a spreadsheet, see docs/SUPABASE_SETUP.md (npm run catalogue:import).')}>Import</OutlineAction><OutlineAction icon={Download} onClick={exportCsv}>Export</OutlineAction><PrimaryAction icon={Plus} onClick={openNew}>Add Product</PrimaryAction></>} />
       <WithPanel
         main={
           <>
@@ -81,10 +98,10 @@ function Page() {
             <Card className="mt-4">
               <FilterBar>
                 <SearchBox placeholder="Search products by name, SKU or category..." value={query} onChange={(v) => { setQuery(v); setPage(1); }} className="w-[276px]" />
-                <SelectBox label="All Categories" />
-                <SelectBox label="All Status" />
-                <SelectBox label="All Stock" />
-                <FiltersButton />
+                <FilterSelect label="Category" value={category} onChange={filter(setCategory)} options={[['', 'All Categories'], ...categories.map((c): [string, string] => [c, c])]} className="w-[170px]" />
+                <FilterSelect label="Status" value={status} onChange={filter(setStatus)} options={[['', 'All Status'], ['active', 'Active'], ['inactive', 'Inactive']]} className="w-[125px]" />
+                <FilterSelect label="Stock" value={stockFilter} onChange={filter(setStockFilter)} options={[['', 'All Stock'], ['in', 'In Stock'], ['low', 'Low Stock'], ['out', 'Out of Stock']]} className="w-[125px]" />
+                <FilterSelect label="Photo" value={photo} onChange={filter(setPhoto)} options={[['', 'All Photos'], ['missing', `Needs photo (${needPhoto.toLocaleString('en-US')})`], ['has', 'Has photo']]} className="w-[175px]" />
               </FilterBar>
               <Table head={[<Checkbox key="c" />, 'Image', <Sortable key="n">Product Name</Sortable>, 'Category', <Sortable key="p">Price</Sortable>, <Sortable key="s">Stock</Sortable>, 'Status', 'Actions']}>
                 {shown.map((p) => {
@@ -92,7 +109,7 @@ function Page() {
                   return (
                     <Tr key={p.id}>
                       <Td><Checkbox /></Td>
-                      <Td>{p.image ? <img src={p.image} alt="" className="size-11 object-contain" /> : <span className="block size-11 rounded bg-[#f1f4f7]" />}</Td>
+                      <Td>{p.image ? <img src={p.image} alt="" className="size-11 object-contain" /> : <button onClick={() => { setDupId(null); setEditId(p.id); }} title="Add a photo" className="grid size-11 place-items-center rounded border border-dashed border-[#c9d1da] bg-[#f8fafc] text-slate hover:border-[#077a52] hover:text-[#077a52]"><ImagePlus className="size-4" /></button>}</Td>
                       <Td><span className="block">{p.name}</span><span className="text-[12.5px] text-slate">{p.sku}</span></Td>
                       <Td><Badge tone={categoryTone[p.category] ?? 'gray'}>{p.category}</Badge></Td>
                       <Td className="whitespace-nowrap"><span className="block">{npr(p.price)}</span>{p.oldPrice > 0 && <del className="text-[12.5px] text-slate">{npr(p.oldPrice)}</del>}</Td>
@@ -109,6 +126,7 @@ function Page() {
         }
         panel={<ProductForm key={formKey} editId={editId} duplicateId={dupId} live={live} onSaved={() => { setEditId(null); setDupId(null); void reload(); }} onClose={openNew} />}
       />
+      {bulk && <BulkPhotoUpload products={all} onClose={() => setBulk(false)} onDone={() => void reload()} />}
     </div>
   );
 }
