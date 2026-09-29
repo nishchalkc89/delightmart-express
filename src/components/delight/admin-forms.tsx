@@ -1,5 +1,5 @@
-import { ArrowRight, ChevronDown, ImagePlus, Loader2, X } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { ArrowRight, ChevronDown, ImagePlus, Loader2, Search, X } from 'lucide-react';
+import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Field, Panel, Toggle } from './admin-ui';
 import { fetchCategories, fetchProductForEdit, saveProduct, uploadImage, type CategoryRow, type ProductInput } from '@/services/admin-actions';
@@ -38,19 +38,48 @@ export function Area({ value, onChange, placeholder, max, rows = 4 }: { value: s
 }
 
 /** Image picker that uploads to Supabase Storage and returns the public URL. */
-export function ImageUpload({ bucket, value, onChange, hint = 'PNG, JPG (Max 2MB)', extra }: { bucket: 'product-images' | 'category-images' | 'banners' | 'store-branding'; value: string | null; onChange: (url: string | null) => void; hint?: string; extra?: string }) {
+export function ImageUpload({ bucket, value, onChange, hint = 'PNG, JPG (Max 2MB)', extra, searchText }: { bucket: 'product-images' | 'category-images' | 'banners' | 'store-branding'; value: string | null; onChange: (url: string | null) => void; hint?: string; extra?: string; searchText?: string | undefined }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [link, setLink] = useState('');
   async function pick(file: File | undefined) {
     if (!file) return;
     setBusy(true);
     try { onChange(await uploadImage(bucket, file)); toast.success('Image uploaded'); } catch (e) { toast.error(e instanceof Error ? e.message : 'Upload failed'); } finally { setBusy(false); }
   }
+  /** Ctrl+V of an image copied from another tab ("Copy image"), or of an image address. */
+  function paste(e: ClipboardEvent) {
+    const file = [...e.clipboardData.files].find((f) => f.type.startsWith('image/'));
+    if (file) { e.preventDefault(); void pick(file); return; }
+    const text = e.clipboardData.getData('text').trim();
+    if (/^https?:\/\/\S+$/i.test(text)) { e.preventDefault(); applyLink(text); }
+  }
+  /** An image dragged in from another tab arrives either as a file or as its address. */
+  function drop(e: DragEvent) {
+    e.preventDefault();
+    const file = [...e.dataTransfer.files].find((f) => f.type.startsWith('image/'));
+    if (file) { void pick(file); return; }
+    const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+    if (/^https?:\/\//i.test(url.trim())) applyLink(url.trim());
+  }
+  function applyLink(url: string) {
+    if (/google\.[a-z.]+\/(imgres|search|url)/i.test(url)) { toast.error('That is a Google page link. Right-click the picture and choose "Copy image" or "Copy image address".'); return; }
+    onChange(url); setLink(''); toast.success('Image added');
+  }
   return (
-    <div className="relative">
+    <div className="relative" onPaste={paste} onDragOver={(e) => e.preventDefault()} onDrop={drop}>
+      {searchText !== undefined && (
+        <div className="mb-2.5 rounded-lg bg-[#f1f7fd] p-3 text-[13px] text-navy">
+          <a href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(searchText)}`} target="_blank" rel="noreferrer" className={`inline-flex items-center gap-2 rounded-md bg-white px-3 py-1.5 font-semibold text-[#2f73d9] shadow-sm ${searchText ? '' : 'pointer-events-none opacity-50'}`}>
+            <Search className="size-4" /> Find photo on Google Images
+          </a>
+          <p className="mt-2 leading-5 text-slate">Pick a clear photo of this exact product, right-click it → <b>Copy image</b>, then click the box below and press <b>Ctrl+V</b>. You can also drag the photo here or paste its address.</p>
+          <input value={link} onChange={(e) => setLink(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && link.trim()) { e.preventDefault(); applyLink(link.trim()); } }} placeholder="…or paste image address and press Enter" className="mt-2 h-9 w-full rounded-md border border-line bg-white px-3 text-[13px] outline-none focus:border-[#077a52]" />
+        </div>
+      )}
       <button type="button" onClick={() => input.current?.click()} className="grid w-full place-items-center rounded-lg border border-dashed border-[#c9d1da] bg-[#f8fafc] px-4 py-5 text-center hover:border-[#077a52]">
         {value ? <img src={value} alt="" className="max-h-[110px] w-auto rounded object-contain" /> : busy ? <Loader2 className="size-8 animate-spin text-navy" /> : <ImagePlus className="size-8 text-navy" strokeWidth={1.5} />}
-        <p className="mt-2 text-[14px] font-medium text-navy">{busy ? 'Uploading…' : value ? 'Click to replace image' : 'Click to upload image'}</p>
+        <p className="mt-2 text-[14px] font-medium text-navy">{busy ? 'Uploading…' : value ? 'Click to replace, or press Ctrl+V' : 'Click to upload, or press Ctrl+V'}</p>
         <p className="text-[12.5px] text-slate">{hint}</p>
         {extra && <p className="text-[12.5px] text-slate">{extra}</p>}
       </button>
@@ -143,7 +172,7 @@ export function ProductForm({ editId, duplicateId, live, onSaved, onClose }: { e
           <Field label="Low Stock Threshold" hint="Get notified when stock is below this level"><Input type="number" value={p.threshold} onChange={(v) => set('threshold', Math.max(0, Number(v)))} /></Field>
         </div>
       )}
-      {tab === 2 && <Field label="Product Image"><ImageUpload bucket="product-images" value={p.imageUrl} onChange={(v) => set('imageUrl', v)} extra="Square images look best" /></Field>}
+      {tab === 2 && <Field label="Product Image"><ImageUpload bucket="product-images" value={p.imageUrl} onChange={(v) => set('imageUrl', v)} extra="Square images look best" searchText={p.name} /></Field>}
       {tab === 3 && (
         <ul className="divide-y divide-line">
           <li className="flex items-center justify-between py-3"><span><b className="block text-[14.5px] font-medium text-navy">Active</b><span className="text-[13px] text-slate">Show this product in the store</span></span><Toggle key={`a${p.active}`} on={p.active} onChange={(v) => set('active', v)} /></li>
