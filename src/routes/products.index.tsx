@@ -40,7 +40,7 @@ function ProductsPage() {
         subtitle={`${(data?.total ?? 0).toLocaleString('en-US')} products · Fresh choices and everyday essentials`}
         products={list.products}
         loading={isFetching}
-        footer={<InfiniteLoader hasMore={list.hasMore} loading={list.loadingMore} onMore={list.loadMore} shown={list.products.length} total={list.total} columns="grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" />}
+        footer={<InfiniteLoader auto={false} hasMore={list.hasMore} loading={list.loadingMore} onMore={list.loadMore} shown={list.products.length} total={list.total} columns="grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" />}
         toolbar={<>
           <ToolbarSelect label="Category" value={current} onChange={(v) => set({ category: byName(v) })} options={['All Categories', ...categories.map((c) => c.name)]} />
           <ToolbarSelect label="Availability" value={search.stock ? 'In Stock Only' : 'All Products'} onChange={(v) => set({ stock: v === 'In Stock Only' ? true : undefined })} options={['All Products', 'In Stock Only']} />

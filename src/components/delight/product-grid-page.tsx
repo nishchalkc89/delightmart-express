@@ -37,16 +37,19 @@ export function ProductGridPage({ title, subtitle, crumb, toolbar, products, emp
   );
 }
 
-/** Loads the next products when the shopper scrolls near the end of the grid; shows loading cards meanwhile. */
-export function InfiniteLoader({ hasMore, loading, onMore, shown, total, columns = 'grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' }: { hasMore: boolean; loading: boolean; onMore: () => void; shown: number; total: number; columns?: string }) {
+/**
+ * Loads more products under a grid, with loading cards meanwhile.
+ * `auto` (category pages) loads as the shopper scrolls; otherwise a "Show more" button, so the footer stays reachable.
+ */
+export function InfiniteLoader({ hasMore, loading, onMore, shown, total, auto = true, columns = 'grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' }: { hasMore: boolean; loading: boolean; onMore: () => void; shown: number; total: number; auto?: boolean; columns?: string }) {
   const sentinel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = sentinel.current;
-    if (!el || !hasMore) return;
+    if (!el || !hasMore || !auto) return;
     const observer = new IntersectionObserver((entries) => { if (entries[0]?.isIntersecting) onMore(); }, { rootMargin: '700px 0px' });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, onMore, shown]);
+  }, [hasMore, onMore, shown, auto]);
   if (!shown) return null;
   return (
     <div ref={sentinel} className="mt-3">
@@ -63,7 +66,7 @@ export function InfiniteLoader({ hasMore, loading, onMore, shown, total, columns
         </div>
       )}
       {hasMore && !loading && (
-        <button type="button" onClick={onMore} className="mx-auto mt-2 flex h-10 items-center gap-2 rounded-full border border-line bg-white px-5 text-[13.5px] font-semibold text-navy">Show more products</button>
+        <button type="button" onClick={onMore} className={`mx-auto mt-2 flex items-center gap-2 rounded-full border font-semibold ${auto ? 'h-10 border-line bg-white px-5 text-[13.5px] text-navy' : 'h-11 border-red bg-white px-7 text-[14.5px] text-red hover:bg-red-50'}`}>Show more products{!auto && ` (${(total - shown).toLocaleString('en-US')} more)`}</button>
       )}
       {!hasMore && <p className="py-5 text-center text-[13px] text-slate">You’ve seen all {total.toLocaleString('en-US')} products ✓</p>}
     </div>

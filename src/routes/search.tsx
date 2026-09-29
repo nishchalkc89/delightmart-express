@@ -57,7 +57,7 @@ function Page() {
         subtitle={q ? `${total.toLocaleString('en-US')} product${total === 1 ? '' : 's'} found` : 'Type a product, brand or category, e.g. “Dairy Milk” or “shampoo”.'}
         products={q ? list.products : []}
         loading={isFetching}
-        footer={q ? <InfiniteLoader hasMore={list.hasMore} loading={list.loadingMore} onMore={list.loadMore} shown={list.products.length} total={list.total} columns="grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" /> : null}
+        footer={q ? <InfiniteLoader auto={false} hasMore={list.hasMore} loading={list.loadingMore} onMore={list.loadMore} shown={list.products.length} total={list.total} columns="grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" /> : null}
         empty={q ? undefined : <div />}
       />
     </StorePage>
