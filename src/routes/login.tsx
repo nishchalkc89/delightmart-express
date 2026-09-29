@@ -4,7 +4,6 @@ import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { AuthLogo, AuthShell, Divider, GreenButton, IconField, PhoneField, SocialButtons } from '@/components/delight/auth-ui';
 import { supabase } from '@/services/supabase';
-import { lovable } from '@/integrations/lovable';
 
 export const Route = createFileRoute('/login')({
   head: () => ({ meta: [{ title: 'Login — Delight Shopping Mart' }, { name: 'description', content: 'Sign in to your Delight Shopping Mart account.' }, { property: 'og:title', content: 'Login — Delight' }, { property: 'og:description', content: 'Access your orders and account.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
@@ -33,8 +32,8 @@ function Page() {
 
   async function google() {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin });
-    if (result.error) { toast.error(result.error.message); setLoading(false); }
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/account` } });
+    if (error) { toast.error(error.message.includes('provider is not enabled') ? 'Google sign-in is not enabled yet. Please use email.' : error.message); setLoading(false); }
   }
 
   return (

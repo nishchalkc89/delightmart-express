@@ -159,26 +159,16 @@ export async function fetchCatalog(): Promise<Catalog> {
   type Cat = { name: string; slug: string; description: string | null; image_url: string | null };
   type Ban = { title: string; image_url: string; link_url: string | null; position: string; starts_at: string | null; ends_at: string | null };
   try {
-    const { supabase } = await import('./supabase');
+    const { supabase, isSupabaseConfigured } = await import('./supabase');
+    if (!isSupabaseConfigured) return demo;
     const [browser, browserCats, browserBanners] = await Promise.all([
       supabase.from('products').select('id,slug,name,brand,unit,price,sale_price,description,featured,created_at,categories(name,slug),inventory(current_stock,reserved_stock),product_images(url,is_primary,sort_order)').eq('status', 'ACTIVE').order('created_at', { ascending: true }),
       supabase.from('categories').select('name,slug,description,image_url,sort_order').eq('status', 'ACTIVE').is('parent_id', null).order('sort_order'),
       supabase.from('banners').select('title,image_url,link_url,position,starts_at,ends_at').eq('status', 'ACTIVE').order('sort_order'),
     ]);
-    let bannerRows = (browserBanners.error ? null : browserBanners.data) as Ban[] | null;
-    let rows = browser.error ? null : (browser.data as unknown[] | null);
-    let cats = (browserCats.error ? null : browserCats.data) as Cat[] | null;
-    if (!rows?.length) {
-      // Anonymous reads can be blocked by row-level security; fall back to the server read.
-      const { getCatalogServer } = await import('./catalog.functions');
-      const { json } = await getCatalogServer();
-      if (json) {
-        const parsed = JSON.parse(json) as { products: unknown[]; categories: Cat[]; banners?: Ban[] };
-        rows = parsed.products;
-        cats = parsed.categories;
-        bannerRows = parsed.banners ?? bannerRows;
-      }
-    }
+    const bannerRows = (browserBanners.error ? null : browserBanners.data) as Ban[] | null;
+    const rows = browser.error ? null : (browser.data as unknown[] | null);
+    const cats = (browserCats.error ? null : browserCats.data) as Cat[] | null;
     if (!rows?.length) return demo;
     const liveCategories = (cats ?? []).map((c) => {
       const visual = categories.find((x) => x.slug === c.slug);
