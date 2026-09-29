@@ -1,2 +1,24 @@
-import {Check} from 'lucide-react';
-export function CheckoutSteps({current}:{current:1|2|3|4}){return <div className="mx-auto mb-7 flex max-w-xl items-start justify-between">{['Cart','Checkout','Review','Payment'].map((s,i)=>{const n=i+1,done=n<current,active=n===current;return <div key={s} className="relative flex flex-1 flex-col items-center text-xs"><div className={`z-10 grid size-8 place-items-center rounded-full border-2 font-bold ${done?'border-primary bg-primary text-primary-foreground':active?'border-primary bg-background text-primary':'border-border bg-background text-muted-foreground'}`}>{done?<Check className="size-4"/>:n}</div><span className={`mt-2 ${active?'font-bold text-primary':'text-muted-foreground'}`}>{s}</span>{i<3&&<span className={`absolute left-1/2 top-4 h-0.5 w-full ${done?'bg-primary':'bg-border'}`}/>}</div>})}</div>}
+import { Check } from 'lucide-react';
+
+const steps = ['Cart', 'Checkout', 'Review', 'Payment'];
+
+export function CheckoutSteps({ current }: { current: 1 | 2 | 3 | 4 }) {
+  return (
+    <div className="mx-auto flex max-w-[640px] items-start px-2">
+      {steps.map((s, i) => {
+        const n = i + 1;
+        const done = n < current;
+        const active = n === current;
+        return (
+          <div key={s} className="relative flex flex-1 flex-col items-center">
+            {i > 0 && <span className={`absolute top-[17px] h-0.5 ${n <= current ? 'bg-brand' : 'bg-line'}`} style={{ left: 'calc(-50% + 26px)', right: 'calc(50% + 26px)' }} />}
+            <span className={`z-10 grid size-9 place-items-center rounded-full text-[15px] font-bold ${done || active ? 'bg-brand text-white' : 'bg-[#eef1f4] text-slate'}`}>
+              {done ? <Check className="size-5" strokeWidth={3} /> : n}
+            </span>
+            <span className={`mt-1.5 text-[13px] lg:text-[14px] ${done || active ? 'font-medium text-brand' : 'text-slate'}`}>{s}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
