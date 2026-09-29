@@ -227,10 +227,59 @@ const footerCols = {
   'About Delight': [['Our Story', '/'], ['Store Location', '/'], ['Careers', '/'], ['Terms & Conditions', '/'], ['Privacy Policy', '/']],
 } as const;
 
+function MobileFooter({ socials }: { socials: Array<typeof Facebook> }) {
+  return (
+    <div className="site-width py-8 lg:hidden">
+      <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
+        <div>
+          <Logo variant="footer" className="mx-auto h-[56px] w-auto sm:mx-0" />
+          <p className="mt-3 text-[14px] leading-6 text-white/85">Your Local Shopping Mart<br />Tulsipur, Dang, Nepal</p>
+          <a href="tel:+9779841234567" className="mt-1 inline-block text-[14px] text-white/85">+977 9841234567</a>
+        </div>
+        <div className="mt-4 flex gap-3 sm:mt-2">
+          {socials.map((Icon, i) => <a key={i} href="#" aria-label="Social link" className="grid size-9 place-items-center rounded-full bg-white text-footer"><Icon className="size-4" /></a>)}
+        </div>
+      </div>
+
+      <div className="mt-6 border-t border-white/15 sm:grid sm:grid-cols-3 sm:gap-6 sm:border-0">
+        {Object.entries(footerCols).map(([title, links]) => (
+          <details key={title} className="group border-b border-white/15 sm:border-0 [&_summary::-webkit-details-marker]:hidden" open={false}>
+            <summary className="flex cursor-pointer list-none items-center justify-between py-3.5 text-[16px] font-bold sm:pointer-events-none sm:py-0 sm:pb-3">
+              {title}
+              <ChevronDown className="size-5 text-white/70 transition-transform group-open:rotate-180 sm:hidden" />
+            </summary>
+            <ul className="space-y-2.5 pb-4 text-[15px] text-white/85">
+              {links.map(([label, to]) => <li key={label}><Link to={to} className="hover:text-white">{label}</Link></li>)}
+            </ul>
+          </details>
+        ))}
+      </div>
+
+      <div className="mt-6 flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
+        <div>
+          <h3 className="text-[16px] font-bold">Download Our App</h3>
+          <p className="text-[14px] text-white/85">Shop Anytime, Anywhere</p>
+        </div>
+        <div className="flex gap-2.5">
+          <img src={asset('google-play')} alt="Get it on Google Play" className="h-10 w-auto" />
+          <img src={asset('app-store')} alt="Download on the App Store" className="h-10 w-auto" />
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-1.5 border-t border-white/15 pt-5 text-center text-[12.5px] text-white/75">
+        <p>© 2024 Delight Shopping Mart Pvt. Ltd. All rights reserved.</p>
+        <p className="flex items-center justify-center gap-1.5">Made with <Heart className="size-3.5 fill-red text-red" /> for a Happier Tulsipur</p>
+      </div>
+    </div>
+  );
+}
+
 export function StoreFooter() {
   const socials = [Facebook, Instagram, Youtube, Music2, Linkedin];
   return (
-    <footer className="hidden bg-footer text-white lg:block">
+    <footer className="bg-footer text-white">
+      <MobileFooter socials={socials} />
+      <div className="hidden lg:block">
       <div className="site-width grid grid-cols-[1.35fr_0.85fr_1fr_1fr_1.5fr] py-9">
         <div className="border-r border-white/15 pr-8">
           <Logo variant="footer" className="h-[66px] w-auto" />
@@ -264,6 +313,7 @@ export function StoreFooter() {
       <div className="site-width flex items-center justify-between border-t border-white/15 py-5 text-[13px] text-white/85">
         <span>© 2024 Delight Shopping Mart Pvt. Ltd. All rights reserved.</span>
         <span className="flex items-center gap-2">Made with <Heart className="size-4 fill-red text-red" /> for a Happier Tulsipur</span>
+      </div>
       </div>
     </footer>
   );
