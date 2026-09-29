@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { ArrowRight, ChevronRight } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StorePage } from '@/components/delight/store-shell';
 import { MobileHead, SectionHead } from '@/components/delight/section';
 import { ProductCard } from '@/components/delight/product-card';
@@ -9,6 +9,7 @@ import { brands, type Category, type Collections, type StoreBanner } from '@/ser
 import { catalogQuery, useStorefront } from '@/hooks/use-catalog';
 import { asset } from '@/lib/assets';
 import { shouldOnboard } from '@/lib/onboarding';
+import storeHero from '@/assets/store-hero.jpg';
 
 export const Route = createFileRoute('/')({
   head: () => ({ meta: [{ title: 'Delight Shopping Mart — Tulsipur, Dang' }, { name: 'description', content: 'Shop groceries, fashion, baby care and home essentials locally in Tulsipur.' }, { property: 'og:title', content: 'Delight Shopping Mart — Tulsipur' }, { property: 'og:description', content: 'Everything you need under one roof.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
@@ -48,17 +49,53 @@ function Bullets({ rows, className, gap = 'gap-x-3.5' }: { rows: string[][]; cla
   );
 }
 
-function DesktopHero() {
+/** Photos shown in the hero slider (the text and buttons stay the same on every slide). */
+const heroSlides = [
+  { src: asset('hero-desktop'), alt: 'Family shopping at Delight Shopping Mart', position: 'center' },
+  { src: storeHero, alt: 'Mother and daughter shopping for fresh groceries', position: '72% center' },
+  { src: asset('hero-mobile'), alt: 'Shopper with a bag of fresh groceries', position: 'center' },
+];
+
+/** Auto-advancing slide index; pauses while the pointer is over the slider. */
+function useSlides(count: number, delay = 5000) {
   const [slide, setSlide] = useState(0);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    if (paused || count < 2) return;
+    const t = setInterval(() => setSlide((v) => (v + 1) % count), delay);
+    return () => clearInterval(t);
+  }, [paused, count, delay]);
+  return { slide, setSlide, pause: () => setPaused(true), resume: () => setPaused(false) };
+}
+
+// Phones start with the photo from the mobile design.
+const mobileSlides = [heroSlides[2]!, heroSlides[0]!, heroSlides[1]!];
+
+function HeroImages({ slide, className, slides = heroSlides }: { slide: number; className: string; slides?: typeof heroSlides }) {
+  return (
+    <>
+      {slides.map((h, i) => (
+        <img key={h.alt} src={h.src} alt={h.alt} aria-hidden={i !== slide} style={{ objectPosition: h.position }}
+          className={`absolute inset-y-0 right-0 h-full object-cover transition-opacity duration-700 ${className} ${i === slide ? 'opacity-100' : 'opacity-0'}`} />
+      ))}
+    </>
+  );
+}
+
+function DesktopHero() {
+  const { slide, setSlide, pause, resume } = useSlides(heroSlides.length);
+  const n = heroSlides.length;
   const feats = [['hero-feat-1', 'Fast & Reliable', 'Local Delivery'], ['hero-feat-2', 'Fresh & Quality', 'Products'], ['hero-feat-3', 'Your Trusted', 'Shopping Mart']] as const;
   return (
-    <section className="site-width relative mt-5">
-      <div className="relative h-[444px] overflow-hidden rounded-2xl bg-[#f3f7f3]">
-        <img src={asset('hero-desktop')} alt="Family shopping at Delight Shopping Mart" className="absolute inset-y-0 right-0 h-full w-[55.5%] object-cover" />
-        <div className="absolute inset-y-0 left-[44.5%] w-24 bg-gradient-to-r from-[#f3f7f3] to-transparent" />
-        <div className="relative z-10 flex h-full flex-col justify-center pl-[38px]">
+    <section className="site-width relative mt-5" onMouseEnter={pause} onMouseLeave={resume}>
+      <div className="relative h-[444px] overflow-hidden rounded-2xl bg-[#f3f7f3] 2xl:h-[500px]">
+        <div className="absolute inset-y-0 right-0 w-[min(58%,960px)]">
+          <HeroImages slide={slide} className="w-full" />
+          <div className="absolute inset-y-0 left-0 w-28 bg-gradient-to-r from-[#f3f7f3] to-transparent" />
+        </div>
+        <div className="relative z-10 flex h-full flex-col justify-center pl-[38px] 2xl:pl-14">
           <p className="flex items-center gap-4 text-[13px] font-semibold tracking-[0.2em] text-navy">YOUR LOCAL SHOPPING MART <span className="h-0.5 w-12 bg-red" /></p>
-          <h1 className="mt-5 text-[54px] font-extrabold leading-[1.02] tracking-[-0.02em] text-[#0b3d2e]">Everything You Need<br /><span className="text-red">Under One Roof</span></h1>
+          <h1 className="mt-5 text-[54px] font-extrabold leading-[1.02] tracking-[-0.02em] text-[#0b3d2e] 2xl:text-[60px]">Everything You Need<br /><span className="text-red">Under One Roof</span></h1>
           <Bullets rows={heroList} className="mt-5 space-y-1 text-[19px] text-ink" />
           <Link to="/products" className="mt-6 flex h-[54px] w-[216px] items-center justify-center gap-3 rounded-lg bg-red text-[18px] font-semibold text-white shadow-md shadow-red/20 hover:bg-red/90">Shop Now <ArrowRight className="size-5" /></Link>
           <div className="mt-6 flex gap-10">
@@ -70,12 +107,12 @@ function DesktopHero() {
             ))}
           </div>
         </div>
-        <div className="absolute bottom-3 left-[46%] z-10 flex h-8 items-center gap-3 rounded-full bg-white/90 px-5 shadow-sm">
-          {[0, 1, 2].map((i) => <button key={i} aria-label={`Slide ${i + 1}`} onClick={() => setSlide(i)} className={`size-2.5 rounded-full ${slide === i ? 'bg-red' : 'bg-[#9aa3ad]'}`} />)}
+        <div className="absolute bottom-3 left-[calc(42%+2rem)] z-10 flex h-8 items-center gap-3 rounded-full bg-white/90 px-5 shadow-sm">
+          {heroSlides.map((h, i) => <button key={h.alt} aria-label={`Slide ${i + 1}`} onClick={() => setSlide(i)} className={`size-2.5 rounded-full transition-colors ${slide === i ? 'bg-red' : 'bg-[#9aa3ad]'}`} />)}
         </div>
       </div>
-      <CarouselArrow dir="left" onClick={() => setSlide((slide + 2) % 3)} className="absolute -left-5 top-1/2 z-20 -translate-y-1/2" />
-      <CarouselArrow dir="right" onClick={() => setSlide((slide + 1) % 3)} className="absolute -right-5 top-1/2 z-20 -translate-y-1/2" />
+      <CarouselArrow dir="left" onClick={() => setSlide((slide + n - 1) % n)} className="absolute -left-5 top-1/2 z-20 -translate-y-1/2" />
+      <CarouselArrow dir="right" onClick={() => setSlide((slide + 1) % n)} className="absolute -right-5 top-1/2 z-20 -translate-y-1/2" />
     </section>
   );
 }
@@ -170,21 +207,17 @@ function ExploreCategories({ categories }: Pick<Data, 'categories'>) {
 }
 
 function Brands() {
-  const ref = useRef<HTMLDivElement>(null);
-  const scroll = (d: number) => ref.current?.scrollBy({ left: d * 260, behavior: 'smooth' });
   return (
     <section className="site-width mt-8">
       <SectionHead eyebrow="Top Brands" title="Trusted Brands at Delight" link="View All Brands" />
-      <div className="relative">
-        <CarouselArrow dir="left" onClick={() => scroll(-1)} className="absolute -left-4 top-1/2 z-10 -translate-y-1/2" />
-        <div ref={ref} className="no-scrollbar mx-7 flex gap-3.5 overflow-x-auto">
-          {brands.map((b, i) => (
-            <div key={i} className="grid h-[80px] w-[115px] shrink-0 place-items-center rounded-lg border border-line bg-white shadow-sm">
-              <img src={b} alt="Brand logo" className="max-h-[64px] w-auto" />
+      <div className="marquee relative overflow-hidden py-1 [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]">
+        <div className="marquee-track flex w-max gap-3.5">
+          {[...brands, ...brands].map((b, i) => (
+            <div key={i} aria-hidden={i >= brands.length} className="grid h-[80px] w-[130px] shrink-0 place-items-center rounded-lg border border-line bg-white shadow-sm">
+              <img src={b} alt={i < brands.length ? 'Brand logo' : ''} className="max-h-[64px] w-auto" />
             </div>
           ))}
         </div>
-        <CarouselArrow dir="right" onClick={() => scroll(1)} className="absolute -right-4 top-1/2 z-10 -translate-y-1/2" />
       </div>
     </section>
   );
@@ -274,7 +307,7 @@ function DesktopHome({ categories, collections, banners }: Data) {
 /* ------------------------------------------------------------------ */
 
 function MobileHome({ categories, collections, banners }: Data) {
-  const [slide, setSlide] = useState(0);
+  const { slide, setSlide } = useSlides(heroSlides.length);
   const slider = at(banners, 'Homepage Slider');
   const below = at(banners, 'Below Slider');
   const services = [['service-3', 'Fast & Reliable', 'Delivery'], ['service-4', 'Quality', 'Products'], ['service-1', 'Great', 'Offers'], ['service-5', '24/7', 'Support']] as const;
@@ -294,7 +327,7 @@ function MobileHome({ categories, collections, banners }: Data) {
 
       {slider.length ? <BannerSlider items={slider} className="mt-4 h-[170px] min-[480px]:h-[230px]" /> : (
       <section className="relative mt-4 h-[196px] overflow-hidden rounded-2xl bg-[#eef6ee] min-[480px]:h-[240px]">
-        <img src={asset('hero-mobile')} alt="Shopper with fresh groceries" className="absolute inset-y-0 right-0 h-full w-[54%] object-cover object-left" />
+        <div className="absolute inset-y-0 right-0 w-[54%]"><HeroImages slide={slide} slides={mobileSlides} className="w-full" /></div>
         <div className="absolute inset-y-0 left-[44%] w-10 bg-gradient-to-r from-[#eef6ee] to-transparent" />
         <div className="relative z-10 flex h-full max-w-[56%] flex-col justify-center pl-4">
           <p className="text-[11.5px] font-semibold text-brand">Your Local Shopping Mart</p>
@@ -303,7 +336,7 @@ function MobileHome({ categories, collections, banners }: Data) {
           <Link to="/products" className="mt-3 flex h-9 w-[112px] items-center justify-center gap-2 rounded-md bg-red text-[13px] font-semibold text-white">Shop Now <ArrowRight className="size-4" /></Link>
         </div>
         <div className="absolute bottom-2 left-[42%] z-10 flex h-5 items-center gap-2 rounded-full bg-white/90 px-3">
-          {[0, 1, 2].map((i) => <button key={i} aria-label={`Slide ${i + 1}`} onClick={() => setSlide(i)} className={`size-2 rounded-full ${slide === i ? 'bg-red' : 'bg-[#c3c9cf]'}`} />)}
+          {heroSlides.map((h, i) => <button key={h.alt} aria-label={`Slide ${i + 1}`} onClick={() => setSlide(i)} className={`size-2 rounded-full ${slide === i ? 'bg-red' : 'bg-[#c3c9cf]'}`} />)}
         </div>
       </section>
       )}

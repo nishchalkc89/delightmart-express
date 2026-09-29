@@ -141,9 +141,15 @@
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  .marquee-track { animation: none !important; }
 }
 
-@utility site-width { width: min(100% - 2rem, 1430px); margin-inline: auto; }
+/* Brand strip: continuous right-to-left loop (the list is rendered twice, so -50% is seamless). */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee-track { animation: marquee 45s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+
+@utility site-width { width: calc(100% - 2rem); margin-inline: auto; @media (min-width: 1024px) { width: calc(100% - 3rem); } }
 @utility no-scrollbar { scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
 @utility eyebrow { display: flex; align-items: center; gap: 1rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #4b5563; &::before { content: ""; width: 1.75rem; height: 2px; background: var(--color-red); } }
 @utility admin-card { border: 1px solid var(--color-line); background: #fff; border-radius: 0.75rem; box-shadow: 0 1px 2px rgb(16 24 40 / 0.04); }
