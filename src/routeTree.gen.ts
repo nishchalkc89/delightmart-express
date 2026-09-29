@@ -25,9 +25,14 @@ import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as AccountAddressesRouteImport } from './routes/account/addresses'
+import { Route as AccountHelpRouteImport } from './routes/account/help'
 import { Route as AccountNotificationsRouteImport } from './routes/account/notifications'
+import { Route as AccountOffersRouteImport } from './routes/account/offers'
 import { Route as AccountOrdersRouteImport } from './routes/account/orders'
+import { Route as AccountPaymentsRouteImport } from './routes/account/payments'
 import { Route as AccountProfileRouteImport } from './routes/account/profile'
+import { Route as AccountSecurityRouteImport } from './routes/account/security'
+import { Route as AccountSettingsRouteImport } from './routes/account/settings'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminBannersRouteImport } from './routes/admin/banners'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
@@ -129,9 +134,19 @@ const AccountAddressesRoute = AccountAddressesRouteImport.update({
   path: '/addresses',
   getParentRoute: () => AccountRoute,
 } as any)
+const AccountHelpRoute = AccountHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AccountRoute,
+} as any)
 const AccountNotificationsRoute = AccountNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountOffersRoute = AccountOffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
   getParentRoute: () => AccountRoute,
 } as any)
 const AccountOrdersRoute = AccountOrdersRouteImport.update({
@@ -139,9 +154,24 @@ const AccountOrdersRoute = AccountOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => AccountRoute,
 } as any)
+const AccountPaymentsRoute = AccountPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AccountRoute,
+} as any)
 const AccountProfileRoute = AccountProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountSecurityRoute = AccountSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountSettingsRoute = AccountSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AccountRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -261,9 +291,14 @@ export interface FileRoutesByFullPath {
   '/verify': typeof VerifyRoute
   '/welcome': typeof WelcomeRoute
   '/account/addresses': typeof AccountAddressesRoute
+  '/account/help': typeof AccountHelpRoute
   '/account/notifications': typeof AccountNotificationsRoute
+  '/account/offers': typeof AccountOffersRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/account/payments': typeof AccountPaymentsRoute
   '/account/profile': typeof AccountProfileRoute
+  '/account/security': typeof AccountSecurityRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -300,9 +335,14 @@ export interface FileRoutesByTo {
   '/verify': typeof VerifyRoute
   '/welcome': typeof WelcomeRoute
   '/account/addresses': typeof AccountAddressesRoute
+  '/account/help': typeof AccountHelpRoute
   '/account/notifications': typeof AccountNotificationsRoute
+  '/account/offers': typeof AccountOffersRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/account/payments': typeof AccountPaymentsRoute
   '/account/profile': typeof AccountProfileRoute
+  '/account/security': typeof AccountSecurityRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -342,9 +382,14 @@ export interface FileRoutesById {
   '/verify': typeof VerifyRoute
   '/welcome': typeof WelcomeRoute
   '/account/addresses': typeof AccountAddressesRoute
+  '/account/help': typeof AccountHelpRoute
   '/account/notifications': typeof AccountNotificationsRoute
+  '/account/offers': typeof AccountOffersRoute
   '/account/orders': typeof AccountOrdersRoute
+  '/account/payments': typeof AccountPaymentsRoute
   '/account/profile': typeof AccountProfileRoute
+  '/account/security': typeof AccountSecurityRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -385,9 +430,14 @@ export interface FileRouteTypes {
     | '/verify'
     | '/welcome'
     | '/account/addresses'
+    | '/account/help'
     | '/account/notifications'
+    | '/account/offers'
     | '/account/orders'
+    | '/account/payments'
     | '/account/profile'
+    | '/account/security'
+    | '/account/settings'
     | '/admin/banners'
     | '/admin/categories'
     | '/admin/customers'
@@ -424,9 +474,14 @@ export interface FileRouteTypes {
     | '/verify'
     | '/welcome'
     | '/account/addresses'
+    | '/account/help'
     | '/account/notifications'
+    | '/account/offers'
     | '/account/orders'
+    | '/account/payments'
     | '/account/profile'
+    | '/account/security'
+    | '/account/settings'
     | '/admin/banners'
     | '/admin/categories'
     | '/admin/customers'
@@ -465,9 +520,14 @@ export interface FileRouteTypes {
     | '/verify'
     | '/welcome'
     | '/account/addresses'
+    | '/account/help'
     | '/account/notifications'
+    | '/account/offers'
     | '/account/orders'
+    | '/account/payments'
     | '/account/profile'
+    | '/account/security'
+    | '/account/settings'
     | '/admin/banners'
     | '/admin/categories'
     | '/admin/customers'
@@ -628,11 +688,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountAddressesRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/account/help': {
+      id: '/account/help'
+      path: '/help'
+      fullPath: '/account/help'
+      preLoaderRoute: typeof AccountHelpRouteImport
+      parentRoute: typeof AccountRoute
+    }
     '/account/notifications': {
       id: '/account/notifications'
       path: '/notifications'
       fullPath: '/account/notifications'
       preLoaderRoute: typeof AccountNotificationsRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/offers': {
+      id: '/account/offers'
+      path: '/offers'
+      fullPath: '/account/offers'
+      preLoaderRoute: typeof AccountOffersRouteImport
       parentRoute: typeof AccountRoute
     }
     '/account/orders': {
@@ -642,11 +716,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountOrdersRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/account/payments': {
+      id: '/account/payments'
+      path: '/payments'
+      fullPath: '/account/payments'
+      preLoaderRoute: typeof AccountPaymentsRouteImport
+      parentRoute: typeof AccountRoute
+    }
     '/account/profile': {
       id: '/account/profile'
       path: '/profile'
       fullPath: '/account/profile'
       preLoaderRoute: typeof AccountProfileRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/security': {
+      id: '/account/security'
+      path: '/security'
+      fullPath: '/account/security'
+      preLoaderRoute: typeof AccountSecurityRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/settings': {
+      id: '/account/settings'
+      path: '/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AccountSettingsRouteImport
       parentRoute: typeof AccountRoute
     }
     '/admin/': {
@@ -794,17 +889,27 @@ declare module '@tanstack/react-router' {
 
 interface AccountRouteChildren {
   AccountAddressesRoute: typeof AccountAddressesRoute
+  AccountHelpRoute: typeof AccountHelpRoute
   AccountNotificationsRoute: typeof AccountNotificationsRoute
+  AccountOffersRoute: typeof AccountOffersRoute
   AccountOrdersRoute: typeof AccountOrdersRoute
+  AccountPaymentsRoute: typeof AccountPaymentsRoute
   AccountProfileRoute: typeof AccountProfileRoute
+  AccountSecurityRoute: typeof AccountSecurityRoute
+  AccountSettingsRoute: typeof AccountSettingsRoute
   AccountIndexRoute: typeof AccountIndexRoute
 }
 
 const AccountRouteChildren: AccountRouteChildren = {
   AccountAddressesRoute: AccountAddressesRoute,
+  AccountHelpRoute: AccountHelpRoute,
   AccountNotificationsRoute: AccountNotificationsRoute,
+  AccountOffersRoute: AccountOffersRoute,
   AccountOrdersRoute: AccountOrdersRoute,
+  AccountPaymentsRoute: AccountPaymentsRoute,
   AccountProfileRoute: AccountProfileRoute,
+  AccountSecurityRoute: AccountSecurityRoute,
+  AccountSettingsRoute: AccountSettingsRoute,
   AccountIndexRoute: AccountIndexRoute,
 }
 

@@ -16,12 +16,12 @@ export const Route = createFileRoute('/account/')({
 const menu = [
   [MapPin, 'Manage Addresses', '/account/addresses'],
   [UserRound, 'Personal Information', '/account/profile'],
-  [CreditCard, 'Payment Methods', '/payment'],
+  [CreditCard, 'Payment Methods', '/account/payments'],
   [Bell, 'Notifications', '/account/notifications'],
-  [Tag, 'Offers & Coupons', '/categories'],
-  [CircleHelp, 'Help & Support', '/account'],
-  [ShieldCheck, 'Privacy & Security', '/account/profile'],
-  [Settings, 'App Settings', '/account'],
+  [Tag, 'Offers & Coupons', '/account/offers'],
+  [CircleHelp, 'Help & Support', '/account/help'],
+  [ShieldCheck, 'Privacy & Security', '/account/security'],
+  [Settings, 'App Settings', '/account/settings'],
 ] as const;
 
 function Page() {
@@ -94,7 +94,7 @@ function Page() {
           <p className="flex items-center gap-2"><b className="text-[18px] font-extrabold text-navy">Delight Plus</b><span className="rounded-md bg-[#fde9a8] px-2 py-0.5 text-[11px] font-semibold text-[#7a5a00]">New</span></p>
           <p className="text-[13px] leading-snug text-slate">Get exclusive offers, free delivery and more!</p>
         </div>
-        <button className="shrink-0 rounded-lg bg-[#dcf2e6] px-4 py-2 text-[15px] font-semibold text-brand">Explore</button>
+        <Link to="/account/offers" className="shrink-0 rounded-lg bg-[#dcf2e6] px-4 py-2 text-[15px] font-semibold text-brand">Explore</Link>
       </section>
 
       {/* My Orders */}

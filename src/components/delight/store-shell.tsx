@@ -6,6 +6,8 @@ import {
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Logo } from './logo';
 import { SmartSearch } from './smart-search';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/services/supabase';
 import { useCart } from './cart-context';
 import { useAuth } from './auth-context';
 import { NAV_CATEGORIES, type Category } from '@/services/catalog';
@@ -153,7 +155,7 @@ function MobileHeader({ variant = 'home', actions = ['wishlist', 'cart'], search
           <Location />
           {actions.includes('search') && <Link to="/search" search={{ q: '' }} aria-label="Search"><Search className="size-6 text-ink" /></Link>}
           {actions.includes('wishlist') && <Link to="/account" aria-label="Wishlist" className="relative"><Heart className="size-6 text-ink" strokeWidth={1.7} /><span className="cart-count">0</span></Link>}
-          {actions.includes('bell') && <Link to="/account/notifications" aria-label="Notifications" className="relative"><Bell className="size-6 text-ink" strokeWidth={1.8} /><span className="cart-count">3</span></Link>}
+          {actions.includes('bell') && <NotificationBell />}
           {actions.includes('cart') && <Link to="/cart" aria-label="Cart" className="relative"><ShoppingCart className="size-6 text-ink" strokeWidth={1.7} /><span className="cart-count">{count}</span></Link>}
         </div>
       </div>
@@ -303,6 +305,23 @@ export function StorePage({ children, mobile, nav = 'default', hideMobileNav = f
       {!hideMobileNav && <FloatingCart />}
       {!hideMobileNav && <MobileNav variant={nav} />}
     </div>
+  );
+}
+
+/** Bell with the number of unread store messages (hidden when there are none). */
+function NotificationBell() {
+  const { user } = useAuth();
+  const { data: unread = 0 } = useQuery({
+    queryKey: ['unread-notifications', user?.id],
+    enabled: Boolean(user),
+    staleTime: 60_000,
+    queryFn: async () => (await supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).is('read_at', null)).count ?? 0,
+  });
+  return (
+    <Link to="/account/notifications" aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'} className="relative">
+      <Bell className="size-6 text-ink" strokeWidth={1.8} />
+      {unread > 0 && <span className="cart-count">{unread}</span>}
+    </Link>
   );
 }
 
