@@ -387,6 +387,19 @@ function MobileHome({ categories, collections, banners }: Data) {
           {collections.popular.map((p) => <div key={p.id} className="w-[31%] shrink-0 sm:w-[23%]"><ProductCard product={p} variant="mobile" badge="none" showUnit={false} /></div>)}
         </div>
       </section>
+
+      <section className="mt-6 pb-2">
+        <MobileHead title="Trusted" accent="Brands" />
+        <div className="marquee relative -mx-4 overflow-hidden py-1 [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]">
+          <div className="marquee-track flex w-max gap-2.5 [animation-duration:30s]">
+            {[...brands, ...brands].map((b, i) => (
+              <div key={i} aria-hidden={i >= brands.length} className="grid h-[58px] w-[96px] shrink-0 place-items-center rounded-lg border border-line bg-white shadow-sm">
+                <img src={b} alt={i < brands.length ? 'Brand logo' : ''} className="max-h-[44px] w-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

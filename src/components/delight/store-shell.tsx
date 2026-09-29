@@ -17,8 +17,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 
 function TopBar() {
   return (
-    <div className="hidden bg-[#f1f8f6] text-[14px] text-ink lg:block">
-      <div className="site-width flex h-11 items-center justify-between">
+    <div className="hidden bg-[#f1f8f6] text-[13px] text-ink lg:block">
+      <div className="site-width flex h-9 items-center justify-between">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5"><MapPin className="size-4 fill-ink text-[#f1f8f6]" />Tulsipur, Dang</span>
           <span className="h-4 w-px bg-ink/40" />
@@ -53,21 +53,21 @@ function DesktopSearch() {
     void nav({ to: '/search', search: { q: query.trim() } });
   }
   return (
-    <form onSubmit={submit} className="flex h-[58px] w-full max-w-[762px] overflow-hidden rounded-lg border border-[#dfe3e8] bg-white shadow-[0_1px_2px_rgb(16_24_40/0.04)]">
+    <form onSubmit={submit} className="flex h-[48px] w-full max-w-[720px] overflow-hidden rounded-lg border border-[#dfe3e8] bg-white shadow-[0_1px_2px_rgb(16_24_40/0.04)]">
       <label className="flex flex-1 items-center gap-3 pl-5">
-        <Search className="size-6 text-ink" />
-        <input value={query} onChange={(e) => setQuery(e.target.value)} className="h-full flex-1 bg-transparent text-[16px] outline-none placeholder:text-slate" placeholder="Search for groceries, fashion, baby products, stationery..." aria-label="Search products" />
+        <Search className="size-5 text-ink" />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} className="h-full flex-1 bg-transparent text-[15px] outline-none placeholder:text-slate" placeholder="Search for groceries, fashion, baby products, stationery..." aria-label="Search products" />
       </label>
-      <button className="w-[130px] rounded-lg bg-red text-[19px] font-semibold text-white hover:bg-red/90">Search</button>
+      <button className="w-[112px] rounded-lg bg-red text-[16px] font-semibold text-white hover:bg-red/90">Search</button>
     </form>
   );
 }
 
 function HeaderAction({ to, icon: Icon, label, count }: { to: string; icon: typeof Heart; label: string; count?: number }) {
   return (
-    <Link to={to} className="flex flex-col items-center gap-1 text-[15px] text-ink hover:text-brand">
+    <Link to={to} className="flex flex-col items-center gap-0.5 text-[13px] text-ink hover:text-brand">
       <span className="relative">
-        <Icon className="size-8" strokeWidth={1.6} />
+        <Icon className="size-6" strokeWidth={1.7} />
         {count !== undefined && <span className="cart-count !-right-2 !-top-2 !size-5">{count}</span>}
       </span>
       {label}
@@ -80,10 +80,10 @@ function DesktopHeader() {
   const { user } = useAuth();
   return (
     <header className="hidden bg-white lg:block">
-      <div className="site-width flex h-[146px] items-center justify-between gap-10">
-        <Link to="/" aria-label="Delight Shopping Mart home"><Logo className="h-[88px] w-auto" /></Link>
+      <div className="site-width flex h-[92px] items-center justify-between gap-10">
+        <Link to="/" aria-label="Delight Shopping Mart home"><Logo className="h-[60px] w-auto" /></Link>
         <DesktopSearch />
-        <div className="flex items-center gap-12 pr-2">
+        <div className="flex items-center gap-9 pr-2">
           <HeaderAction to={user ? '/account' : '/login'} icon={UserRound} label="Account" />
           <HeaderAction to="/account" icon={Heart} label="Wishlist" count={0} />
           <HeaderAction to="/cart" icon={ShoppingCart} label="Cart" count={count} />
@@ -96,14 +96,14 @@ function DesktopHeader() {
 function CategoryNav() {
   return (
     <nav className="hidden bg-white lg:block">
-      <div className="site-width flex h-[100px] items-stretch border-b border-line pb-2">
-        <Link to="/categories" className="my-auto mr-6 flex h-[60px] shrink-0 items-center gap-3 rounded-lg bg-brand px-6 text-[18px] font-semibold text-white shadow-sm hover:bg-brand-dark">
-          <Menu className="size-6" /> All Categories <ChevronDown className="size-5" />
+      <div className="site-width flex h-[72px] items-stretch border-b border-line pb-1.5">
+        <Link to="/categories" className="my-auto mr-5 flex h-[46px] shrink-0 items-center gap-2.5 rounded-lg bg-brand px-5 text-[15px] font-semibold text-white shadow-sm hover:bg-brand-dark">
+          <Menu className="size-5" /> All Categories <ChevronDown className="size-4" />
         </Link>
         <div className="flex flex-1 items-stretch justify-between">
           {categories.map((c, i) => (
-            <Link key={c.slug} to="/categories/$slug" params={{ slug: c.slug }} className={`group flex flex-1 flex-col items-center justify-center gap-1.5 px-2 text-[15px] text-ink hover:text-brand ${i ? 'border-l border-line' : ''}`}>
-              <img src={c.icon} alt="" className="size-11 object-contain transition-transform group-hover:-translate-y-0.5" />
+            <Link key={c.slug} to="/categories/$slug" params={{ slug: c.slug }} className={`group flex flex-1 flex-col items-center justify-center gap-1 px-2 text-[13.5px] text-ink hover:text-brand ${i ? 'border-l border-line' : ''}`}>
+              <img src={c.icon} alt="" className="size-8 object-contain transition-transform group-hover:-translate-y-0.5" />
               <span className="whitespace-nowrap">{c.name}</span>
             </Link>
           ))}
@@ -230,45 +230,37 @@ const footerCols = {
 function MobileFooter({ socials }: { socials: Array<typeof Facebook> }) {
   return (
     <div className="site-width py-8 lg:hidden">
-      <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
-        <div>
-          <Logo variant="footer" className="mx-auto h-[56px] w-auto sm:mx-0" />
-          <p className="mt-3 text-[14px] leading-6 text-white/85">Your Local Shopping Mart<br />Tulsipur, Dang, Nepal</p>
-          <a href="tel:+9779841234567" className="mt-1 inline-block text-[14px] text-white/85">+977 9841234567</a>
-        </div>
-        <div className="mt-4 flex gap-3 sm:mt-2">
-          {socials.map((Icon, i) => <a key={i} href="#" aria-label="Social link" className="grid size-9 place-items-center rounded-full bg-white text-footer"><Icon className="size-4" /></a>)}
-        </div>
+      <Logo variant="footer" className="h-[52px] w-auto" />
+      <p className="mt-3 text-[14px] leading-6 text-white/85">Your Local Shopping Mart<br />Tulsipur, Dang, Nepal</p>
+      <a href="tel:+9779841234567" className="text-[14px] text-white/85">+977 9841234567</a>
+      <div className="mt-4 flex gap-2.5">
+        {socials.map((Icon, i) => <a key={i} href="#" aria-label="Social link" className="grid size-9 place-items-center rounded-full bg-white text-footer"><Icon className="size-4" /></a>)}
       </div>
 
-      <div className="mt-6 border-t border-white/15 sm:grid sm:grid-cols-3 sm:gap-6 sm:border-0">
+      <div className="mt-7 grid grid-cols-2 gap-x-6 gap-y-7 border-t border-white/15 pt-6 sm:grid-cols-3">
         {Object.entries(footerCols).map(([title, links]) => (
-          <details key={title} className="group border-b border-white/15 sm:border-0 [&_summary::-webkit-details-marker]:hidden" open={false}>
-            <summary className="flex cursor-pointer list-none items-center justify-between py-3.5 text-[16px] font-bold sm:pointer-events-none sm:py-0 sm:pb-3">
-              {title}
-              <ChevronDown className="size-5 text-white/70 transition-transform group-open:rotate-180 sm:hidden" />
-            </summary>
-            <ul className="space-y-2.5 pb-4 text-[15px] text-white/85">
+          <div key={title}>
+            <h3 className="text-[15.5px] font-bold">{title}</h3>
+            <span className="mt-1.5 block h-0.5 w-8 bg-red" />
+            <ul className="mt-3 space-y-2 text-[14px] text-white/80">
               {links.map(([label, to]) => <li key={label}><Link to={to} className="hover:text-white">{label}</Link></li>)}
             </ul>
-          </details>
+          </div>
         ))}
       </div>
 
-      <div className="mt-6 flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
-        <div>
-          <h3 className="text-[16px] font-bold">Download Our App</h3>
-          <p className="text-[14px] text-white/85">Shop Anytime, Anywhere</p>
-        </div>
-        <div className="flex gap-2.5">
+      <div className="mt-7 border-t border-white/15 pt-6">
+        <h3 className="text-[15.5px] font-bold">Download Our App</h3>
+        <p className="text-[14px] text-white/80">Shop Anytime, Anywhere</p>
+        <div className="mt-3 flex gap-2.5">
           <img src={asset('google-play')} alt="Get it on Google Play" className="h-10 w-auto" />
           <img src={asset('app-store')} alt="Download on the App Store" className="h-10 w-auto" />
         </div>
       </div>
 
-      <div className="mt-6 space-y-1.5 border-t border-white/15 pt-5 text-center text-[12.5px] text-white/75">
+      <div className="mt-7 space-y-1 border-t border-white/15 pt-5 text-[12.5px] text-white/70">
         <p>© 2024 Delight Shopping Mart Pvt. Ltd. All rights reserved.</p>
-        <p className="flex items-center justify-center gap-1.5">Made with <Heart className="size-3.5 fill-red text-red" /> for a Happier Tulsipur</p>
+        <p className="flex items-center gap-1.5">Made with <Heart className="size-3.5 fill-red text-red" /> for a Happier Tulsipur</p>
       </div>
     </div>
   );
