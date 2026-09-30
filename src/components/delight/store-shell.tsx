@@ -227,36 +227,6 @@ const footerCols = {
 } as const;
 
 
-/** Both stores with address, hours, phone and directions (details come from Admin → Settings). */
-function FooterStores({ compact = false }: { compact?: boolean }) {
-  const { branches } = useBranch();
-  return (
-    <div className={compact ? 'mt-7 border-t border-white/15 pt-6' : 'site-width border-t border-white/15 py-7'}>
-      <h3 className={`${compact ? 'text-[15.5px]' : 'text-[17px]'} font-bold`}>Our Stores</h3>
-      {compact && <span className="mt-1.5 block h-0.5 w-8 bg-red" />}
-      <div className={`mt-4 grid gap-3 ${compact ? '' : 'grid-cols-2 xl:grid-cols-3'}`}>
-        {branches.map((b) => {
-          const tel = (b.phone ?? '').replace(/\D/g, '');
-          const hours = hoursText(b);
-          return (
-            <div key={b.id} className="rounded-xl bg-white/[0.06] p-4 text-[14px] leading-6 text-white/85">
-              <b className="flex flex-wrap items-center gap-2 text-[15.5px] text-white"><MapPin className="size-4 shrink-0 text-red" />{b.city} Store
-                {!b.acceptingOrders && <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-semibold">Online orders soon</span>}</b>
-              <p className="mt-1">{b.address}</p>
-              {hours && <p>Open daily, {hours}</p>}
-              <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
-                {tel && <a href={`tel:+${tel}`} className="font-semibold text-white hover:underline">{b.phone}</a>}
-                {b.mapsUrl && <a href={b.mapsUrl} target="_blank" rel="noreferrer" className="font-semibold text-white hover:underline">Get directions</a>}
-                {!tel && !b.mapsUrl && <Link to="/store-location" className="font-semibold text-white hover:underline">Store details</Link>}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 /** App store badges, shown as "coming soon" until the apps are published. */
 function AppBadges({ size }: { size: 'sm' | 'md' }) {
   return (
@@ -298,7 +268,6 @@ function MobileFooter({ socials }: { socials: ReadonlyArray<readonly [typeof Fac
         <AppBadges size="sm" />
       </div>
 
-      <FooterStores compact />
 
       <div className="mt-7 space-y-1 border-t border-white/15 pt-5 text-[12.5px] text-white/70">
         <p>© 2024 Delight Shopping Mart Pvt. Ltd. All rights reserved.</p>
@@ -339,7 +308,6 @@ export function StoreFooter() {
           </div>
         </div>
       </div>
-      <FooterStores />
       <div className="site-width flex items-center justify-between border-t border-white/15 py-5 text-[13px] text-white/85">
         <span>© 2024 Delight Shopping Mart Pvt. Ltd. All rights reserved.</span>
         <span className="flex items-center gap-2">Made with <Heart className="size-4 fill-red text-red" /> for a Happier Dang</span>
