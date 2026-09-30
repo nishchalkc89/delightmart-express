@@ -2,8 +2,10 @@ import { createFileRoute } from '@tanstack/react-router';
 import { Eye, EyeOff, MessageSquare, Star, ThumbsUp, TriangleAlert, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Avatar, Badge, Card, Checkbox, DateRange, FilterBar, FiltersButton, IconBtn, PageHeader, Pagination, Panel, PanelTitle, SearchBox, SelectBox, StatCard, Table, Tabs, Td, Tr, WithPanel } from '@/components/delight/admin-ui';
+import { Avatar, Badge, Card, Checkbox, DataBadge, DateRange, FilterBar, FiltersButton, IconBtn, PageHeader, Pagination, Panel, PanelTitle, SearchBox, SelectBox, StatCard, Table, Tabs, Td, Tr, WithPanel } from '@/components/delight/admin-ui';
 import { adminProducts as ap, people } from '@/components/delight/admin-data';
+import { fmtDate, useAdminData } from '@/services/admin';
+import { fetchReviews, setReviewStatus, type ReviewRow } from '@/services/admin-actions';
 
 export const Route = createFileRoute('/admin/reviews')({
   head: () => ({ meta: [{ title: 'Reviews — Delight Admin' }, { name: 'description', content: 'Moderate customer product reviews.' }, { property: 'og:title', content: 'Reviews — Delight Admin' }, { property: 'og:description', content: 'Review moderation.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
@@ -26,44 +28,63 @@ function StarRow({ n }: { n: number }) {
   return <span className="flex">{Array.from({ length: 5 }, (_, i) => <Star key={i} className={`size-4 ${i < n ? 'fill-star text-star' : 'fill-[#e5e7eb] text-[#e5e7eb]'}`} />)}</span>;
 }
 
+const demo: ReviewRow[] = reviews.map(([p, who, rating, text, date, st], i) => ({ id: String(i), product: p.short, productSlug: '', customer: who.name, rating, review: text, status: st.toUpperCase(), createdAt: date, image: p.img }));
+const label = (s: string) => (s === 'PUBLISHED' ? 'Published' : s === 'HIDDEN' ? 'Hidden' : 'Pending');
+const imageFor = (r: ReviewRow) => ('image' in r ? String((r as { image: string }).image) : ap.find((p) => p.name.toLowerCase().startsWith(r.product.toLowerCase().slice(0, 10)))?.img);
+
 function Page() {
+  const { rows, setRows, live, loading } = useAdminData<ReviewRow>(fetchReviews, demo);
   const [tab, setTab] = useState(0);
+  const [query, setQuery] = useState('');
+  const filters = [() => true, (r: ReviewRow) => r.status === 'PUBLISHED', (r: ReviewRow) => r.status === 'PENDING', (r: ReviewRow) => r.status === 'HIDDEN'];
+  const shown = rows.filter((r) => filters[tab]!(r) && `${r.product} ${r.customer} ${r.review}`.toLowerCase().includes(query.toLowerCase()));
+  const count = (i: number) => rows.filter(filters[i]!).length;
+  const avg = rows.length ? rows.reduce((s, r) => s + r.rating, 0) / rows.length : 0;
+  async function moderate(r: ReviewRow, status: 'PUBLISHED' | 'HIDDEN') {
+    if (!live) { toast.info('Sample data — sign in with a staff account to moderate real reviews.'); return; }
+    try {
+      await setReviewStatus(r.id, status);
+      setRows((list) => list.map((x) => (x.id === r.id ? { ...x, status } : x)));
+      toast.success(status === 'PUBLISHED' ? 'Review published on the product page' : 'Review hidden');
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not update the review'); }
+  }
   return (
     <div>
-      <PageHeader title="Reviews" subtitle="Moderate customer reviews and keep product feedback helpful." />
+      <PageHeader title="Reviews" subtitle="Moderate customer reviews and keep product feedback helpful." badge={<DataBadge live={live} loading={loading} />} />
       <WithPanel
         main={
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatCard icon={MessageSquare} tone="green" label="Total Reviews" value="1,086" delta="+14%" filled={false} />
-              <StatCard icon={Star} tone="amber" label="Average Rating" value="4.6" delta="+0.2" />
-              <StatCard icon={TriangleAlert} tone="blue" label="Pending Review" value="12" delta="-8%" dir="down" filled={false} />
-              <StatCard icon={EyeOff} tone="red" label="Hidden Reviews" value="7" delta="+2" dir="down" filled={false} />
+              <StatCard icon={MessageSquare} tone="green" label="Total Reviews" value={live ? String(rows.length) : '1,086'} delta={live ? undefined : '+14%'} filled={false} />
+              <StatCard icon={Star} tone="amber" label="Average Rating" value={live ? avg.toFixed(1) : '4.6'} delta={live ? undefined : '+0.2'} />
+              <StatCard icon={TriangleAlert} tone="blue" label="Pending Review" value={live ? String(count(2)) : '12'} delta={live ? undefined : '-8%'} dir="down" filled={false} />
+              <StatCard icon={EyeOff} tone="red" label="Hidden Reviews" value={live ? String(count(3)) : '7'} delta={live ? undefined : '+2'} dir="down" filled={false} />
             </div>
             <Card className="mt-4">
-              <Tabs items={['All Reviews (1,086)', 'Published (1,067)', 'Pending (12)', 'Hidden (7)']} active={tab} onChange={setTab} />
+              <Tabs items={['All Reviews', 'Published', 'Pending', 'Hidden'].map((t, i) => `${t} (${live ? count(i) : ['1,086', '1,067', '12', '7'][i]})`)} active={tab} onChange={setTab} />
               <FilterBar>
-                <SearchBox placeholder="Search by product, customer or review..." className="w-[266px]" />
+                <SearchBox placeholder="Search by product, customer or review..." value={query} onChange={setQuery} className="w-[266px]" />
                 <SelectBox label="All Ratings" className="w-[130px]" />
                 <SelectBox label="All Status" className="w-[130px]" />
                 <DateRange />
                 <FiltersButton />
               </FilterBar>
               <Table head={[<Checkbox key="c" />, 'Product', 'Customer', 'Rating', 'Review', 'Date', 'Status', 'Actions']}>
-                {reviews.map(([p, who, rating, text, date, st]) => (
-                  <Tr key={text}>
+                {shown.map((r) => (
+                  <Tr key={r.id}>
                     <Td><Checkbox /></Td>
-                    <Td><span className="flex items-center gap-3"><img src={p.img} alt="" className="size-9 shrink-0 object-contain" /><span className="leading-tight">{p.short}</span></span></Td>
-                    <Td><span className="flex items-center gap-2.5 whitespace-nowrap"><Avatar src={who.avatar} name={who.name} size="size-8" />{who.name}</span></Td>
-                    <Td><StarRow n={rating} /></Td>
-                    <Td className="max-w-[240px] text-slate"><span className="line-clamp-2">{text}</span></Td>
-                    <Td className="whitespace-nowrap text-slate">{date}</Td>
-                    <Td><Badge tone={st === 'Published' ? 'green' : st === 'Pending' ? 'amber' : 'red'}>{st}</Badge></Td>
-                    <Td><span className="flex gap-2"><IconBtn icon={Eye} label="Publish" onClick={() => toast.success('Review published')} /><IconBtn icon={EyeOff} label="Hide" onClick={() => toast.success('Review hidden')} /><IconBtn icon={Trash2} label="Delete" tone="danger" /></span></Td>
+                    <Td><span className="flex items-center gap-3">{imageFor(r) ? <img src={imageFor(r)} alt="" className="size-9 shrink-0 object-contain" /> : null}<span className="leading-tight">{r.product}</span></span></Td>
+                    <Td><span className="flex items-center gap-2.5 whitespace-nowrap"><Avatar src={Object.values(people).find((x) => x.name === r.customer)?.avatar} name={r.customer} size="size-8" />{r.customer}</span></Td>
+                    <Td><StarRow n={r.rating} /></Td>
+                    <Td className="max-w-[240px] text-slate"><span className="line-clamp-2">{r.review}</span></Td>
+                    <Td className="whitespace-nowrap text-slate">{live ? fmtDate(r.createdAt) : r.createdAt}</Td>
+                    <Td><Badge tone={r.status === 'PUBLISHED' ? 'green' : r.status === 'PENDING' ? 'amber' : 'red'}>{label(r.status)}</Badge></Td>
+                    <Td><span className="flex gap-2"><IconBtn icon={Eye} label="Publish" onClick={() => void moderate(r, 'PUBLISHED')} /><IconBtn icon={EyeOff} label="Hide" onClick={() => void moderate(r, 'HIDDEN')} /><IconBtn icon={Trash2} label="Hide permanently" tone="danger" onClick={() => void moderate(r, 'HIDDEN')} /></span></Td>
                   </Tr>
                 ))}
               </Table>
-              <Pagination text="Showing 1-8 of 1,086 reviews" pages={[1, 2, 3, 4, 5, '…', 136]} perPage="8 per page" />
+              {!shown.length && <p className="px-5 py-10 text-center text-[14px] text-slate">No reviews in this view yet.</p>}
+              <Pagination text={`Showing 1-${shown.length} of ${live ? rows.length : '1,086'} reviews`} pages={live ? [1] : [1, 2, 3, 4, 5, '…', 136]} perPage="8 per page" />
             </Card>
           </>
         }
@@ -71,9 +92,9 @@ function Page() {
           <div className="space-y-4">
             <Panel>
               <PanelTitle>Rating Breakdown</PanelTitle>
-              <div className="flex items-end gap-3"><b className="text-[40px] font-extrabold leading-none text-navy">4.6</b><span className="pb-1"><StarRow n={5} /><span className="text-[13px] text-slate">1,086 reviews</span></span></div>
+              <div className="flex items-end gap-3"><b className="text-[40px] font-extrabold leading-none text-navy">{live ? avg.toFixed(1) : '4.6'}</b><span className="pb-1"><StarRow n={Math.round(live ? avg : 5)} /><span className="text-[13px] text-slate">{live ? rows.length : '1,086'} reviews</span></span></div>
               <ul className="mt-4 space-y-2.5">
-                {[[5, 68], [4, 20], [3, 7], [2, 3], [1, 2]].map(([n, pct]) => (
+                {(live ? [5, 4, 3, 2, 1].map((n) => [n, rows.length ? Math.round((rows.filter((r) => r.rating === n).length / rows.length) * 100) : 0]) : [[5, 68], [4, 20], [3, 7], [2, 3], [1, 2]]).map(([n, pct]) => (
                   <li key={n} className="flex items-center gap-3 text-[13px] text-navy">
                     <span className="flex w-8 items-center gap-1">{n}<Star className="size-3.5 fill-star text-star" /></span>
                     <span className="h-2 flex-1 rounded-full bg-[#eef1f4]"><span className="block h-full rounded-full bg-[#0a8a5b]" style={{ width: `${pct}%` }} /></span>

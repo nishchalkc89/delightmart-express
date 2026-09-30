@@ -1,18 +1,21 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { Lock, Mail } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { AuthLogo, AuthShell, Divider, GreenButton, IconField, PhoneField, SocialButtons } from '@/components/delight/auth-ui';
 import { supabase } from '@/services/supabase';
-import { lovable } from '@/integrations/lovable';
 
 export const Route = createFileRoute('/login')({
+  // Where to go after signing in, e.g. /login?redirect=/cart (only paths on this site).
+  validateSearch: (s: Record<string, unknown>): { redirect?: string | undefined } => ({ redirect: typeof s['redirect'] === 'string' && /^\/(?!\/)/.test(s['redirect']) ? s['redirect'] : undefined }),
   head: () => ({ meta: [{ title: 'Login — Delight Shopping Mart' }, { name: 'description', content: 'Sign in to your Delight Shopping Mart account.' }, { property: 'og:title', content: 'Login — Delight' }, { property: 'og:description', content: 'Access your orders and account.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
   component: Page,
 });
 
 function Page() {
   const nav = useNavigate();
+  const { redirect } = Route.useSearch();
+  const router = useRouter();
   const [tab, setTab] = useState<'phone' | 'email'>('phone');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -28,13 +31,14 @@ function Page() {
       : await supabase.auth.signInWithPassword({ phone: `+977${phone}`, password });
     setLoading(false);
     if (error) toast.error(tab === 'phone' && /phone|provider/i.test(error.message) ? 'Mobile login is not enabled yet. Please use the Email tab.' : error.message);
+    else if (redirect) router.history.push(redirect);
     else void nav({ to: '/account' });
   }
 
   async function google() {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin });
-    if (result.error) { toast.error(result.error.message); setLoading(false); }
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}${redirect ?? '/account'}` } });
+    if (error) { toast.error(error.message.includes('provider is not enabled') ? 'Google sign-in is not enabled yet. Please use email.' : error.message); setLoading(false); }
   }
 
   return (

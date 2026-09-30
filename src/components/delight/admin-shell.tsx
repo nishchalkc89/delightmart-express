@@ -1,7 +1,7 @@
-import { Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { Link, Outlet, useRouter, useRouterState } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import {
-  BadgePercent, Bell, ChartColumn, ChevronDown, ClipboardList, Folder, Images, LayoutDashboard, MapPin, Menu, Package,
+  BadgePercent, ChartColumn, LogOut, Mail, ChevronDown, ClipboardList, Folder, Images, LayoutDashboard, MapPin, Menu, Package,
   Search, Settings, Star, Store, Truck, UserRound, UsersRound, WalletCards, X,
 } from 'lucide-react';
 import { Logo } from './logo';
@@ -21,6 +21,7 @@ const nav = [
   ['/admin/delivery', Truck, 'Delivery Management'],
   ['/admin/payments', WalletCards, 'Payments'],
   ['/admin/reviews', Star, 'Reviews'],
+  ['/admin/subscribers', Mail, 'Subscribers'],
   ['/admin/reports', ChartColumn, 'Reports'],
   ['/admin/users', UsersRound, 'Users & Roles'],
   ['/admin/settings', Settings, 'Settings'],
@@ -36,7 +37,7 @@ const searchHints: Record<string, string> = {
   '/admin/settings': 'Search settings, store, orders, users...',
 };
 
-function Sidebar({ path, onNavigate }: { path: string; onNavigate?: () => void }) {
+function Sidebar({ path, onNavigate, pending }: { path: string; onNavigate?: () => void; pending: number }) {
   return (
     <div className="flex h-full flex-col bg-[linear-gradient(180deg,#01352a_0%,#013328_60%,#002e24_100%)] text-white">
       <div className="px-5 pb-4 pt-3"><Logo variant="admin" className="h-[70px] w-auto" /></div>
@@ -47,7 +48,7 @@ function Sidebar({ path, onNavigate }: { path: string; onNavigate?: () => void }
             <Link key={to} to={to} onClick={onNavigate} className={`flex h-[46px] items-center gap-3.5 whitespace-nowrap rounded-lg px-3.5 text-[15px] transition-colors ${active ? 'bg-[#006147] shadow-[0_2px_8px_rgb(0_0_0/0.18)]' : 'text-white/95 hover:bg-white/8'}`}>
               <Icon className="size-[22px]" strokeWidth={1.6} />
               <span className="flex-1">{label}</span>
-              {label === 'Orders' && <span className="grid h-[22px] min-w-[22px] place-items-center rounded-full bg-[#e3101a] px-1.5 text-[12px] font-semibold">12</span>}
+              {label === 'Orders' && pending > 0 && <span title="New orders waiting" className="grid h-[22px] min-w-[22px] place-items-center rounded-full bg-[#e3101a] px-1.5 text-[12px] font-semibold">{pending}</span>}
             </Link>
           );
         })}
@@ -66,43 +67,62 @@ function Sidebar({ path, onNavigate }: { path: string; onNavigate?: () => void }
 
 export function AdminShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const { user, loading, displayName } = useAuth();
-  const [allowed, setAllowed] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const { user, loading, displayName, signOut } = useAuth();
+  const [role, setRole] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
+  const [pending, setPending] = useState(0);
 
+  // Admin always needs a signed-in staff account (the database enforces the same rules).
   useEffect(() => {
     if (loading) return;
-    // Local development preview: the admin UI is viewable without a staff account.
-    // Production access is still enforced here and by Supabase RLS.
-    if (import.meta.env.DEV) { setAllowed(true); setChecking(false); return; }
-    if (!user) { setAllowed(false); setChecking(false); return; }
+    if (!user) { router.history.replace(`/admin/login?redirect=${encodeURIComponent(path)}`); return; }
+    setChecking(true);
     void supabase.from('user_roles').select('role').eq('user_id', user.id).then(({ data }) => {
-      setAllowed(Boolean(data?.some((row) => row.role !== 'CUSTOMER')));
+      const staff = (data ?? []).map((r) => r.role).filter((r) => r !== 'CUSTOMER');
+      setRole(staff.includes('SUPER_ADMIN') ? 'SUPER_ADMIN' : staff[0] ?? null);
       setChecking(false);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading]);
 
-  if (checking || loading) return <div className="grid min-h-screen place-items-center bg-page text-slate">Checking access…</div>;
-  if (!allowed) {
+  // Number of new orders waiting to be confirmed (shown next to Orders).
+  useEffect(() => {
+    if (!role) return;
+    const load = () => void supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'PENDING').then(({ count }) => setPending(count ?? 0));
+    load();
+    const t = setInterval(load, 60_000);
+    return () => clearInterval(t);
+  }, [role, path]);
+
+  async function logout() {
+    await signOut();
+    router.history.replace('/admin/login');
+  }
+
+  if (loading || checking || !user) return <div className="grid min-h-screen place-items-center bg-page text-slate">Checking access…</div>;
+  if (!role) {
     return (
       <div className="grid min-h-screen place-items-center bg-page p-6">
         <div className="max-w-md rounded-2xl border border-line bg-white p-8 text-center">
           <Logo className="mx-auto h-16 w-auto" />
-          <h1 className="mt-5 text-[24px] font-extrabold text-navy">Staff access required</h1>
-          <p className="mt-2 text-slate">Sign in with an authorized store account to open management screens.</p>
-          <Link to="/login" className="mt-5 inline-flex h-11 items-center rounded-lg bg-[#077a52] px-6 font-semibold text-white">Sign In</Link>
+          <h1 className="mt-5 text-[24px] font-extrabold text-navy">No admin access</h1>
+          <p className="mt-2 text-slate">You are signed in as {user.email}, which is a customer account. Sign in with the store admin account.</p>
+          <button onClick={() => void logout()} className="mt-5 inline-flex h-11 items-center rounded-lg bg-[#077a52] px-6 font-semibold text-white">Sign in as admin</button>
         </div>
       </div>
     );
   }
 
-  const name = user ? displayName : 'Nishchal Kc';
+  const name = displayName;
+  const roleLabel = role.split('_').map((w) => w[0] + w.slice(1).toLowerCase()).join(' ');
   return (
     <div className="min-h-screen bg-page">
       {open && <div className="fixed inset-0 z-40 bg-navy/50 xl:hidden" onClick={() => setOpen(false)} />}
       <aside className={`fixed inset-y-0 left-0 z-50 w-[243px] transition-transform xl:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
-        <Sidebar path={path} onNavigate={() => setOpen(false)} />
+        <Sidebar path={path} onNavigate={() => setOpen(false)} pending={pending} />
         <button aria-label="Close menu" onClick={() => setOpen(false)} className="absolute right-2 top-2 p-1 text-white xl:hidden"><X className="size-5" /></button>
       </aside>
       <div className="xl:pl-[243px]">
@@ -113,13 +133,21 @@ export function AdminShell() {
             <input className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-slate" placeholder={searchHints[path] ?? 'Search products, orders, customers...'} aria-label="Search" />
           </label>
           <div className="ml-auto flex items-center gap-7">
-            <button className="flex h-[42px] items-center gap-2.5 rounded-lg border border-line px-4 text-[15px] text-navy"><MapPin className="size-5 fill-[#0a8a5b] text-white" /> Tulsipur Store <ChevronDown className="ml-2 size-4 text-slate" /></button>
-            <button aria-label="Notifications" className="relative text-navy"><Bell className="size-6" strokeWidth={1.7} /><span className="absolute -right-1.5 -top-1.5 grid size-[18px] place-items-center rounded-full bg-[#e3101a] text-[11px] font-semibold text-white">3</span></button>
-            <button className="flex items-center gap-3">
-              <img src={asset('av-nishchal')} alt="" className="size-11 rounded-full object-cover" />
-              <span className="hidden text-left leading-5 sm:block"><b className="block text-[15px] font-semibold text-navy">{name}</b><span className="text-[14px] text-slate">Super Admin</span></span>
-              <ChevronDown className="size-4 text-slate" />
-            </button>
+            <Link to="/" target="_blank" className="hidden h-[42px] items-center gap-2.5 rounded-lg border border-line px-4 text-[15px] text-navy sm:flex"><MapPin className="size-5 fill-[#0a8a5b] text-white" /> View Store</Link>
+            <div className="relative">
+              <button onClick={() => setMenu(!menu)} aria-expanded={menu} className="flex items-center gap-3">
+                <span className="grid size-11 place-items-center rounded-full bg-[#077a52] text-[16px] font-bold text-white">{name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}</span>
+                <span className="hidden text-left leading-5 sm:block"><b className="block text-[15px] font-semibold text-navy">{name}</b><span className="text-[14px] text-slate">{roleLabel}</span></span>
+                <ChevronDown className="size-4 text-slate" />
+              </button>
+              {menu && (
+                <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-60 overflow-hidden rounded-xl border border-line bg-white shadow-lg" onMouseLeave={() => setMenu(false)}>
+                  <p className="border-b border-line px-4 py-3 text-[13px] text-slate">Signed in as<br /><b className="text-navy">{user.email}</b></p>
+                  <Link to="/admin/settings" onClick={() => setMenu(false)} className="block px-4 py-2.5 text-[14px] text-navy hover:bg-page">Settings</Link>
+                  <button onClick={() => void logout()} className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[14px] font-semibold text-[#e3101a] hover:bg-page"><LogOut className="size-4" /> Sign out</button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <main className="px-4 pb-8 pt-4"><Outlet /></main>

@@ -2,16 +2,19 @@ import { createFileRoute } from '@tanstack/react-router';
 import { ArrowUpRight, ChevronDown, ChevronRight, CircleX, Clock, CreditCard, Download, Ellipsis, Eye, HandCoins, RotateCcw, Settings, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts';
-import { Avatar, Badge, Card, Checkbox, DateRange, FilterBar, FiltersButton, IconBtn, PageHeader, Pagination, Panel, PanelTitle, SearchBox, SelectBox, StatCard, Table, Tabs, Td, Tr, WithPanel } from '@/components/delight/admin-ui';
+import { Avatar, Badge, Card, Checkbox, DataBadge, DateRange, FilterBar, FiltersButton, IconBtn, PageHeader, Pagination, Panel, PanelTitle, SearchBox, SelectBox, StatCard, Table, Tabs, Td, Tr, WithPanel } from '@/components/delight/admin-ui';
 import { npr, people } from '@/components/delight/admin-data';
 import { asset } from '@/lib/assets';
+import { fmtDate, fmtTime, useAdminData } from '@/services/admin';
+import { fetchPayments, type PaymentRow } from '@/services/admin-actions';
+import { toast } from 'sonner';
 
 export const Route = createFileRoute('/admin/payments')({
   head: () => ({ meta: [{ title: 'Payments — Delight Admin' }, { name: 'description', content: 'Track payments, transactions and settlements.' }, { property: 'og:title', content: 'Payments — Delight Admin' }, { property: 'og:description', content: 'Payment management.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
   component: Page,
 });
 
-const methodIcon: Record<string, string> = { eSewa: 'pay-esewa', Khalti: 'pay-khalti', 'Card (Visa)': 'pay-visa', 'Card (Mastercard)': 'pay-mc', 'Cash on Delivery': 'pay-cod', 'Connect IPS': 'pay-ips' };
+const methodIcon: Record<string, string> = { COD: 'pay-cod', ESEWA: 'pay-esewa', KHALTI: 'pay-khalti', CARD: 'pay-visa',  eSewa: 'pay-esewa', Khalti: 'pay-khalti', 'Card (Visa)': 'pay-visa', 'Card (Mastercard)': 'pay-mc', 'Cash on Delivery': 'pay-cod', 'Connect IPS': 'pay-ips' };
 const rows = [
   ['TXN001248', '#10251', people.sujan, 1250, 'eSewa', 'Success', '27 Sep 2026', '10:24 AM'],
   ['TXN001247', '#10250', people.aarati, 680, 'Khalti', 'Success', '26 Sep 2026', '04:15 PM'],
@@ -27,46 +30,70 @@ const rows = [
 const revenue = [18, 10, 30, 42, 36, 50, 38, 58, 45, 72, 55, 80, 62, 85, 70, 100, 95, 110, 104, 128, 118, 140, 125, 160].map((v, i) => ({ i, v: v * 1000, d: ['Sep 21', '', '', '', '', 'Sep 28', '', '', '', '', 'Oct 05', '', '', '', '', 'Oct 12', '', '', '', '', 'Oct 19', '', '', ''][i] }));
 const methods = [['pay-esewa', 'eSewa', 42, '#22b14c'], ['pay-khalti', 'Khalti', 28, '#8b5cf6'], ['pay-visa', 'Card (Visa/Mastercard)', 18, '#2f80ed'], ['pay-cod', 'Cash on Delivery', 8, '#f5a623'], ['pay-ips', 'Connect IPS', 4, '#e3101a']] as const;
 
+const providerName: Record<string, string> = { COD: 'Cash on Delivery', ESEWA: 'eSewa', KHALTI: 'Khalti', CARD: 'Card' };
+const demo: PaymentRow[] = rows.map(([txn, order, who, amt, method, st, date, time]) => ({ id: txn, orderNumber: order, customer: who.name, provider: method, status: st === 'Success' ? 'PAID' : st.toUpperCase(), amount: amt, createdAt: `${date} ${time}`, txn }));
+const statusText = (s: string) => (s === 'PAID' ? 'Success' : s === 'PENDING' ? 'Pending' : s === 'FAILED' ? 'Failed' : s === 'REFUNDED' ? 'Refunded' : s);
+
 function Page() {
+  const { rows: list, live, loading } = useAdminData<PaymentRow>(fetchPayments, demo);
   const [tab, setTab] = useState(0);
+  const [query, setQuery] = useState('');
+  const filters = [() => true, (p: PaymentRow) => p.status === 'PAID', (p: PaymentRow) => p.status === 'PENDING', (p: PaymentRow) => p.status === 'FAILED', (p: PaymentRow) => p.status === 'REFUNDED' || p.status === 'PARTIAL_REFUND'];
+  const shown = list.filter((p) => filters[tab]!(p) && `${p.orderNumber} ${p.customer} ${p.txn ?? ''} ${p.id}`.toLowerCase().includes(query.toLowerCase()));
+  const count = (i: number) => list.filter(filters[i]!).length;
+  const paidTotal = list.filter((p) => p.status === 'PAID').reduce((s, p) => s + p.amount, 0);
+  const byProvider = Object.entries(list.reduce<Record<string, number>>((acc, p) => { acc[p.provider] = (acc[p.provider] ?? 0) + 1; return acc; }, {}));
+  const liveMethods = byProvider.map(([prov, c]) => [methodIcon[prov] ?? 'pay-cod', providerName[prov] ?? prov, Math.round((c / Math.max(1, list.length)) * 100), prov === 'COD' ? '#f5a623' : prov === 'ESEWA' ? '#22b14c' : prov === 'KHALTI' ? '#8b5cf6' : '#2f80ed'] as const);
+  const when = (p: PaymentRow) => (live ? [fmtDate(p.createdAt), fmtTime(p.createdAt)] : p.createdAt.split(/ (?=\d{2}:)/));
+  function exportCsv() {
+    const lines = [['Transaction', 'Order', 'Customer', 'Amount', 'Method', 'Status', 'Date'], ...list.map((p) => [p.txn ?? p.id, p.orderNumber, p.customer, String(p.amount), providerName[p.provider] ?? p.provider, statusText(p.status), p.createdAt])];
+    const url = URL.createObjectURL(new Blob(['\ufeff', lines.map((r) => r.map((c) => `"${c.replaceAll('"', '""')}"`).join(',')).join('\r\n')], { type: 'text/csv' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'delight-payments.csv'; a.click(); URL.revokeObjectURL(url);
+  }
   return (
     <div>
-      <PageHeader title="Payments" subtitle="Track and manage all payments, transactions and settlements in one place." />
+      <PageHeader title="Payments" subtitle="Track and manage all payments, transactions and settlements in one place." badge={<DataBadge live={live} loading={loading} />} />
       <WithPanel
         main={
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatCard icon={Wallet} tone="green" label="Total Payments" value="NPR 865,420" delta="+18%" filled={false} />
-              <StatCard icon={CreditCard} tone="blue" label="Successful Payments" value="1,186" delta="+22%" filled={false} />
-              <StatCard icon={Clock} tone="amber" label="Pending Payments" value="24" delta="-20%" dir="down" filled={false} />
-              <StatCard icon={CircleX} tone="red" label="Failed Payments" value="18" delta="+5%" dir="down" />
+              <StatCard icon={Wallet} tone="green" label="Total Payments" value={live ? npr(paidTotal) : 'NPR 865,420'} delta={live ? undefined : '+18%'} note={live ? 'collected' : 'vs last month'} filled={false} />
+              <StatCard icon={CreditCard} tone="blue" label="Successful Payments" value={live ? String(count(1)) : '1,186'} delta={live ? undefined : '+22%'} filled={false} />
+              <StatCard icon={Clock} tone="amber" label="Pending Payments" value={live ? String(count(2)) : '24'} delta={live ? undefined : '-20%'} dir="down" filled={false} />
+              <StatCard icon={CircleX} tone="red" label="Failed Payments" value={live ? String(count(3)) : '18'} delta={live ? undefined : '+5%'} dir="down" />
             </div>
             <Card className="mt-4">
-              <Tabs items={['All Transactions (1,228)', 'Successful (1,186)', 'Pending (24)', 'Failed (18)', 'Refunded (12)']} active={tab} onChange={setTab} />
+              <Tabs items={['All Transactions', 'Successful', 'Pending', 'Failed', 'Refunded'].map((t, i) => `${t} (${live ? count(i) : ['1,228', '1,186', '24', '18', '12'][i]})`)} active={tab} onChange={setTab} />
               <FilterBar>
-                <SearchBox placeholder="Search by order ID, customer name or transaction ID..." className="w-[284px]" />
+                <SearchBox placeholder="Search by order ID, customer name or transaction ID..." value={query} onChange={setQuery} className="w-[284px]" />
                 <SelectBox label="All Payment Methods" className="w-[136px]" />
                 <SelectBox label="All Status" className="w-[112px]" />
                 <DateRange />
                 <FiltersButton />
               </FilterBar>
               <Table head={[<Checkbox key="c" />, '#', 'Transaction ID', 'Order ID', 'Customer', 'Amount', 'Payment Method', 'Status', 'Date & Time', 'Actions']}>
-                {rows.map(([txn, order, who, amt, method, st, date, time], i) => (
-                  <Tr key={txn}>
+                {shown.map((p, i) => {
+                  const st = statusText(p.status);
+                  const method = providerName[p.provider] ?? p.provider;
+                  const [date, time] = when(p);
+                  return (
+                  <Tr key={p.id}>
                     <Td><Checkbox /></Td>
                     <Td>{i + 1}</Td>
-                    <Td>{txn}</Td>
-                    <Td>{order}</Td>
-                    <Td><span className="flex items-center gap-2.5 whitespace-nowrap"><Avatar src={who.avatar} name={who.name} size="size-8" />{who.name}</span></Td>
-                    <Td className="whitespace-nowrap">{npr(amt)}</Td>
-                    <Td><span className="flex items-center gap-2 whitespace-nowrap text-[12.5px]"><img src={asset(methodIcon[method]!)} alt="" className="h-5 w-6 object-contain" />{method}</span></Td>
+                    <Td className="whitespace-nowrap">{p.txn ?? `TXN-${p.id.slice(0, 6).toUpperCase()}`}</Td>
+                    <Td className="whitespace-nowrap">{p.orderNumber}</Td>
+                    <Td><span className="flex items-center gap-2.5 whitespace-nowrap"><Avatar src={Object.values(people).find((x) => x.name === p.customer)?.avatar} name={p.customer} size="size-8" />{p.customer}</span></Td>
+                    <Td className="whitespace-nowrap">{npr(p.amount)}</Td>
+                    <Td><span className="flex items-center gap-2 whitespace-nowrap text-[12.5px]"><img src={asset(methodIcon[p.provider] ?? 'pay-cod')} alt="" className="h-5 w-6 object-contain" />{method}</span></Td>
                     <Td><Badge tone={st === 'Success' ? 'green' : st === 'Pending' ? 'amber' : 'red'}>{st}</Badge></Td>
                     <Td className="whitespace-nowrap leading-tight text-slate">{date}<br />{time}</Td>
-                    <Td><span className="flex gap-2"><IconBtn icon={Eye} label="View" /><IconBtn icon={Ellipsis} label="More" /></span></Td>
+                    <Td><span className="flex gap-2"><IconBtn icon={Eye} label="View" onClick={() => toast.info(`${method} · ${npr(p.amount)} · ${st} · Order ${p.orderNumber}`)} /><IconBtn icon={Ellipsis} label="More" /></span></Td>
                   </Tr>
-                ))}
+                  );
+                })}
               </Table>
-              <Pagination text="Showing 1-10 of 1,228 transactions" pages={[1, 2, 3, 4, 5, '…', 123]} />
+              {!shown.length && <p className="px-5 py-10 text-center text-[14px] text-slate">No payments in this view yet.</p>}
+              <Pagination text={`Showing 1-${shown.length} of ${live ? list.length : '1,228'} transactions`} pages={live ? [1] : [1, 2, 3, 4, 5, '…', 123]} />
             </Card>
           </>
         }
@@ -74,7 +101,7 @@ function Page() {
           <div className="space-y-4">
             <Panel>
               <div className="flex items-center justify-between gap-2"><h2 className="whitespace-nowrap text-[17px] font-bold text-navy">Revenue Overview</h2><button className="flex h-9 items-center gap-2 whitespace-nowrap rounded-lg border border-line px-3 text-[13px] text-navy">Last 30 Days <ChevronDown className="size-4" /></button></div>
-              <p className="mt-2 text-[26px] font-extrabold text-navy">NPR 865,420</p>
+              <p className="mt-2 text-[26px] font-extrabold text-navy">{live ? npr(paidTotal) : 'NPR 865,420'}</p>
               <p className="flex items-center gap-1 text-[14px] font-semibold text-[#0a8a5b]"><ArrowUpRight className="size-4" /> 18% <span className="font-normal text-navy">vs previous period</span></p>
               <div className="mt-2 h-[140px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -91,7 +118,7 @@ function Page() {
             <Panel>
               <PanelTitle>Payment Methods</PanelTitle>
               <ul className="space-y-3.5">
-                {methods.map(([icon, name, pct, color]) => (
+                {(live ? liveMethods : methods).map(([icon, name, pct, color]) => (
                   <li key={name} className="flex items-center gap-3">
                     <img src={asset(icon)} alt="" className="h-6 w-7 object-contain" />
                     <span className="w-[96px] text-[13px] leading-tight text-navy">{name}</span>
@@ -104,7 +131,7 @@ function Page() {
             <Panel>
               <PanelTitle>Quick Actions</PanelTitle>
               {([[HandCoins, 'Settle Payments', 'Manage settlements with payment partners'], [RotateCcw, 'Refund Management', 'Process customer refunds'], [Settings, 'Payment Settings', 'Configure payment methods'], [Download, 'Download Reports', 'Export payment reports (CSV, PDF)']] as const).map(([Icon, a, b]) => (
-                <button key={a} className="mb-2.5 flex w-full items-center gap-3 rounded-lg border border-line px-4 py-3 text-left last:mb-0">
+                <button key={a} onClick={a === 'Download Reports' ? exportCsv : () => toast.info(a === 'Payment Settings' ? 'eSewa and Khalti need merchant accounts before they can be enabled.' : `${a} will be available once online payments are enabled.`)} className="mb-2.5 flex w-full items-center gap-3 rounded-lg border border-line px-4 py-3 text-left last:mb-0">
                   <Icon className="size-5 shrink-0 text-navy" />
                   <span className="min-w-0 flex-1"><b className="block text-[14px] font-medium text-navy">{a}</b><span className="text-[11.5px] text-slate">{b}</span></span>
                   <ChevronRight className="size-4 text-slate" />

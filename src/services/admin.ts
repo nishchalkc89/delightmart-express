@@ -20,6 +20,10 @@ export type AdminOrder = {
 export type AdminProduct = {
   id: string; name: string; slug: string; sku: string; category: string; price: number; oldPrice: number;
   stock: number; threshold: number; active: boolean; image: string; updatedAt: string;
+  /** True when the product has its own photo (not a sample-data picture). */
+  hasPhoto?: boolean;
+  /** Units sold in orders that were not cancelled. */
+  sold?: number;
 };
 
 export type AdminCustomer = { id: string; name: string; phone: string; email: string; orders: number; spent: number; lastOrder: string | null; joined: string; status: string; avatar: string | null };
@@ -52,12 +56,27 @@ export async function fetchAdminOrders(limit = 50): Promise<AdminOrder[]> {
   });
 }
 
-export async function fetchAdminProducts(): Promise<AdminProduct[]> {
-  const { data, error } = await supabase.from('products')
-    .select('id,name,slug,sku,price,sale_price,status,updated_at,categories(name),inventory(current_stock,reserved_stock,low_stock_threshold,last_updated),product_images(url,is_primary)')
-    .order('name');
+const ADMIN_PRODUCT_COLUMNS = 'id,name,slug,sku,price,sale_price,status,updated_at,categories(name),inventory(current_stock,reserved_stock,low_stock_threshold,last_updated),product_images(url,is_primary)';
+
+/** All products for the admin screens, read 1000 at a time (the database's page limit). */
+async function fetchAllProductRows() {
+  const { count, error } = await supabase.from('products').select('id', { count: 'exact', head: true });
   if (error) throw error;
-  return (data ?? []).map((p) => {
+  const pages = Math.max(1, Math.ceil((count ?? 0) / 1000));
+  const results = await Promise.all(Array.from({ length: pages }, (_, i) => supabase.from('products').select(ADMIN_PRODUCT_COLUMNS).order('name').order('id').range(i * 1000, i * 1000 + 999)));
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw failed.error;
+  return results.flatMap((r) => r.data ?? []);
+}
+
+export async function fetchAdminProducts(): Promise<AdminProduct[]> {
+  const [data, sales] = await Promise.all([
+    fetchAllProductRows(),
+    supabase.from('order_items').select('product_id,quantity,orders!inner(status)').neq('orders.status', 'CANCELLED').limit(10000),
+  ]);
+  const sold = new Map<string, number>();
+  for (const s of (sales.data ?? []) as Array<{ product_id: string | null; quantity: number }>) if (s.product_id) sold.set(s.product_id, (sold.get(s.product_id) ?? 0) + s.quantity);
+  return data.map((p) => {
     const inv = Array.isArray(p.inventory) ? p.inventory[0] : p.inventory;
     const img = p.product_images?.find((i) => i.is_primary)?.url ?? p.product_images?.[0]?.url ?? imageBySlug.get(p.slug) ?? '';
     const onSale = p.sale_price !== null && Number(p.sale_price) < Number(p.price);
@@ -66,6 +85,7 @@ export async function fetchAdminProducts(): Promise<AdminProduct[]> {
       price: Number(onSale ? p.sale_price : p.price), oldPrice: onSale ? Number(p.price) : 0,
       stock: inv ? inv.current_stock - inv.reserved_stock : 0, threshold: inv?.low_stock_threshold ?? 10,
       active: p.status === 'ACTIVE', image: img, updatedAt: inv?.last_updated ?? p.updated_at,
+      hasPhoto: Boolean(p.product_images?.length), sold: sold.get(p.id) ?? 0,
     };
   });
 }

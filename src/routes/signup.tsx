@@ -4,7 +4,6 @@ import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { AuthLogo, AuthShell, Divider, GreenButton, IconField, PhoneField, SocialButtons } from '@/components/delight/auth-ui';
 import { supabase } from '@/services/supabase';
-import { lovable } from '@/integrations/lovable';
 
 export const Route = createFileRoute('/signup')({
   head: () => ({ meta: [{ title: 'Create Account — Delight Shopping Mart' }, { name: 'description', content: 'Create your Delight Shopping Mart account.' }, { property: 'og:title', content: 'Create a Delight Account' }, { property: 'og:description', content: 'Shop faster and track your local orders.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
@@ -37,8 +36,8 @@ function Page() {
 
   async function google() {
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin });
-    if (result.error) { toast.error(result.error.message); setBusy(false); }
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/account` } });
+    if (error) { toast.error(error.message.includes('provider is not enabled') ? 'Google sign-in is not enabled yet. Please use email.' : error.message); setBusy(false); }
   }
 
   return (
@@ -55,7 +54,7 @@ function Page() {
         <IconField icon={Lock} label="Confirm Password" name="confirm" type="password" value={confirm} onChange={setConfirm} autoComplete="new-password" />
         <label className="flex cursor-pointer items-start gap-3 pt-2 text-[15px] leading-6 text-slate">
           <button type="button" role="checkbox" aria-checked={agree} onClick={() => setAgree(!agree)} className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-md ${agree ? 'bg-brand text-white' : 'border-2 border-line'}`}>{agree && <Check className="size-4" strokeWidth={3} />}</button>
-          <span>I agree to the <Link to="/" className="text-brand underline">Terms &amp; Conditions</Link> and <Link to="/" className="text-brand underline">Privacy Policy</Link></span>
+          <span>I agree to the <Link to="/terms" target="_blank" className="text-brand underline">Terms &amp; Conditions</Link> and <Link to="/privacy" target="_blank" className="text-brand underline">Privacy Policy</Link></span>
         </label>
         <div className="pt-3"><GreenButton disabled={busy}>{busy ? 'Creating account…' : 'Sign Up'}</GreenButton></div>
       </form>

@@ -14,7 +14,7 @@ export const Route = createFileRoute('/admin/settings')({
 type Settings = { id: string; store_name: string; address: string; phone: string | null; email: string | null; opening_time: string | null; closing_time: string | null; currency: string; timezone: string; delivery_radius_km: number | null; delivery_fee: number | null; min_order: number | null; estimated_delivery_minutes: number | null; delivery_available: boolean };
 
 // Values shown in the approved Settings screen, used until the store's saved settings load.
-const defaults: Settings = { id: '', store_name: 'Delight Shopping Mart', address: 'Tulsipur Sub-Metropolitan City, Ward No. 6\nDang, Lumbini Province, Nepal', phone: '+977 9841234567', email: 'info@delightmart.com.np', opening_time: '07:00', closing_time: '21:00', currency: 'NPR', timezone: 'Asia/Kathmandu', delivery_radius_km: 5, delivery_fee: 0, min_order: 0, estimated_delivery_minutes: 20, delivery_available: true };
+const defaults: Settings = { id: '', store_name: 'Delight Shopping Mart', address: 'Tulsipur Sub-Metropolitan City, Ward No. 6\nDang, Lumbini Province, Nepal', phone: '+977 9841234567', email: 'info@delightshoppingmart.com', opening_time: '07:00', closing_time: '21:00', currency: 'NPR', timezone: 'Asia/Kathmandu', delivery_radius_km: 5, delivery_fee: 0, min_order: 0, estimated_delivery_minutes: 20, delivery_available: true };
 
 const tabs = [[Settings, 'General'], [Store, 'Store Information'], [CreditCard, 'Payment Settings'], [Truck, 'Delivery Settings'], [Mail, 'Email & Notifications'], [Palette, 'Appearance'], [Shield, 'System']] as const;
 

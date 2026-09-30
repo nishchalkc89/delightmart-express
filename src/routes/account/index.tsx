@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import {
   Bell, Camera, ChevronRight, CircleHelp, Clock, Crown, FileText, Heart, LogOut, MapPin, Package, Pencil,
-  RotateCcw, Settings, ShieldCheck, Star, Tag, UserRound, Wallet, CreditCard,
+  RotateCcw, Settings, ShieldCheck, Star, Tag, UserRound, CreditCard,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/delight/auth-context';
+import { useWishlist } from '@/components/delight/wishlist-context';
 import { getMyOrders } from '@/services/orders';
 import { supabase } from '@/services/supabase';
 
@@ -14,26 +15,30 @@ export const Route = createFileRoute('/account/')({
 });
 
 const menu = [
+  [Heart, 'My Wishlist', '/wishlist'],
   [MapPin, 'Manage Addresses', '/account/addresses'],
   [UserRound, 'Personal Information', '/account/profile'],
-  [CreditCard, 'Payment Methods', '/payment'],
+  [CreditCard, 'Payment Methods', '/account/payments'],
   [Bell, 'Notifications', '/account/notifications'],
-  [Tag, 'Offers & Coupons', '/categories'],
-  [CircleHelp, 'Help & Support', '/account'],
-  [ShieldCheck, 'Privacy & Security', '/account/profile'],
-  [Settings, 'App Settings', '/account'],
+  [Tag, 'Offers & Coupons', '/account/offers'],
+  [CircleHelp, 'Help & Support', '/account/help'],
+  [ShieldCheck, 'Privacy & Security', '/account/security'],
+  [Settings, 'App Settings', '/account/settings'],
 ] as const;
 
 function Page() {
   const { user, displayName, signOut } = useAuth();
   const nav = useNavigate();
+  const wishlist = useWishlist();
   const [orders, setOrders] = useState(0);
   const [addresses, setAddresses] = useState(0);
+  const [offers, setOffers] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     void getMyOrders(user.id).then((o) => setOrders(o.length)).catch(() => undefined);
     void supabase.from('addresses').select('id', { count: 'exact', head: true }).eq('user_id', user.id).then(({ count }) => setAddresses(count ?? 0));
+    void supabase.from('coupons').select('id', { count: 'exact', head: true }).eq('status', 'ACTIVE').then(({ count }) => setOffers(count ?? 0));
   }, [user]);
 
   const avatar = user?.user_metadata['avatar_url'] as string | undefined;
@@ -46,10 +51,10 @@ function Page() {
   }
 
   const stats = [
-    [FileText, String(orders), 'Total Orders'],
-    [Heart, '0', 'Saved Items'],
-    [MapPin, String(addresses), 'Saved Addresses'],
-    [Wallet, 'NPR 0', 'Wallet Balance'],
+    [FileText, String(orders), 'Total Orders', '/account/orders'],
+    [Heart, String(wishlist.count), 'Saved Items', '/wishlist'],
+    [MapPin, String(addresses), 'Saved Addresses', '/account/addresses'],
+    [Tag, String(offers), 'Offers for You', '/account/offers'],
   ] as const;
 
   return (
@@ -77,12 +82,12 @@ function Page() {
             : <Link to="/login" className="shrink-0 rounded-lg bg-brand px-4 py-2 text-[14px] font-semibold text-white">Sign In</Link>}
         </div>
         <div className="grid grid-cols-4 bg-white py-3.5">
-          {stats.map(([Icon, value, label], i) => (
-            <div key={label} className={`flex flex-col items-center gap-1 text-center ${i < 3 ? 'border-r border-line' : ''}`}>
+          {stats.map(([Icon, value, label, to], i) => (
+            <Link key={label} to={to} className={`flex flex-col items-center gap-1 text-center hover:bg-[#f7faf9] ${i < 3 ? 'border-r border-line' : ''}`}>
               <Icon className="size-6 text-brand" strokeWidth={1.8} />
               <b className="text-[16px] font-bold text-navy lg:text-[18px]">{value}</b>
               <span className="text-[12px] leading-tight text-slate lg:text-[14px]">{label}</span>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -94,7 +99,7 @@ function Page() {
           <p className="flex items-center gap-2"><b className="text-[18px] font-extrabold text-navy">Delight Plus</b><span className="rounded-md bg-[#fde9a8] px-2 py-0.5 text-[11px] font-semibold text-[#7a5a00]">New</span></p>
           <p className="text-[13px] leading-snug text-slate">Get exclusive offers, free delivery and more!</p>
         </div>
-        <button className="shrink-0 rounded-lg bg-[#dcf2e6] px-4 py-2 text-[15px] font-semibold text-brand">Explore</button>
+        <Link to="/account/offers" className="shrink-0 rounded-lg bg-[#dcf2e6] px-4 py-2 text-[15px] font-semibold text-brand">Explore</Link>
       </section>
 
       {/* My Orders */}
@@ -103,7 +108,7 @@ function Page() {
         <Link to="/account/orders" className="flex items-center gap-1 text-[15px] font-medium text-brand">View All <ChevronRight className="size-4" /></Link>
       </div>
       <section className="mt-2.5 grid grid-cols-4 rounded-2xl border border-line bg-white py-4">
-        {([[Package, 'Current Order', 'Track your order', '/orders'], [Clock, 'Order History', 'View past orders', '/account/orders'], [RotateCcw, 'Reorder', 'Buy again', '/products'], [Star, 'Reviews', 'Rate products', '/account/orders']] as const).map(([Icon, a, b, to], i) => (
+        {([[Package, 'Current Order', 'Track your order', '/orders'], [Clock, 'Order History', 'View past orders', '/account/orders'], [RotateCcw, 'Reorder', 'Buy again', '/account/orders'], [Star, 'Reviews', 'Rate products', '/account/orders']] as const).map(([Icon, a, b, to], i) => (
           <Link key={a} to={to} className={`flex flex-col items-center gap-1 px-1 text-center ${i < 3 ? 'border-r border-line' : ''}`}>
             <Icon className="size-7 text-brand" strokeWidth={1.7} />
             <b className="mt-1 text-[13px] font-semibold leading-tight text-navy lg:text-[15px]">{a}</b>

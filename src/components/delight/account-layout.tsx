@@ -10,6 +10,8 @@ export function AccountLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { user, loading } = useAuth();
   const isHome = path === '/account' || path === '/account/';
+  // Help is useful before signing in too.
+  const isPublic = path.startsWith('/account/help');
 
   if (isHome) {
     return (
@@ -23,7 +25,7 @@ export function AccountLayout() {
     <StorePage mobile={{ variant: 'back', actions: ['bell'], search: false }} nav="account">
       <div className="mx-auto max-w-[860px] px-4 py-4 lg:py-8">
         <p className="mb-4 hidden text-[14px] text-slate lg:block"><Link to="/">Home</Link> / <Link to="/account">My Account</Link></p>
-        {!user && !loading ? (
+        {isPublic ? <Outlet /> : !user && !loading ? (
           <div className="rounded-xl border border-line bg-white p-8 text-center">
             <h1 className="text-[24px] font-extrabold text-navy">Sign in to your account</h1>
             <p className="mt-2 text-slate">Your orders, addresses and account details will appear here.</p>

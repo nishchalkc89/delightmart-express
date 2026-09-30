@@ -1,14 +1,52 @@
-import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import { buildCollections, fetchCatalog } from '@/services/catalog';
+import { useRouterState } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
+import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { categories as designedCategories, dealsCategory, fetchCategories, fetchProduct, fetchProducts, fetchStorefront, fetchSubcategories, type ProductFilter, type ProductPage } from '@/services/catalog';
 
-export const catalogQuery = queryOptions({ queryKey: ['catalog'], queryFn: fetchCatalog, staleTime: 5 * 60_000 });
+const minutes = (n: number) => n * 60_000;
 
-export const useCatalog = () => useSuspenseQuery(catalogQuery);
+export const storefrontQuery = queryOptions({ queryKey: ['storefront'], queryFn: fetchStorefront, staleTime: minutes(5) });
+export const categoriesQuery = queryOptions({ queryKey: ['categories'], queryFn: fetchCategories, staleTime: minutes(10) });
+export const productsQuery = (filter: ProductFilter) => queryOptions({ queryKey: ['products', filter], queryFn: () => fetchProducts(filter), staleTime: minutes(2), placeholderData: keepPreviousData });
+export const subcategoriesQuery = (category: string) => queryOptions({ queryKey: ['subcategories', category], queryFn: () => fetchSubcategories(category), staleTime: minutes(10) });
+export const productQuery = (slug: string) => queryOptions({ queryKey: ['product', slug], queryFn: () => fetchProduct(slug), staleTime: minutes(2) });
 
-/** Catalogue plus the homepage/category collections derived from it. */
-export function useStorefront() {
-  const { data } = useCatalog();
-  const collections = useMemo(() => buildCollections(data.products), [data.products]);
-  return { ...data, collections };
+const fallbackCategories = [...designedCategories, dealsCategory];
+
+/** Store categories for navigation; shows the built-in list until the database answers. */
+export function useCategories() {
+  return useQuery({ ...categoriesQuery, placeholderData: fallbackCategories }).data ?? fallbackCategories;
+}
+
+/** True while the router loads the next page of results (never during the first render, so it matches the server HTML). */
+export function useLoadingPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const pending = useRouterState({ select: (s) => s.status === 'pending' });
+  return mounted && pending;
+}
+
+/**
+ * Product listing that keeps loading the next page as the shopper scrolls.
+ * The first page comes from the route loader (so the server HTML already has products).
+ */
+export function useInfiniteProducts(filter: ProductFilter, first: ProductPage | null | undefined) {
+  const base = { ...filter, page: undefined };
+  const query = useInfiniteQuery({
+    queryKey: ['products-infinite', base],
+    queryFn: ({ pageParam }) => fetchProducts({ ...base, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page < last.pages ? last.page + 1 : undefined),
+    enabled: Boolean(first),
+    staleTime: minutes(2),
+    ...(first ? { initialData: { pages: [first], pageParams: [1] } } : {}),
+  });
+  const pages = query.data?.pages ?? (first ? [first] : []);
+  return {
+    products: pages.flatMap((p) => p.products),
+    total: pages[0]?.total ?? 0,
+    hasMore: Boolean(query.hasNextPage),
+    loadingMore: query.isFetchingNextPage,
+    loadMore: () => { if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage(); },
+  };
 }

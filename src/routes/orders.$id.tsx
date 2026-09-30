@@ -1,5 +1,10 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { Check, ChefHat, CircleCheck, ClipboardCheck, MapPin, Package, Truck, Zap } from 'lucide-react';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { Check, ChefHat, CircleCheck, ClipboardCheck, Loader2, MapPin, MessageCircle, Package, RotateCcw, Truck, XCircle, Zap } from 'lucide-react';
+import { toast } from 'sonner';
+import { useCart } from '@/components/delight/cart-context';
+import { fetchProductsByIds } from '@/services/catalog';
+import { supabase } from '@/services/supabase';
+import { whatsappLink } from '@/lib/store-info';
 import { useEffect, useState } from 'react';
 import { StorePage } from '@/components/delight/store-shell';
 import { getMyOrders } from '@/services/orders';
@@ -35,7 +40,50 @@ function Page() {
     void getMyOrders(user.id).then((list) => setOrder(list.find((o) => o.id === id) ?? null)).catch(() => setOrder(null)).finally(() => setLoading(false));
   }, [user, authLoading, id]);
 
+  const cart = useCart();
+  const nav = useNavigate();
+  const [busy, setBusy] = useState<'' | 'reorder' | 'cancel'>('');
+
+  function load() {
+    if (!user) return;
+    void getMyOrders(user.id).then((list) => setOrder(list.find((o) => o.id === id) ?? null)).catch(() => setOrder(null));
+  }
+
+  async function reorder() {
+    if (!order) return;
+    setBusy('reorder');
+    try {
+      const ids = order.order_items.map((i) => i.product_id).filter((x): x is string => Boolean(x));
+      const found = await fetchProductsByIds(ids);
+      let added = 0;
+      for (const item of order.order_items) {
+        const p = found.find((x) => x.id === item.product_id);
+        if (p && p.stock > 0) { cart.add(p, Math.min(item.quantity, p.stock)); added++; }
+      }
+      const missing = order.order_items.length - added;
+      if (added) {
+        toast.success(`${added} item${added === 1 ? '' : 's'} added to your cart${missing ? ` · ${missing} not available now` : ''}`);
+        void nav({ to: '/cart' });
+      } else toast.error('These items are not available right now');
+    } catch { toast.error('Could not load the items. Please try again.'); }
+    setBusy('');
+  }
+
+  async function cancel() {
+    if (!order || !window.confirm(`Cancel order #${order.order_number}?`)) return;
+    setBusy('cancel');
+    const { error } = await supabase.rpc('cancel_my_order', { p_order: order.id });
+    setBusy('');
+    if (error) {
+      toast.error(/function|schema cache/i.test(error.message) ? 'Please call the store to cancel this order.' : error.message);
+      return;
+    }
+    toast.success('Your order was cancelled');
+    load();
+  }
+
   const current = order ? rank[order.status] ?? -1 : -1;
+  const cancellable = order ? ['PENDING', 'CONFIRMED'].includes(order.status) : false;
   const stopped = order && (order.status === 'CANCELLED' || order.status === 'FAILED');
 
   return (
@@ -92,6 +140,12 @@ function Page() {
                 </div>
               ))}
             </section>
+
+            <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              <button onClick={() => void reorder()} disabled={busy !== ''} className="flex h-11 items-center justify-center gap-2 rounded-lg bg-brand text-[14.5px] font-semibold text-white disabled:opacity-60">{busy === 'reorder' ? <Loader2 className="size-4 animate-spin" /> : <RotateCcw className="size-4" />} Reorder</button>
+              <a href={whatsappLink(`Hello Delight, I need help with order #${order.order_number}.`)} target="_blank" rel="noreferrer" className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-[14.5px] font-semibold text-navy"><MessageCircle className="size-4 text-brand" /> Get help</a>
+              {cancellable && <button onClick={() => void cancel()} disabled={busy !== ''} className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-lg border border-[#f3b3b6] bg-white text-[14.5px] font-semibold text-red disabled:opacity-60 sm:col-span-1">{busy === 'cancel' ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />} Cancel order</button>}
+            </div>
 
             <section className="mt-3 rounded-xl border border-line bg-white px-4 py-4 text-[14.5px]">
               <p className="flex justify-between text-slate"><span>Subtotal</span><span className="text-navy">{formatNpr(order.subtotal)}</span></p>
