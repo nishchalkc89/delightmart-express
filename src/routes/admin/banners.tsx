@@ -2,43 +2,36 @@ import { createFileRoute } from '@tanstack/react-router';
 import { ArrowRight, CalendarDays, Clock, Eye, Image, MinusCircle, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Badge, Card, Checkbox, DataBadge, Field, FiltersButton, IconBtn, PageHeader, Pagination, Panel, PrimaryAction, SearchBox, StatCard, Table, Tabs, Td, TipCard, Toggle, Tr, WithPanel } from '@/components/delight/admin-ui';
+import { Badge, Card, DataBadge, Field, FilterSelect, IconBtn, PageHeader, Pagination, Panel, PrimaryAction, SearchBox, StatCard, Table, Tabs, Td, TipCard, Toggle, Tr, usePaged, WithPanel } from '@/components/delight/admin-ui';
 import { FormButtons, ImageUpload, Input, Select } from '@/components/delight/admin-forms';
 import { useAdminData } from '@/services/admin';
 import { deleteBanner, fetchBanners, saveBanner, setBannerStatus, type BannerRow } from '@/services/admin-actions';
 import { BANNER_POSITIONS } from '@/services/catalog';
-import { asset } from '@/lib/assets';
 
 export const Route = createFileRoute('/admin/banners')({
   head: () => ({ meta: [{ title: 'Banners & Content — Delight Admin' }, { name: 'description', content: 'Manage homepage banners and site content.' }, { property: 'og:title', content: 'Banners & Content — Delight Admin' }, { property: 'og:description', content: 'Content management.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
   component: Page,
 });
 
-const demo: BannerRow[] = ([
-  ['bn-1', 'Fresh Groceries', 'Homepage Slider', '2026-09-20', '2026-09-30'],
-  ['bn-2', 'Fashion Collection', 'Homepage Slider', '2026-09-15', '2026-10-15'],
-  ['bn-3', 'Electronics Sale', 'Homepage Slider', '2026-09-01', '2026-09-30'],
-  ['bn-4', 'Home Essentials', 'Homepage Slider', '2026-09-10', '2026-09-30'],
-  ['bn-5', 'Festive Offer', 'Homepage Slider', '2026-09-20', '2026-10-10'],
-  ['bn-6', 'App Promotion', 'Below Slider', '2026-09-01', '2026-10-31'],
-] as const).map(([img, title, position, from, to], i) => ({ id: img, title, image_url: asset(img), link_url: null, position, status: 'ACTIVE', starts_at: from, ends_at: to, sort_order: i }));
-
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
 type Form = { id?: string | undefined; title: string; imageUrl: string | null; linkUrl: string; position: string; start: string; end: string; active: boolean };
 const blank: Form = { title: '', imageUrl: null, linkUrl: '', position: BANNER_POSITIONS[0]!, start: '', end: '', active: true };
 
 function Page() {
-  const { rows, live, loading, reload } = useAdminData<BannerRow>(fetchBanners, demo);
+  const { rows, live, loading, reload } = useAdminData<BannerRow>(fetchBanners);
   const [tab, setTab] = useState(0);
   const [query, setQuery] = useState('');
   const [form, setForm] = useState<Form>(blank);
   const [busy, setBusy] = useState(false);
   const now = Date.now();
   const scheduled = (b: BannerRow) => Boolean(b.starts_at && new Date(b.starts_at).getTime() > now);
-  const shown = rows.filter((b) => b.title.toLowerCase().includes(query.toLowerCase()));
+  const ended = (b: BannerRow) => Boolean(b.ends_at && new Date(b.ends_at).getTime() < now);
+  const tabFilters: Array<(b: BannerRow) => boolean> = [() => true, (b) => b.status === 'ACTIVE' && !scheduled(b) && !ended(b), scheduled, (b) => b.status !== 'ACTIVE' || ended(b)];
+  const [place, setPlace] = useState('all');
+  const shown = rows.filter((b) => tabFilters[tab]!(b) && b.title.toLowerCase().includes(query.toLowerCase()) && (place === 'all' || b.position === place));
+  const pg = usePaged(shown, 20);
 
   function guard() {
-    if (!live) { toast.info('Sample data — sign in with a staff account to manage real banners.'); return false; }
     return true;
   }
   async function submit() {
@@ -70,24 +63,22 @@ function Page() {
         main={
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatCard icon={Image} tone="green" label="Total Banners" value={String(rows.length)} delta={live ? undefined : '+20%'} filled={false} />
-              <StatCard icon={Eye} tone="blue" label="Active Banners" value={String(rows.filter((b) => b.status === 'ACTIVE' && !scheduled(b)).length)} delta={live ? undefined : '+25%'} filled={false} />
-              <StatCard icon={Clock} tone="amber" label="Scheduled Banners" value={String(rows.filter(scheduled).length)} delta={live ? undefined : '0%'} dir="flat" filled={false} />
-              <StatCard icon={MinusCircle} tone="red" label="Inactive Banners" value={String(rows.filter((b) => b.status !== 'ACTIVE').length)} delta={live ? undefined : ''} dir="none" />
+              <StatCard icon={Image} tone="green" label="Total Banners" value={String(rows.length)} filled={false} />
+              <StatCard icon={Eye} tone="blue" label="Active Banners" value={String(rows.filter((b) => b.status === 'ACTIVE' && !scheduled(b)).length)} filled={false} />
+              <StatCard icon={Clock} tone="amber" label="Scheduled Banners" value={String(rows.filter(scheduled).length)} dir="flat" filled={false} />
+              <StatCard icon={MinusCircle} tone="red" label="Inactive Banners" value={String(rows.filter((b) => b.status !== 'ACTIVE').length)} dir="none" />
             </div>
             <Card className="mt-4">
-              <Tabs items={['Banners', 'Homepage Sections', 'About Content', 'Policy Pages', 'Footer Content']} active={tab} onChange={setTab} />
-              {tab === 0 ? (
+              <Tabs items={['All Banners', 'Live', 'Scheduled', 'Inactive / Ended'].map((t, i) => `${t} (${rows.filter(tabFilters[i]!).length})`)} active={tab} onChange={(i) => { setTab(i); pg.reset(); }} />
                 <>
                   <div className="flex items-center justify-between px-4 py-4">
                     <SearchBox placeholder="Search banners..." value={query} onChange={setQuery} className="w-[278px]" />
-                    <FiltersButton />
+                    <FilterSelect label="Location" value={place} onChange={(v) => { setPlace(v); pg.reset(); }} options={[['all', 'All Locations'], ...BANNER_POSITIONS.map((p): [string, string] => [p, p])]} className="w-[180px]" />
                   </div>
-                  <Table head={[<Checkbox key="c" />, '#', 'Banner Preview', 'Title', 'Location', 'Status', 'Display Period', 'Actions']}>
-                    {shown.map((b, i) => (
+                  <Table head={['#', 'Banner Preview', 'Title', 'Location', 'Status', 'Display Period', 'Actions']}>
+                    {pg.shown.map((b, i) => (
                       <Tr key={b.id}>
-                        <Td><Checkbox /></Td>
-                        <Td>{i + 1}</Td>
+                        <Td>{pg.from + i}</Td>
                         <Td><img src={b.image_url} alt={b.title} className="h-[60px] w-[180px] rounded-md object-cover" /></Td>
                         <Td className="whitespace-nowrap">{b.title}</Td>
                         <Td><Badge tone="gray" className="!bg-[#f1f4f7] !px-2.5">{b.position === 'Below Slider' ? <span className="text-[#2f73d9]">{b.position}</span> : b.position}</Badge></Td>
@@ -97,12 +88,9 @@ function Page() {
                       </Tr>
                     ))}
                   </Table>
-                  {!shown.length && <p className="px-5 py-10 text-center text-[14px] text-slate">No banners yet. Add one to show it on the homepage.</p>}
-                  <Pagination text={`Showing 1-${shown.length} of ${rows.length} banners`} pages={[]} />
+                  {!shown.length && <p className="px-5 py-10 text-center text-[14px] text-slate">{rows.length ? 'No banners in this view.' : 'No banners yet. Add one to show it on the homepage.'}</p>}
+                  <Pagination text={`Showing ${pg.from}-${pg.to} of ${pg.total} banners`} current={pg.page} pageCount={pg.pageCount} onPage={pg.setPage} />
                 </>
-              ) : (
-                <p className="px-6 py-12 text-center text-[14.5px] text-slate">Editing {['', 'homepage sections', 'the About page', 'policy pages', 'footer content'][tab]} will be available in a later update. Banners are live now.</p>
-              )}
             </Card>
           </>
         }

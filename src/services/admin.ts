@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/components/delight/auth-context';
 import type { Database } from '@/integrations/supabase/types';
 import { supabase } from './supabase';
 import { products as demoCatalog } from './catalog';
@@ -35,7 +38,7 @@ const imageByName = new Map(demoCatalog.map((p) => [p.name.toLowerCase(), p.imag
 /* Reads (RLS returns rows only for staff accounts)                    */
 /* ------------------------------------------------------------------ */
 
-export async function fetchAdminOrders(limit = 50): Promise<AdminOrder[]> {
+export async function fetchAdminOrders(limit = 1000): Promise<AdminOrder[]> {
   const { data, error } = await supabase.from('orders')
     .select('id,order_number,status,total,subtotal,discount,delivery_fee,payment_method,created_at,delivery_instructions,user_id,order_items(product_name,quantity,unit_price,line_total)')
     .order('created_at', { ascending: false }).limit(limit);
@@ -131,18 +134,20 @@ export async function setStock(productId: string, current: number, next: number,
 /* Hook: live data when available, the approved demo data otherwise    */
 /* ------------------------------------------------------------------ */
 
-export function useAdminData<T>(load: () => Promise<T[]>, demo: T[]) {
-  const [rows, setRows] = useState<T[]>(demo);
+export function useAdminData<T>(load: () => Promise<T[]>, _demo?: T[]) {
+  const [rows, setRows] = useState<T[]>([]);
   const [live, setLive] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
+    // The admin always shows the store's real data (an empty list means nothing yet), never sample rows.
     try {
-      const data = await load();
-      if (data.length) { setRows(data); setLive(true); } else { setRows(demo); setLive(false); }
-    } catch {
-      setRows(demo); setLive(false);
+      setRows(await load());
+    } catch (e) {
+      setRows([]);
+      toast.error(e instanceof Error ? `Could not load data: ${e.message}` : 'Could not load data');
     } finally {
+      setLive(true);
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -155,3 +160,36 @@ export function useAdminData<T>(load: () => Promise<T[]>, demo: T[]) {
 export const statusLabel = (s: string) => s.toLowerCase().split('_').map((w) => w[0]!.toUpperCase() + w.slice(1)).join(' ');
 export const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 export const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+/** Name shown for the signed-in staff account (from its profile, e.g. "Delight Shopping Mart"). */
+export function useStaffName() {
+  const { user, displayName } = useAuth();
+  const { data } = useQuery({
+    queryKey: ['staff-name', user?.id],
+    enabled: Boolean(user),
+    staleTime: 10 * 60_000,
+    queryFn: async () => (await supabase.from('profiles').select('full_name').eq('id', user!.id).maybeSingle()).data?.full_name ?? null,
+  });
+  return data || displayName;
+}
+
+/** Stock level below which a product counts as "low stock". */
+export async function setThreshold(productId: string, threshold: number) {
+  const { error } = await supabase.from('inventory').update({ low_stock_threshold: threshold }).eq('product_id', productId);
+  if (error) throw error;
+}
+
+export type StockMove = { at: string; delta: number; reason: string };
+
+/** Stock changes for one product, newest first: manual updates plus items sold in orders. */
+export async function fetchStockHistory(productId: string): Promise<StockMove[]> {
+  const [adj, sold] = await Promise.all([
+    supabase.from('inventory_adjustments').select('created_at,quantity_delta,reason').eq('product_id', productId).order('created_at', { ascending: false }).limit(20),
+    supabase.from('order_items').select('quantity,orders!inner(order_number,created_at,status)').eq('product_id', productId).limit(20),
+  ]);
+  const moves: StockMove[] = (adj.data ?? []).map((a) => ({ at: a.created_at, delta: a.quantity_delta, reason: a.reason }));
+  for (const s of (sold.data ?? []) as unknown as Array<{ quantity: number; orders: { order_number: string; created_at: string; status: string } }>) {
+    moves.push({ at: s.orders.created_at, delta: -s.quantity, reason: `Sold (order ${s.orders.order_number})${s.orders.status === 'CANCELLED' ? ' · cancelled, returned to stock' : ''}` });
+  }
+  return moves.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
+}

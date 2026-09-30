@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Clock, CreditCard, Database, Download, Image, Mail, Palette, Settings, Shield, Store, Trash2, Truck } from 'lucide-react';
+import { Clock, CreditCard, Database, Download, Image, Settings, Store, Truck } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { Card, Field, PageHeader, SelectBox, Toggle } from '@/components/delight/admin-ui';
+import { Badge, Card, downloadCsv, Field, PageHeader, Toggle } from '@/components/delight/admin-ui';
+import { paymentOptions } from '@/components/delight/checkout-ui';
+import { fetchAdminCustomers, fetchAdminOrders, fetchAdminProducts, fmtDate, statusLabel } from '@/services/admin';
 import { supabase } from '@/services/supabase';
 import { asset } from '@/lib/assets';
 
@@ -16,7 +18,7 @@ type Settings = { id: string; store_name: string; address: string; phone: string
 // Values shown in the approved Settings screen, used until the store's saved settings load.
 const defaults: Settings = { id: '', store_name: 'Delight Shopping Mart', address: 'Tulsipur Sub-Metropolitan City, Ward No. 6\nDang, Lumbini Province, Nepal', phone: '+977 9841234567', email: 'info@delightshoppingmart.com', opening_time: '07:00', closing_time: '21:00', currency: 'NPR', timezone: 'Asia/Kathmandu', delivery_radius_km: 5, delivery_fee: 0, min_order: 0, estimated_delivery_minutes: 20, delivery_available: true };
 
-const tabs = [[Settings, 'General'], [Store, 'Store Information'], [CreditCard, 'Payment Settings'], [Truck, 'Delivery Settings'], [Mail, 'Email & Notifications'], [Palette, 'Appearance'], [Shield, 'System']] as const;
+const tabs = [[Store, 'Store Information'], [Truck, 'Delivery & Hours'], [CreditCard, 'Payment Methods']] as const;
 
 function Section({ icon: Icon, title, sub, action, children }: { icon: typeof Store; title: string; sub: string; action?: ReactNode; children: ReactNode }) {
   return (
@@ -41,8 +43,7 @@ function Input({ value, onChange, type = 'text', multiline = false }: { value: s
 function Page() {
   const [tab, setTab] = useState(0);
   const [s, setS] = useState<Settings>(defaults);
-  const [altPhone, setAltPhone] = useState('+977 9807654321');
-  const [website, setWebsite] = useState('https://delightmart.com.np');
+  const [exporting, setExporting] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -54,11 +55,24 @@ function Page() {
   function update<K extends keyof Settings>(key: K, value: Settings[K]) { setS((v) => ({ ...v, [key]: value })); }
 
   async function save() {
-    if (!s.id) { toast.info('Settings saved locally. Connect the store database to persist them.'); return; }
+    if (!s.id) { toast.error('Store settings have not loaded yet. Refresh the page and try again.'); return; }
+    if (!s.store_name.trim()) { toast.error('Store name is required'); return; }
     setBusy(true);
     const { error } = await supabase.from('store_settings').update({ store_name: s.store_name, address: s.address, phone: s.phone, email: s.email, opening_time: s.opening_time, closing_time: s.closing_time, timezone: s.timezone, delivery_radius_km: s.delivery_radius_km, delivery_fee: s.delivery_fee, min_order: s.min_order, estimated_delivery_minutes: s.estimated_delivery_minutes, delivery_available: s.delivery_available, updated_at: new Date().toISOString() }).eq('id', s.id);
     setBusy(false);
     if (error) toast.error(error.message); else toast.success('Settings saved');
+  }
+
+  async function exportAll() {
+    setExporting(true);
+    try {
+      const [products, orders, customers] = await Promise.all([fetchAdminProducts(), fetchAdminOrders(5000), fetchAdminCustomers()]);
+      const day = new Date().toISOString().slice(0, 10);
+      downloadCsv(`delight-products-${day}.csv`, [['Name', 'SKU', 'Category', 'Price', 'MRP', 'Stock', 'Active'], ...products.map((p) => [p.name, p.sku, p.category, p.price, p.oldPrice, p.stock, p.active ? 'Yes' : 'No'])]);
+      downloadCsv(`delight-orders-${day}.csv`, [['Order', 'Date', 'Customer', 'Phone', 'Total', 'Payment', 'Status'], ...orders.map((o) => [o.number, fmtDate(o.createdAt), o.customer.name, o.customer.phone, o.total, o.paymentMethod, statusLabel(o.status)])]);
+      downloadCsv(`delight-customers-${day}.csv`, [['Name', 'Phone', 'Email', 'Orders', 'Total spent', 'Joined'], ...customers.map((c) => [c.name, c.phone, c.email, c.orders, c.spent, fmtDate(c.joined)])]);
+      toast.success('Downloaded 3 files: products, orders and customers');
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not export the data'); } finally { setExporting(false); }
   }
 
   const saveBtn = <button onClick={save} disabled={busy} className="rounded-lg bg-[#dcf2e6] px-5 py-2.5 text-[14.5px] font-medium text-[#077a52]">{busy ? 'Saving…' : 'Save Changes'}</button>;
@@ -77,7 +91,7 @@ function Page() {
         </div>
       </Card>
 
-      {tab === 3 ? (
+      {tab === 1 ? (
         <div className="grid gap-4 xl:grid-cols-2">
           <Section icon={Truck} title="Delivery Settings" sub="Control delivery area, fees and estimated time." action={saveBtn}>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -91,18 +105,26 @@ function Page() {
               <Toggle on={s.delivery_available} onChange={(v) => update('delivery_available', v)} />
             </div>
           </Section>
-          <Section icon={Clock} title="Opening Hours" sub="Customers see these hours across the store.">
+          <Section icon={Clock} title="Opening Hours" sub="Customers see these hours across the store." action={saveBtn}>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Opens"><Input type="time" value={s.opening_time ?? ''} onChange={(v) => update('opening_time', v)} /></Field>
               <Field label="Closes"><Input type="time" value={s.closing_time ?? ''} onChange={(v) => update('closing_time', v)} /></Field>
             </div>
           </Section>
         </div>
-      ) : tab > 1 ? (
-        <Card className="p-8 text-center">
-          <h2 className="text-[20px] font-bold text-navy">{tabs[tab]![1]}</h2>
-          <p className="mt-2 text-slate">These settings will be available once the related services are connected.</p>
-        </Card>
+      ) : tab === 2 ? (
+        <Section icon={CreditCard} title="Payment Methods" sub="What customers can choose on the payment step at checkout.">
+          <ul className="divide-y divide-line">
+            {paymentOptions.map((p) => (
+              <li key={p.value} className="flex items-center gap-4 py-3.5">
+                <img src={asset(p.icon)} alt="" className="h-8 w-10 object-contain" />
+                <span className="flex-1"><b className="block text-[14.5px] font-medium text-navy">{p.title}</b><span className="text-[13px] text-slate">{p.sub}</span></span>
+                {p.available ? <Badge tone="green">Active</Badge> : <Badge tone="amber">Needs merchant account</Badge>}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 rounded-lg bg-[#f0faf5] p-4 text-[13.5px] leading-5 text-navy">Cash on Delivery works today. eSewa, Khalti and cards are shown to customers as “coming soon”. To switch them on, the store first needs a merchant account with each provider; the developer then connects the account keys.</p>
+        </Section>
       ) : (
         <div className="grid gap-4 xl:grid-cols-[1.12fr_1fr]">
           <Section icon={Store} title="Store Information" sub="Update your store details and contact information." action={saveBtn}>
@@ -110,55 +132,36 @@ function Page() {
               <Field label="Store Name" required><Input value={s.store_name} onChange={(v) => update('store_name', v)} /></Field>
               <Field label="Email Address" required><Input type="email" value={s.email ?? ''} onChange={(v) => update('email', v)} /></Field>
               <Field label="Phone Number" required><Input value={s.phone ?? ''} onChange={(v) => update('phone', v)} /></Field>
-              <Field label="Alternate Phone"><Input value={altPhone} onChange={setAltPhone} /></Field>
               <Field label="Store Address" required><Input multiline value={s.address} onChange={(v) => update('address', v)} /></Field>
-              <Field label="Website"><Input value={website} onChange={setWebsite} /></Field>
             </div>
           </Section>
 
-          <Section icon={Image} title="Store Logo & Branding" sub="Upload your store logo and brand assets.">
+          <Section icon={Image} title="Store Logo & Branding" sub="The logo and colours used across the website and app.">
             <div className="grid gap-5 sm:grid-cols-[1fr_245px]">
               <div className="grid place-items-center rounded-lg border border-line bg-[#f8fafc] px-4 py-6 text-center">
                 <img src={asset('settings-logo')} alt="Delight Shopping Mart logo" className="h-[80px] w-auto mix-blend-multiply" />
-                <p className="mt-3 text-[14px] font-medium text-navy">Click to upload logo</p>
-                <p className="text-[12.5px] text-slate">PNG, JPG (Max 2MB)</p>
+                <p className="mt-3 text-[12.5px] text-slate">The logo is part of the website design. Send a new logo to your developer to change it.</p>
               </div>
               <div className="space-y-3">
-                <Field label="Favicon"><span className="flex items-center gap-4"><img src={asset('favicon-cart')} alt="" className="size-12 rounded-md border border-line object-contain" /><button className="rounded-lg border border-line px-4 py-2 text-[14px] font-medium text-navy">Change</button></span></Field>
+                <Field label="App Icon"><img src={asset('favicon-cart')} alt="" className="size-12 rounded-md border border-line object-contain" /></Field>
                 <Field label="Brand Color"><span className="flex h-10 items-center gap-3 rounded-lg border border-line pr-3"><span className="h-full w-9 rounded-l-lg bg-[#0B6B3A]" /> <span className="text-[14px] text-navy">#0B6B3A</span></span></Field>
                 <Field label="Secondary Color"><span className="flex h-10 items-center gap-3 rounded-lg border border-line pr-3"><span className="h-full w-9 rounded-l-lg bg-[#F4B400]" /> <span className="text-[14px] text-navy">#F4B400</span></span></Field>
               </div>
             </div>
           </Section>
 
-          <Section icon={Settings} title="Business Settings" sub="Configure your business preferences.">
-            <ul className="divide-y divide-line">
-              {([['Enable Online Orders', 'Allow customers to place orders online', true], ['Require Email Verification', 'Customers must verify email before ordering', true], ['Allow Guest Checkout', 'Let customers place orders without creating an account', false], ['Enable Product Reviews', 'Allow customers to write reviews', true], ['Maintenance Mode', 'Temporarily disable the store for maintenance', false]] as const).map(([a, b, on]) => (
-                <li key={a} className="flex items-center justify-between py-2.5">
-                  <span><b className="block text-[14.5px] font-medium text-navy">{a}</b><span className="text-[13px] text-slate">{b}</span></span>
-                  <Toggle on={on} />
-                </li>
+          <Section icon={Clock} title="Region & Currency" sub="Used for prices, order times and reports.">
+            <dl className="divide-y divide-line text-[14px]">
+              {([['Timezone', '(GMT+05:45) Kathmandu, Nepal'], ['Currency', 'NPR (Nepalese Rupee)'], ['Date Format', 'DD MMM YYYY (25 Sep 2026)']] as const).map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between py-2.5"><dt className="text-slate">{k}</dt><dd className="font-medium text-navy">{v}</dd></div>
               ))}
-            </ul>
+            </dl>
           </Section>
 
-          <Section icon={Clock} title="Timezone & Currency" sub="Set your store timezone and currency.">
-            <div className="space-y-4">
-              <Field label="Timezone"><SelectBox label="(GMT+05:45) Kathmandu, Nepal" className="w-full" /></Field>
-              <Field label="Currency"><SelectBox label="NPR (Nepalese Rupee)" className="w-full" /></Field>
-              <Field label="Date Format"><SelectBox label="DD MMM YYYY (25 Sep 2026)" className="w-full" /></Field>
-            </div>
-          </Section>
-
-          <Card className="flex items-center gap-4 p-5">
-            <Trash2 className="size-8 shrink-0 text-[#e3101a]" strokeWidth={1.6} />
-            <span className="flex-1"><b className="block text-[17px] font-bold text-[#e3101a]">Danger Zone</b><span className="text-[13.5px] text-slate">These actions are irreversible. Please be careful.</span></span>
-            <button onClick={() => toast.error('Resetting store data requires confirmation from a Super Admin.')} className="flex items-center gap-2 rounded-lg border border-[#f5b5b8] bg-[#fdf3f3] px-5 py-2.5 text-[14.5px] font-medium text-[#e3101a]"><Trash2 className="size-4" /> Reset Store Data</button>
-          </Card>
-          <Card className="flex items-center gap-4 p-5">
+          <Card className="flex flex-wrap items-center gap-4 p-5 xl:col-span-2">
             <Database className="size-8 shrink-0 text-navy" strokeWidth={1.6} />
-            <span className="flex-1"><b className="block text-[17px] font-bold text-navy">Export &amp; Backup</b><span className="text-[13.5px] text-slate">Download your store data and backups.</span></span>
-            <button onClick={() => toast.success('Export started')} className="flex items-center gap-2 rounded-lg border border-line px-5 py-2.5 text-[14.5px] font-medium text-navy"><Download className="size-4" /> Export All Data</button>
+            <span className="flex-1"><b className="block text-[17px] font-bold text-navy">Export &amp; Backup</b><span className="text-[13.5px] text-slate">Download products, orders and customers as CSV files (they open in Excel).</span></span>
+            <button onClick={() => void exportAll()} disabled={exporting} className="flex items-center gap-2 rounded-lg border border-line px-5 py-2.5 text-[14.5px] font-medium text-navy hover:bg-page disabled:opacity-60"><Download className="size-4" /> {exporting ? 'Preparing…' : 'Export All Data'}</button>
           </Card>
         </div>
       )}

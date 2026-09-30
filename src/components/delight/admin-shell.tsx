@@ -1,4 +1,4 @@
-import { Link, Outlet, useRouter, useRouterState } from '@tanstack/react-router';
+import { Link, Outlet, useNavigate, useRouter, useRouterState } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import {
   BadgePercent, ChartColumn, LogOut, Mail, ChevronDown, ClipboardList, Folder, Images, LayoutDashboard, MapPin, Menu, Package,
@@ -7,6 +7,7 @@ import {
 import { Logo } from './logo';
 import { useAuth } from './auth-context';
 import { supabase } from '@/services/supabase';
+import { useStaffName } from '@/services/admin';
 import { asset } from '@/lib/assets';
 
 const nav = [
@@ -27,15 +28,26 @@ const nav = [
   ['/admin/settings', Settings, 'Settings'],
 ] as const;
 
-const searchHints: Record<string, string> = {
-  '/admin': 'Search orders, products, customers...',
-  '/admin/orders': 'Search orders, customers, products...',
-  '/admin/reports': 'Search orders, customers, products, reports...',
-  '/admin/delivery': 'Search orders, customers, products, deliveries...',
-  '/admin/payments': 'Search orders, customers, products, payments...',
-  '/admin/users': 'Search users, orders, products...',
-  '/admin/settings': 'Search settings, store, orders, users...',
-};
+/** Header search: order numbers and phone numbers open Orders, anything else opens Products (or the page you are on). */
+function searchTarget(path: string, q: string): { to: '/admin/orders' | '/admin/products' | '/admin/inventory'; search: { q: string } } {
+  const orderLike = /^#?dlt[-\s]?\d/i.test(q) || /^\+?[\d\s-]{7,}$/.test(q);
+  if (orderLike || path === '/admin/orders') return { to: '/admin/orders', search: { q } };
+  if (path === '/admin/inventory') return { to: '/admin/inventory', search: { q } };
+  return { to: '/admin/products', search: { q } };
+}
+
+function HeaderSearch({ path }: { path: string }) {
+  const navigate = useNavigate();
+  const [q, setQ] = useState('');
+  const hint = path === '/admin/orders' ? 'Search orders by number, customer or phone...' : path === '/admin/inventory' ? 'Search stock by product name or SKU...' : 'Search products, SKUs or order numbers (DLT-…)';
+  return (
+    <form role="search" onSubmit={(e) => { e.preventDefault(); const v = q.trim(); if (v) void navigate(searchTarget(path, v)); }} className="hidden h-[42px] max-w-[530px] flex-1 items-center gap-3 rounded-lg border border-line bg-[#f7f9fb] px-4 focus-within:border-[#077a52] md:flex">
+      <Search className="size-5 text-slate" />
+      <input value={q} onChange={(e) => setQ(e.target.value)} className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-slate" placeholder={hint} aria-label="Search the admin" />
+      {q && <button type="button" aria-label="Clear search" onClick={() => setQ('')} className="text-slate hover:text-navy"><X className="size-4" /></button>}
+    </form>
+  );
+}
 
 function Sidebar({ path, onNavigate, pending }: { path: string; onNavigate?: () => void; pending: number }) {
   return (
@@ -70,7 +82,8 @@ export function AdminShell() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
-  const { user, loading, displayName, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const staffName = useStaffName();
   const [role, setRole] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [pending, setPending] = useState(0);
@@ -116,7 +129,7 @@ export function AdminShell() {
     );
   }
 
-  const name = displayName;
+  const name = staffName;
   const roleLabel = role.split('_').map((w) => w[0] + w.slice(1).toLowerCase()).join(' ');
   return (
     <div className="min-h-screen bg-page">
@@ -128,10 +141,7 @@ export function AdminShell() {
       <div className="xl:pl-[243px]">
         <header className="sticky top-0 z-30 flex h-[72px] items-center gap-5 bg-white px-5 shadow-[0_1px_0_#eef1f4]">
           <button aria-label="Toggle menu" onClick={() => setOpen(!open)} className="text-navy"><Menu className="size-7" strokeWidth={1.7} /></button>
-          <label className="hidden h-[42px] max-w-[530px] flex-1 items-center gap-3 rounded-lg border border-line bg-[#f7f9fb] px-4 md:flex">
-            <Search className="size-5 text-slate" />
-            <input className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-slate" placeholder={searchHints[path] ?? 'Search products, orders, customers...'} aria-label="Search" />
-          </label>
+          <HeaderSearch key={path} path={path} />
           <div className="ml-auto flex items-center gap-7">
             <Link to="/" target="_blank" className="hidden h-[42px] items-center gap-2.5 rounded-lg border border-line px-4 text-[15px] text-navy sm:flex"><MapPin className="size-5 fill-[#0a8a5b] text-white" /> View Store</Link>
             <div className="relative">

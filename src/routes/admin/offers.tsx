@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { CalendarDays, CircleCheck, Clock, Copy, Info, MinusCircle, Percent, Plus, Tag, Trash2, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
-import { Badge, Card, Checkbox, DataBadge, DateRange, Field, FilterBar, FiltersButton, IconBtn, PageHeader, Pagination, Panel, PrimaryAction, SearchBox, SelectBox, StatCard, Status, Table, Tabs, Td, Toggle, Tr, WithPanel, type BadgeTone } from '@/components/delight/admin-ui';
+import { Badge, Card, DataBadge, Field, FilterBar, FilterSelect, IconBtn, PageHeader, Pagination, Panel, PrimaryAction, SearchBox, StatCard, Status, Table, Tabs, Td, Toggle, Tr, usePaged, WithPanel, type BadgeTone } from '@/components/delight/admin-ui';
 import { FormButtons, Input } from '@/components/delight/admin-forms';
 import { useAdminData } from '@/services/admin';
 import { deleteCoupon, fetchCoupons, saveCoupon, setCouponStatus, type CouponRow } from '@/services/admin-actions';
@@ -14,27 +14,15 @@ export const Route = createFileRoute('/admin/offers')({
 });
 
 const typeTone: Record<string, BadgeTone> = { Category: 'pink', Coupon: 'blue', Product: 'green', Shipping: 'purple' };
-const offers = [
-  ['offer-dashain', 'Dashain Special', 'Big savings this festival season', 'Category', '20% OFF', '', '20 Sep – 15 Oct 2026', '124 / 500'],
-  ['offer-welcome', 'Welcome100', 'For first time customers', 'Coupon', 'NPR 100 OFF', 'Min. order: NPR 500', '01 Sep – 31 Dec 2026', '320 / 1,000'],
-  ['offer-grocery', 'Grocery Essentials', 'Save on daily essentials', 'Category', '15% OFF', '', '18 Sep – 30 Sep 2026', '86 / 500'],
-  ['offer-bogo', 'Buy 1 Get 1', 'Selected skincare products', 'Product', 'Buy 1 Get 1', '', '15 Sep – 15 Oct 2026', '45 / 200'],
-  ['offer-student', 'Student Discount', 'For verified students', 'Coupon', '10% OFF', 'Min. order: NPR 300', '01 Sep – 31 Dec 2026', '190 / 1,000'],
-  ['offer-weekend', 'Weekend Deal', 'Special offer every weekend', 'Category', '25% OFF', '', 'Every Fri – Sun', '310 / 1,000'],
-  ['offer-delivery', 'Free Delivery', 'On orders above NPR 1,000', 'Shipping', 'Free Delivery', 'Min. order: NPR 1,000', '01 Sep – 31 Oct 2026', '480 / 2,000'],
-  ['offer-clearance', 'Clearance Sale', 'Limited stock, big discounts', 'Product', 'Up to 50% OFF', '', '01 Sep – 30 Sep 2026', '92 / 300'],
-] as const;
+type Row = { pct: boolean; id: string; img: string; name: string; sub: string; type: string; disc: string; min: string; valid: string; usage: string; active: boolean; state: 'active' | 'upcoming' | 'expired' };
 
-type Row = { id: string; img: string; name: string; sub: string; type: string; disc: string; min: string; valid: string; usage: string; active: boolean; state: 'active' | 'upcoming' | 'expired' };
-
-const demoRows: Row[] = offers.map(([img, name, sub, t, disc, min, valid, usage]) => ({ id: name, img: asset(img), name, sub, type: t, disc, min, valid, usage, active: true, state: 'active' }));
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
 
 function toRow(c: CouponRow): Row {
   const now = Date.now();
   const state = c.ends_at && new Date(c.ends_at).getTime() < now ? 'expired' : c.starts_at && new Date(c.starts_at).getTime() > now ? 'upcoming' : 'active';
   return {
-    id: c.id, img: asset('offer-welcome'), name: c.code, sub: 'Promo code', type: 'Coupon',
+    pct: c.discount_type === 'PERCENTAGE', id: c.id, img: asset('offer-welcome'), name: c.code, sub: 'Promo code', type: 'Coupon',
     disc: c.discount_type === 'PERCENTAGE' ? `${c.discount_value}% OFF` : `NPR ${c.discount_value.toLocaleString('en-US')} OFF`,
     min: c.min_order ? `Min. order: NPR ${c.min_order.toLocaleString('en-US')}` : '',
     valid: c.starts_at || c.ends_at ? `${day(c.starts_at) || 'Now'} – ${day(c.ends_at) || 'No end'}` : 'Always',
@@ -46,21 +34,25 @@ type Form = { code: string; pct: boolean; value: string; minOrder: string; limit
 const blank: Form = { code: '', pct: true, value: '', minOrder: '', limit: '', start: '', end: '', active: true };
 
 function Page() {
-  const { rows: coupons, live, loading, reload } = useAdminData<CouponRow>(fetchCoupons, []);
-  const rows = live ? coupons.map(toRow) : demoRows;
+  const { rows: coupons, live, loading, reload } = useAdminData<CouponRow>(fetchCoupons);
+  const rows = coupons.map(toRow);
   const [tab, setTab] = useState(0);
   const [type, setType] = useState(2);
   const [query, setQuery] = useState('');
+  const [kind, setKind] = useState('all');
+  const [sort, setSort] = useState('newest');
   const [form, setForm] = useState<Form>(blank);
   const [busy, setBusy] = useState(false);
 
-  const filters: Array<(r: Row) => boolean> = [() => true, (r) => r.type === 'Product', (r) => r.type === 'Category', (r) => r.type === 'Coupon', (r) => r.state === 'upcoming', (r) => r.state === 'expired'];
-  const shown = rows.filter((r) => filters[tab]!(r) && `${r.name} ${r.sub}`.toLowerCase().includes(query.toLowerCase()));
+  const filters: Array<(r: Row) => boolean> = [() => true, (r) => r.active && r.state === 'active', (r) => r.state === 'upcoming', (r) => r.state === 'expired', (r) => !r.active];
+  const used = (r: Row) => Number(r.usage.split(' / ')[0]) || 0;
+  const shown = rows
+    .filter((r) => filters[tab]!(r) && `${r.name} ${r.sub}`.toLowerCase().includes(query.toLowerCase()) && (kind === 'all' || (kind === 'pct') === r.pct))
+    .sort((a, b) => (sort === 'used' ? used(b) - used(a) : sort === 'name' ? a.name.localeCompare(b.name) : 0));
+  const pg = usePaged(shown, 20);
   const n = (i: number) => rows.filter(filters[i]!).length;
-  const demoCounts = ['24', '10', '6', '5', '4', '2'];
 
   function guard() {
-    if (!live) { toast.info('Sample data — sign in with a staff account to manage real promo codes.'); return false; }
     return true;
   }
   async function submit() {
@@ -94,37 +86,34 @@ function Page() {
         main={
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatCard icon={Tag} tone="green" label="Total Offers" value={live ? String(rows.length) : '24'} delta={live ? undefined : '+20%'} />
-              <StatCard icon={Percent} tone="blue" label="Active Offers" value={live ? String(rows.filter((r) => r.active && r.state === 'active').length) : '18'} delta={live ? undefined : '+12%'} filled={false} />
-              <StatCard icon={Clock} tone="amber" label="Upcoming Offers" value={live ? String(n(4)) : '4'} delta={live ? undefined : '+33%'} filled={false} />
-              <StatCard icon={MinusCircle} tone="red" label="Expired Offers" value={live ? String(n(5)) : '2'} delta={live ? undefined : '-50%'} dir="down" />
+              <StatCard icon={Tag} tone="green" label="Total Offers" value={String(rows.length)} />
+              <StatCard icon={Percent} tone="blue" label="Active Offers" value={String(rows.filter((r) => r.active && r.state === 'active').length)} filled={false} />
+              <StatCard icon={Clock} tone="amber" label="Upcoming Offers" value={String(n(4))} filled={false} />
+              <StatCard icon={MinusCircle} tone="red" label="Expired Offers" value={String(n(5))} dir="down" />
             </div>
             <Card className="mt-4">
-              <Tabs items={['All Offers', 'Product Offers', 'Category Offers', 'Coupons', 'Upcoming', 'Expired'].map((t, i) => `${t} (${live ? n(i) : demoCounts[i]})`)} active={tab} onChange={setTab} />
+              <Tabs items={['All Codes', 'Running', 'Upcoming', 'Expired', 'Turned Off'].map((t, i) => `${t} (${n(i)})`)} active={tab} onChange={(i) => { setTab(i); pg.reset(); }} />
               <FilterBar>
                 <SearchBox placeholder="Search offers, coupon codes..." value={query} onChange={setQuery} className="w-[232px]" />
-                <SelectBox label="All Types" className="w-[122px]" />
-                <SelectBox label="All Status" className="w-[138px]" />
-                <DateRange />
-                <FiltersButton />
+                <FilterSelect label="Discount type" value={kind} onChange={(v) => { setKind(v); pg.reset(); }} options={[['all', 'All Discounts'], ['pct', 'Percentage off'], ['fixed', 'Fixed amount off']]} className="w-[160px]" />
+                <FilterSelect label="Sort" value={sort} onChange={setSort} options={[['newest', 'Sort: Newest'], ['used', 'Sort: Most used'], ['name', 'Sort: Code (A-Z)']]} className="w-[160px]" />
               </FilterBar>
-              <Table head={[<Checkbox key="c" />, '#', 'Offer Name', 'Type', 'Discount', 'Validity', 'Status', 'Usage', 'Actions']}>
-                {shown.map((r, i) => (
+              <Table head={['#', 'Offer Name', 'Type', 'Discount', 'Validity', 'Status', 'Usage', 'Actions']}>
+                {pg.shown.map((r, i) => (
                   <Tr key={r.id}>
-                    <Td><Checkbox /></Td>
-                    <Td>{i + 1}</Td>
+                    <Td>{pg.from + i}</Td>
                     <Td><span className="flex items-center gap-3"><img src={r.img} alt="" className="size-10 rounded object-contain" /><span className="leading-tight"><span className="block">{r.name}</span><span className="text-[12px] text-slate">{r.sub}</span></span></span></Td>
                     <Td><Badge tone={typeTone[r.type]!}>{r.type}</Badge></Td>
                     <Td className="leading-tight"><b className="block font-semibold">{r.disc}</b>{r.min && <span className="text-[12px] text-slate">{r.min}</span>}</Td>
                     <Td className="whitespace-nowrap text-slate">{r.valid}</Td>
-                    <Td>{live ? <span className="flex items-center gap-2"><Toggle key={`${r.id}${r.active}`} on={r.active} onChange={(v) => void toggle(r, v)} /><Status value={r.state === 'expired' ? 'Inactive' : r.active ? 'Active' : 'Inactive'} /></span> : <Status value="Active" />}</Td>
+                    <Td>{<span className="flex items-center gap-2"><Toggle key={`${r.id}${r.active}`} on={r.active} onChange={(v) => void toggle(r, v)} /><Status value={r.state === 'expired' ? 'Inactive' : r.active ? 'Active' : 'Inactive'} /></span>}</Td>
                     <Td className="whitespace-nowrap text-slate">{r.usage}</Td>
                     <Td><span className="flex gap-2"><IconBtn icon={Copy} label="Copy code" onClick={() => { void navigator.clipboard?.writeText(r.name); toast.success(`${r.name} copied`); }} /><IconBtn icon={Trash2} label="Delete" tone="danger" onClick={() => void remove(r)} /></span></Td>
                   </Tr>
                 ))}
               </Table>
-              {!shown.length && <p className="px-5 py-10 text-center text-[14px] text-slate">No offers in this view yet.</p>}
-              <Pagination text={`Showing 1-${shown.length} of ${live ? rows.length : '24'} offers`} pages={live ? [1] : [1, 2, 3]} perPage="8 per page" />
+              {!shown.length && <p className="px-5 py-10 text-center text-[14px] text-slate">{rows.length ? 'No promo codes match these filters.' : 'No promo codes yet. Create one with the form on the right.'}</p>}
+              <Pagination text={`Showing ${pg.from}-${pg.to} of ${pg.total} promo codes`} current={pg.page} pageCount={pg.pageCount} onPage={pg.setPage} />
             </Card>
           </>
         }

@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { ArrowDown, ArrowRight, ArrowUpRight, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Filter, ImagePlus, Minus, Search, X, type LucideIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
@@ -55,7 +56,7 @@ const toneStyles: Record<Tone, { card: string; circle: string; icon: string }> =
   purple: { card: 'bg-[#f4f3ff] border-[#e7e5fb]', circle: 'bg-[#e6e2fc]', icon: 'text-[#7c5cf5]' },
 };
 
-export function StatCard({ icon: Icon, tone, label, value, delta, dir = 'up', note = 'vs last month', filled = true, compact = false }: { icon: LucideIcon; tone: Tone; label: string; value: string; delta?: string | undefined; dir?: 'up' | 'down' | 'flat' | 'none'; note?: string; filled?: boolean; compact?: boolean }) {
+export function StatCard({ icon: Icon, tone, label, value, delta, dir = 'up', note = '', filled = true, compact = false }: { icon: LucideIcon; tone: Tone; label: string; value: string; delta?: string | undefined; dir?: 'up' | 'down' | 'flat' | 'none'; note?: string; filled?: boolean; compact?: boolean }) {
   const t = toneStyles[tone];
   const deltaColor = dir === 'down' ? 'text-[#e3101a]' : dir === 'flat' ? 'text-[#f59f0b]' : dir === 'none' ? 'text-slate' : 'text-[#0a8a5b]';
   const Arrow = dir === 'down' ? ArrowDown : dir === 'flat' ? ArrowRight : dir === 'none' ? Minus : ArrowUpRight;
@@ -98,15 +99,7 @@ export function SearchBox({ placeholder, value, onChange, className = 'w-[320px]
   );
 }
 
-export function SelectBox({ label, className = 'w-[150px]' }: { label: string; className?: string }) {
-  return (
-    <button className={`flex h-[40px] items-center justify-between gap-2 rounded-lg border border-line bg-white px-3 text-[13px] text-navy ${className}`}>
-      <span className="truncate">{label}</span><ChevronDown className="size-4 shrink-0 text-slate" />
-    </button>
-  );
-}
-
-/** Working dropdown styled like SelectBox. */
+/** Working dropdown for table filters. */
 export function FilterSelect({ value, onChange, options, className = 'w-[150px]', label }: { value: string; onChange: (v: string) => void; options: Array<[string, string]>; className?: string; label: string }) {
   return (
     <span className={`relative flex h-[40px] items-center rounded-lg border border-line bg-white text-[13px] text-navy ${className}`}>
@@ -118,17 +111,32 @@ export function FilterSelect({ value, onChange, options, className = 'w-[150px]'
   );
 }
 
-export function DateRange({ label = '21 Sep 2026 - 21 Oct 2026', className = '' }: { label?: string; className?: string }) {
-  return (
-    <button className={`flex h-[40px] items-center gap-2 whitespace-nowrap rounded-lg border border-line bg-white px-3 text-[13px] text-navy ${className}`}>
-      <CalendarDays className="size-[18px] text-navy" /> {label} <ChevronDown className="size-4 text-slate" />
-    </button>
-  );
-}
+/** Time windows used by the admin filters and dashboard. */
+export const PERIODS: Array<[string, string]> = [['all', 'All time'], ['today', 'Today'], ['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ['month', 'This month'], ['90d', 'Last 90 days']];
 
-export function FiltersButton() {
+/** Start of a period as a timestamp (0 = no limit). */
+export function periodStart(period: string): number {
+  const now = new Date();
+  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (period === 'today') return day;
+  if (period === '7d') return day - 6 * 86_400_000;
+  if (period === '30d') return day - 29 * 86_400_000;
+  if (period === '90d') return day - 89 * 86_400_000;
+  if (period === 'month') return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  return 0;
+}
+export const inPeriod = (iso: string, period: string) => new Date(iso).getTime() >= periodStart(period);
+
+/** Date filter: Today, Last 7 days, This month… */
+export function PeriodSelect({ value, onChange, className = 'w-[150px]' }: { value: string; onChange: (v: string) => void; className?: string }) {
   return (
-    <button className="flex h-[40px] items-center gap-2 rounded-lg border border-line bg-white px-4 text-[14px] font-semibold text-navy"><Filter className="size-4" /> Filters</button>
+    <span className={`relative flex h-[40px] items-center rounded-lg border border-line bg-white text-[13px] text-navy ${className}`}>
+      <CalendarDays className="pointer-events-none absolute left-3 size-[17px] text-navy" />
+      <select aria-label="Date range" value={value} onChange={(e) => onChange(e.target.value)} className="h-full w-full cursor-pointer appearance-none rounded-lg bg-transparent pl-9 pr-8 outline-none">
+        {PERIODS.map(([v, text]) => <option key={v} value={v}>{text}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 size-4 text-slate" />
+    </span>
   );
 }
 
@@ -142,10 +150,6 @@ export function FilterBar({ children }: { children: ReactNode }) {
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <section className={`rounded-xl border border-line bg-white shadow-[0_1px_2px_rgb(16_24_40/0.03)] ${className}`}>{children}</section>;
-}
-
-export function Checkbox({ checked = false }: { checked?: boolean }) {
-  return <span className={`inline-block size-[17px] rounded-[4px] border-2 ${checked ? 'border-[#077a52] bg-[#077a52]' : 'border-[#b6bec8] bg-white'}`} />;
 }
 
 export function Table({ head, children, className = '' }: { head: ReactNode[]; children: ReactNode; className?: string }) {
@@ -229,22 +233,40 @@ export function pageList(page: number, count: number): Array<number | string> {
   return nums.flatMap((n, i) => (i > 0 && n - nums[i - 1]! > 1 ? ['…', n] : [n]));
 }
 
-export function Pagination({ text, pages = [1, 2, 3, 4, 5, '…', 125], perPage = '10 per page', current, pageCount, onPage }: { text: string; pages?: Array<number | string> | undefined; perPage?: string; current?: number | undefined; pageCount?: number | undefined; onPage?: ((page: number) => void) | undefined }) {
-  const [own, setOwn] = useState(1);
-  const page = current ?? own;
-  const setPage = (n: number) => { if (pageCount && (n < 1 || n > pageCount)) return; setOwn(n); onPage?.(n); };
-  if (pageCount) pages = pageList(page, pageCount);
+/** Download rows as a CSV file that opens in Excel. */
+export function downloadCsv(filename: string, lines: Array<Array<string | number>>) {
+  const body = lines.map((r) => r.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob(['\ufeff', body], { type: 'text/csv' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** Rows of the current page plus the pager state, e.g. `const pg = usePaged(rows, 20)`. */
+export function usePaged<T>(rows: T[], perPage = 20) {
+  const [page, setPage] = useState(1);
+  const pageCount = Math.max(1, Math.ceil(rows.length / perPage));
+  const current = Math.min(page, pageCount);
+  const shown = rows.slice((current - 1) * perPage, current * perPage);
+  const from = rows.length ? (current - 1) * perPage + 1 : 0;
+  return { shown, page: current, pageCount, setPage, reset: () => setPage(1), from, to: from ? from + shown.length - 1 : 0, total: rows.length };
+}
+
+/** "Showing 1–20 of 57" with page buttons (hidden when everything fits on one page). */
+export function Pagination({ text, current = 1, pageCount = 1, onPage }: { text: string; current?: number | undefined; pageCount?: number | undefined; onPage?: ((page: number) => void) | undefined }) {
+  const go = (n: number) => { if (n >= 1 && n <= pageCount) onPage?.(n); };
   return (
-    <div className="flex items-center justify-between px-5 py-4 text-[14px] text-slate">
+    <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-[14px] text-slate">
       <span>{text}</span>
-      <div className="flex items-center gap-2">
-        <button aria-label="Previous page" onClick={() => setPage(page - 1)} className="grid size-8 place-items-center rounded-md text-navy"><ChevronLeft className="size-4" /></button>
-        {pages.map((p, i) => typeof p === 'number'
-          ? <button key={i} onClick={() => setPage(p)} className={`grid h-8 min-w-8 place-items-center rounded-md border px-2 text-[13.5px] ${page === p ? 'border-[#9dc9f5] bg-[#eaf4fe] text-[#2f73d9]' : 'border-line bg-white text-navy'}`}>{p}</button>
-          : <span key={i} className="px-1">…</span>)}
-        <button aria-label="Next page" onClick={() => setPage(page + 1)} className="grid size-8 place-items-center rounded-md text-navy"><ChevronRight className="size-4" /></button>
-      </div>
-      <div className="flex items-center gap-3">Show <SelectBox label={perPage} className="w-[132px]" /></div>
+      {pageCount > 1 && (
+        <div className="flex items-center gap-2">
+          <button aria-label="Previous page" disabled={current <= 1} onClick={() => go(current - 1)} className="grid size-8 place-items-center rounded-md text-navy disabled:opacity-40"><ChevronLeft className="size-4" /></button>
+          {pageList(current, pageCount).map((p, i) => typeof p === 'number'
+            ? <button key={i} onClick={() => go(p)} aria-current={current === p ? 'page' : undefined} className={`grid h-8 min-w-8 place-items-center rounded-md border px-2 text-[13.5px] ${current === p ? 'border-[#9dc9f5] bg-[#eaf4fe] text-[#2f73d9]' : 'border-line bg-white text-navy'}`}>{p}</button>
+            : <span key={i} className="px-1">…</span>)}
+          <button aria-label="Next page" disabled={current >= pageCount} onClick={() => go(current + 1)} className="grid size-8 place-items-center rounded-md text-navy disabled:opacity-40"><ChevronRight className="size-4" /></button>
+        </div>
+      )}
     </div>
   );
 }
@@ -267,11 +289,11 @@ export function Panel({ title, children, onClose, className = '' }: { title?: Re
   );
 }
 
-export function PanelTitle({ children, link }: { children: ReactNode; link?: string }) {
+export function PanelTitle({ children, link }: { children: ReactNode; link?: { label: string; to: string } | undefined }) {
   return (
     <div className="mb-3 flex items-center justify-between">
       <h2 className="text-[17px] font-bold text-navy">{children}</h2>
-      {link && <button className="text-[14px] font-medium text-[#2f73d9]">{link}</button>}
+      {link && <Link to={link.to as '/admin'} className="text-[14px] font-medium text-[#2f73d9]">{link.label}</Link>}
     </div>
   );
 }
@@ -303,10 +325,6 @@ export function TextArea({ placeholder, max, rows = 4 }: { placeholder?: string;
       {max && <span className="mt-1 block text-right text-[12px] text-slate">{v.length}/{max}</span>}
     </>
   );
-}
-
-export function Dropdown({ label }: { label: string }) {
-  return <SelectBox label={label} className="w-full" />;
 }
 
 export function UploadBox({ hint = 'PNG, JPG (Max 2MB)', extra }: { hint?: string; extra?: string }) {

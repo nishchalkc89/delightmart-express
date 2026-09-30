@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { Box, ChevronRight, CircleCheck, CircleX, Ellipsis, Eye, MapPin, Plus, Settings, Truck, UsersRound } from 'lucide-react';
+import { Box, ChevronRight, CircleCheck, CircleX, ExternalLink, Eye, MapPin, Phone, Plus, Settings, Truck, UsersRound } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Avatar, Badge, Card, Checkbox, DataBadge, DateRange, Field, FilterBar, FiltersButton, IconBtn, PageHeader, Pagination, Panel, PanelTitle, PrimaryAction, SearchBox, SelectBox, StatCard, Table, Tabs, Td, Tr, WithPanel, type BadgeTone } from '@/components/delight/admin-ui';
+import { Avatar, Badge, Card, DataBadge, Field, FilterBar, FilterSelect, IconBtn, inPeriod, PageHeader, Pagination, Panel, PanelTitle, PeriodSelect, PrimaryAction, SearchBox, StatCard, Table, Tabs, Td, Tr, usePaged, WithPanel, type BadgeTone } from '@/components/delight/admin-ui';
 import { Select } from '@/components/delight/admin-forms';
-import { people } from '@/components/delight/admin-data';
 import { fmtDate, useAdminData } from '@/services/admin';
 import { assignDelivery, fetchDeliveries, fetchUsersWithRoles, type DeliveryRow, type StaffRow } from '@/services/admin-actions';
 import { asset } from '@/lib/assets';
+import { STORE } from '@/lib/store-info';
 
 export const Route = createFileRoute('/admin/delivery')({
   head: () => ({ meta: [{ title: 'Delivery Management — Delight Admin' }, { name: 'description', content: 'Manage deliveries and delivery staff.' }, { property: 'og:title', content: 'Delivery Management — Delight Admin' }, { property: 'og:description', content: 'Delivery operations.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
@@ -28,20 +28,14 @@ function statusOf(r: DeliveryRow): string {
   return 'Processing';
 }
 
-const demo: DeliveryRow[] = ([
-  ['10251', people.sujan, 'Tulsipur', 'Ramesh D.', 'DELIVERED', '2026-09-27'], ['10250', people.aarati, 'Tulsipur', 'Suman K.', 'OUT_FOR_DELIVERY', '2026-09-28'],
-  ['10249', people.bikash, 'Ghorahi', 'Dipesh R.', 'PENDING', '2026-09-29'], ['10248', people.sangita, 'Tulsipur', 'Ramesh D.', 'DELIVERED', '2026-09-25'],
-  ['10247', people.ramesh, 'Lamahi', 'Anil S.', 'OUT_FOR_DELIVERY', '2026-09-26'], ['10246', people.sita, 'Tulsipur', 'Suman K.', 'FAILED', '2026-09-24'],
-  ['10245', people.kiran, 'Dang', 'Dipesh R.', 'DELIVERED', '2026-09-22'], ['10244', people.prabin, 'Tulsipur', 'Ramesh D.', 'PENDING', '2026-09-23'],
-  ['10243', people.anjali, 'Ghorahi', 'Suman K.', 'OUT_FOR_DELIVERY', '2026-09-24'], ['10242', people.dipesh, 'Lamahi', 'Anil S.', 'DELIVERED', '2026-09-20'],
-] as const).map(([n, who, loc, partner, st, eta]) => ({ orderId: n, orderNumber: `#${n}`, customer: who.name, phone: who.phone, address: loc, total: 0, orderStatus: 'CONFIRMED', createdAt: eta, staffId: partner, status: st as Status, estimated: eta }));
-const demoPartners = [[people.ramesh, 'Ramesh D.', 48, '96%'], [people.kiran, 'Suman K.', 42, '93%'], [people.dipesh, 'Dipesh R.', 38, '89%'], [people.bikash, 'Anil S.', 27, '85%']] as const;
-
 function Page() {
-  const { rows, setRows, live, loading } = useAdminData<DeliveryRow>(fetchDeliveries, demo);
+  const { rows, setRows, live, loading } = useAdminData<DeliveryRow>(fetchDeliveries);
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [tab, setTab] = useState(0);
   const [query, setQuery] = useState('');
+  const [statusF, setStatusF] = useState('all');
+  const [partnerF, setPartnerF] = useState('all');
+  const [period, setPeriod] = useState('all');
   const [tracking, setTracking] = useState('');
   const [selId, setSelId] = useState<string | null>(null);
   const [assignee, setAssignee] = useState('');
@@ -49,13 +43,17 @@ function Page() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { if (live) void fetchUsersWithRoles().then((u) => setStaff(u.filter((x) => x.roles.includes('DELIVERY_STAFF')))).catch(() => setStaff([])); }, [live]);
-  const staffName = (id: string | null) => (live ? staff.find((s) => s.id === id)?.name ?? (id ? 'Staff' : 'Not assigned') : id ?? '—');
+  const staffName = (id: string | null) => (staff.find((s) => s.id === id)?.name ?? (id ? 'Staff' : 'Not assigned'));
 
   const tabs: Array<[string, (r: DeliveryRow) => boolean]> = [
     ['All Deliveries', () => true], ['Out for Delivery', (r) => statusOf(r) === 'Out for Delivery'], ['Delivered', (r) => statusOf(r) === 'Delivered'], ['Failed', (r) => statusOf(r) === 'Failed'], ['Delivery Partners', () => false],
   ];
-  const shown = useMemo(() => rows.filter((r) => tabs[tab]![1](r) && `${r.orderNumber} ${r.customer} ${r.phone}`.toLowerCase().includes(query.toLowerCase())), [rows, tab, query]); // eslint-disable-line react-hooks/exhaustive-deps
-  const n = (i: number) => (i === 4 ? (live ? staff.length : 8) : rows.filter(tabs[i]![1]).length);
+  const shown = useMemo(() => rows.filter((r) => tabs[tab]![1](r) && `${r.orderNumber} ${r.customer} ${r.phone} ${r.address}`.toLowerCase().includes(query.toLowerCase())
+    && (statusF === 'all' || statusOf(r) === statusF)
+    && (partnerF === 'all' || (partnerF === 'none' ? !r.staffId : r.staffId === partnerF))
+    && inPeriod(r.createdAt, period)), [rows, tab, query, statusF, partnerF, period]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pg = usePaged(shown, 20);
+  const n = (i: number) => (i === 4 ? (staff.length) : rows.filter(tabs[i]![1]).length);
   const sel = rows.find((r) => r.orderId === selId);
 
   function select(r: DeliveryRow) {
@@ -65,7 +63,6 @@ function Page() {
   }
   async function save() {
     if (!sel) return;
-    if (!live) { toast.info('Sample data — sign in with a staff account to assign real deliveries.'); return; }
     setSaving(true);
     try {
       await assignDelivery(sel.orderId, assignee || null, nextStatus);
@@ -74,9 +71,7 @@ function Page() {
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not update the delivery'); } finally { setSaving(false); }
   }
 
-  const partners = live
-    ? staff.map((s) => { const mine = rows.filter((r) => r.staffId === s.id); const done = mine.filter((r) => statusOf(r) === 'Delivered').length; return [s, s.name, mine.length, mine.length ? `${Math.round((done / mine.length) * 100)}%` : '—'] as const; })
-    : demoPartners;
+  const partners = staff.map((s) => { const mine = rows.filter((r) => r.staffId === s.id); const done = mine.filter((r) => statusOf(r) === 'Delivered').length; return [s, s.name, mine.length, mine.length ? `${Math.round((done / mine.length) * 100)}%` : '—'] as const; });
 
   return (
     <div>
@@ -85,13 +80,13 @@ function Page() {
         main={
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatCard icon={Truck} tone="green" label="Total Deliveries" value={live ? String(rows.length) : '346'} delta={live ? undefined : '+18%'} />
-              <StatCard icon={Box} tone="blue" label="Out for Delivery" value={live ? String(n(1)) : '72'} delta={live ? undefined : '+12%'} />
-              <StatCard icon={CircleCheck} tone="amber" label="Delivered" value={live ? String(n(2)) : '258'} delta={live ? undefined : '+25%'} />
-              <StatCard icon={CircleX} tone="red" label="Failed / Returned" value={live ? String(n(3)) : '16'} delta={live ? undefined : '-8%'} dir="down" />
+              <StatCard icon={Truck} tone="green" label="Total Deliveries" value={String(rows.length)} />
+              <StatCard icon={Box} tone="blue" label="Out for Delivery" value={String(n(1))} />
+              <StatCard icon={CircleCheck} tone="amber" label="Delivered" value={String(n(2))} />
+              <StatCard icon={CircleX} tone="red" label="Failed / Returned" value={String(n(3))} dir="down" />
             </div>
             <Card className="mt-4">
-              <Tabs items={tabs.map(([t], i) => `${t} (${live ? n(i) : ['346', '72', '258', '16', '8'][i]})`)} active={tab} onChange={setTab} />
+              <Tabs items={tabs.map(([t], i) => `${t} (${n(i)})`)} active={tab} onChange={setTab} />
               {tab === 4 ? (
                 <div className="p-5">
                   {partners.length ? partners.map(([p, name, count, rate]) => (
@@ -106,31 +101,29 @@ function Page() {
                 <>
                   <FilterBar>
                     <SearchBox placeholder="Search by order ID, customer name or tracking ID..." value={query} onChange={setQuery} className="w-[292px]" />
-                    <SelectBox label="All Status" className="w-[104px]" />
-                    <SelectBox label="All Delivery Partners" className="w-[140px]" />
-                    <DateRange />
-                    <FiltersButton />
+                    <FilterSelect label="Delivery status" value={statusF} onChange={(v) => { setStatusF(v); pg.reset(); }} options={[['all', 'All Status'], ...['Processing', 'Ready', 'Out for Delivery', 'Delivered', 'Failed', 'Cancelled'].map((x): [string, string] => [x, x])]} className="w-[150px]" />
+                    <FilterSelect label="Delivery partner" value={partnerF} onChange={(v) => { setPartnerF(v); pg.reset(); }} options={[['all', 'All Delivery Partners'], ['none', 'Not assigned'], ...staff.map((s): [string, string] => [s.id, s.name])]} className="w-[180px]" />
+                    <PeriodSelect value={period} onChange={(v) => { setPeriod(v); pg.reset(); }} />
                   </FilterBar>
-                  <Table head={[<Checkbox key="c" />, '#', 'Order ID', 'Customer', 'Location', 'Delivery Partner', 'Status', 'Estimated Delivery', 'Actions']}>
-                    {shown.map((r, i) => {
+                  <Table head={['#', 'Order ID', 'Customer', 'Location', 'Delivery Partner', 'Status', 'Estimated Delivery', 'Actions']}>
+                    {pg.shown.map((r, i) => {
                       const st = statusOf(r);
                       return (
                         <Tr key={r.orderId} active={r.orderId === selId} onClick={() => select(r)}>
-                          <Td><Checkbox /></Td>
-                          <Td>{i + 1}</Td>
+                          <Td>{pg.from + i}</Td>
                           <Td className="whitespace-nowrap">{r.orderNumber}</Td>
-                          <Td><span className="flex items-center gap-2.5 whitespace-nowrap"><Avatar src={Object.values(people).find((p) => p.name === r.customer)?.avatar} name={r.customer} size="size-8" />{r.customer}</span></Td>
+                          <Td><span className="flex items-center gap-2.5 whitespace-nowrap"><Avatar name={r.customer} size="size-8" />{r.customer}</span></Td>
                           <Td className="max-w-[140px] truncate text-slate">{r.address}</Td>
                           <Td className="whitespace-nowrap">{staffName(r.staffId)}</Td>
                           <Td><Badge tone={tone[st] ?? 'gray'}>{st}</Badge></Td>
                           <Td className="whitespace-nowrap text-slate">{r.estimated ? fmtDate(r.estimated) : '—'}</Td>
-                          <Td><span className="flex gap-2"><IconBtn icon={Eye} label="Manage delivery" onClick={() => select(r)} /><IconBtn icon={MapPin} label="Open map" onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(`${r.address}, Nepal`)}`, '_blank')} /><IconBtn icon={Ellipsis} label="More" /></span></Td>
+                          <Td><span className="flex gap-2"><IconBtn icon={Eye} label="Manage delivery" onClick={() => select(r)} /><IconBtn icon={MapPin} label="Open map" onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(`${r.address}, Nepal`)}`, '_blank')} />{r.phone && <IconBtn icon={Phone} label="Call customer" onClick={() => { window.location.href = `tel:${r.phone}`; }} />}</span></Td>
                         </Tr>
                       );
                     })}
                   </Table>
                   {!shown.length && <p className="px-5 py-10 text-center text-[14px] text-slate">No deliveries in this view.</p>}
-                  <Pagination text={`Showing 1-${shown.length} of ${live ? rows.length : '346'} deliveries`} pages={live ? [1] : [1, 2, 3, 4, 5, '…', 35]} />
+                  <Pagination text={`Showing ${pg.from}-${pg.to} of ${pg.total} deliveries`} current={pg.page} pageCount={pg.pageCount} onPage={pg.setPage} />
                 </>
               )}
             </Card>
@@ -150,7 +143,7 @@ function Page() {
                   <Field label="Delivery Staff">
                     <Select value={assignee} onChange={setAssignee}>
                       <option value="">Not assigned</option>
-                      {(live ? staff.map((s) => [s.id, s.name] as const) : demoPartners.map(([, name]) => [name, name] as const)).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                      {(staff.map((s) => [s.id, s.name] as const)).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
                     </Select>
                   </Field>
                   <Field label="Delivery Status"><Select value={nextStatus} onChange={(v) => setNextStatus(v as Status)}>{(Object.keys(labels) as Status[]).map((k) => <option key={k} value={k}>{labels[k]}</option>)}</Select></Field>
@@ -159,8 +152,8 @@ function Page() {
               )}
             </Panel>
             <Panel>
-              <PanelTitle link="View Full Map">Live Delivery Map</PanelTitle>
-              <img src={asset('delivery-map')} alt="Delivery area map around Tulsipur" className="w-full rounded-lg" />
+              <div className="mb-3 flex items-center justify-between"><h2 className="text-[17px] font-bold text-navy">Delivery Area Map</h2><a href={STORE.mapsUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[13px] font-medium text-[#077a52]">Open in Maps <ExternalLink className="size-3.5" /></a></div>
+              <a href={STORE.mapsUrl} target="_blank" rel="noreferrer" aria-label="Open the store location in Google Maps"><img src={asset('delivery-map')} alt="Delivery area map around Tulsipur" className="w-full rounded-lg" /></a>
               <div className="mb-2 mt-5 flex items-center justify-between"><h3 className="text-[15px] font-bold text-navy">Delivery Partner Performance</h3><button onClick={() => setTab(4)} className="text-[13px] font-medium text-[#2f73d9]">View All</button></div>
               <ul className="space-y-2.5">
                 {partners.slice(0, 4).map(([p, name, count, rate]) => (

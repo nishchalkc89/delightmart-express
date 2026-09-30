@@ -1,21 +1,30 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { ArrowUpDown, Box, CircleCheck, CircleX, Copy, Download, ImagePlus, Package, Pencil, Plus, Trash2, TriangleAlert, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Badge, Card, Checkbox, DataBadge, FilterBar, FilterSelect, IconBtn, OutlineAction, PageHeader, Pagination, PrimaryAction, SearchBox, StatCard, Table, Td, Toggle, Tr, WithPanel } from '@/components/delight/admin-ui';
+import { Badge, Card, DataBadge, FilterBar, FilterSelect, IconBtn, OutlineAction, PageHeader, Pagination, PrimaryAction, SearchBox, StatCard, Table, Td, Toggle, Tr, WithPanel } from '@/components/delight/admin-ui';
 import { BulkPhotoUpload } from '@/components/delight/admin-bulk-photos';
 import { ProductForm } from '@/components/delight/admin-forms';
 import { deleteProduct } from '@/services/admin-actions';
-import { categoryTone, demoAdminProducts, npr } from '@/components/delight/admin-data';
+import { categoryTone, npr } from '@/components/delight/admin-data';
 import { fetchAdminProducts, setProductActive, useAdminData, type AdminProduct } from '@/services/admin';
 
 export const Route = createFileRoute('/admin/products')({
+  validateSearch: (s: Record<string, unknown>): { q?: string | undefined } => ({ q: typeof s['q'] === 'string' ? s['q'] : undefined }),
   head: () => ({ meta: [{ title: 'Products — Delight Admin' }, { name: 'description', content: 'Manage the product catalog.' }, { property: 'og:title', content: 'Products — Delight Admin' }, { property: 'og:description', content: 'Catalog management.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
   component: Page,
 });
 
-function Sortable({ children }: { children: string }) {
-  return <span className="flex items-center gap-1">{children}<ArrowUpDown className="size-3.5" /></span>;
+type SortKey = 'name' | 'price' | 'stock';
+
+/** Column title that sorts the table when clicked (click again to reverse). */
+function Sortable({ children, k, sort, onSort }: { children: string; k: SortKey; sort: [SortKey, 1 | -1] | null; onSort: (k: SortKey) => void }) {
+  const on = sort?.[0] === k;
+  return (
+    <button type="button" onClick={() => onSort(k)} className={`flex items-center gap-1 ${on ? 'font-semibold text-navy' : ''}`}>
+      {children}<ArrowUpDown className="size-3.5" />{on && <span className="text-[11px]">{sort[1] === 1 ? '↑' : '↓'}</span>}
+    </button>
+  );
 }
 
 function stockLabel(stock: number, threshold: number) {
@@ -30,8 +39,12 @@ function Page() {
   const [editId, setEditId] = useState<string | null>(null);
   const [dupId, setDupId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
-  const [query, setQuery] = useState('');
-  const { rows: all, setRows, live, loading, reload } = useAdminData<AdminProduct>(fetchAdminProducts, demoAdminProducts);
+  const search = Route.useSearch();
+  const [query, setQuery] = useState(search.q ?? '');
+  useEffect(() => { if (search.q !== undefined) { setQuery(search.q); setPage(1); } }, [search.q]);
+  const [sort, setSort] = useState<[SortKey, 1 | -1] | null>(null);
+  const onSort = (k: SortKey) => setSort((v) => (v?.[0] === k ? [k, v[1] === 1 ? -1 : 1] : [k, 1]));
+  const { rows: all, setRows, live, loading, reload } = useAdminData<AdminProduct>(fetchAdminProducts);
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
@@ -47,7 +60,13 @@ function Page() {
     .filter((p) => !stockFilter || (stockFilter === 'out' ? p.stock <= 0 : stockFilter === 'low' ? p.stock > 0 && p.stock < p.threshold : p.stock >= p.threshold))
     .filter((p) => !photo || (photo === 'missing' ? !p.hasPhoto : Boolean(p.hasPhoto)))
     // Products missing a photo: best sellers first, so the photos that matter most get done first.
-    .sort((a, b) => (photo === 'missing' ? (b.sold ?? 0) - (a.sold ?? 0) : 0));
+    .sort((a, b) => {
+      if (sort) {
+        const [k, dir] = sort;
+        return dir * (k === 'name' ? a.name.localeCompare(b.name) : k === 'price' ? a.price - b.price : a.stock - b.stock);
+      }
+      return photo === 'missing' ? (b.sold ?? 0) - (a.sold ?? 0) : 0;
+    });
   const filter = (fn: (v: string) => void) => (v: string) => { fn(v); setPage(1); };
   const pageCount = Math.max(1, Math.ceil(rows.length / PER_PAGE));
   const shown = rows.slice((Math.min(page, pageCount) - 1) * PER_PAGE, Math.min(page, pageCount) * PER_PAGE);
@@ -56,7 +75,6 @@ function Page() {
 
   function openNew() { setEditId(null); setDupId(null); setFormKey((k) => k + 1); }
   async function remove(p: AdminProduct) {
-    if (!live) { toast.info('Sample data — sign in with a staff account to change real products.'); return; }
     if (!window.confirm(`Delete ${p.name}?`)) return;
     try {
       const result = await deleteProduct(p.id);
@@ -72,7 +90,6 @@ function Page() {
   }
 
   async function toggle(p: AdminProduct, active: boolean) {
-    if (!live) { toast.info('Sample data — sign in with a staff account to change real products.'); return; }
     try {
       await setProductActive(p.id, active);
       setRows((list) => list.map((x) => (x.id === p.id ? { ...x, active } : x)));
@@ -84,16 +101,16 @@ function Page() {
 
   return (
     <div>
-      <PageHeader title="Products" subtitle="Manage your product catalog, prices, stock and more." badge={<DataBadge live={live} loading={loading} />} actions={<><OutlineAction icon={ImagePlus} onClick={() => (live ? setBulk(true) : toast.info('Sample data — sign in with a staff account to add photos.'))}>Bulk Photos</OutlineAction><OutlineAction icon={Upload} onClick={() => toast.info('To import products from a spreadsheet, see docs/SUPABASE_SETUP.md (npm run catalogue:import).')}>Import</OutlineAction><OutlineAction icon={Download} onClick={exportCsv}>Export</OutlineAction><PrimaryAction icon={Plus} onClick={openNew}>Add Product</PrimaryAction></>} />
+      <PageHeader title="Products" subtitle="Manage your product catalog, prices, stock and more." badge={<DataBadge live={live} loading={loading} />} actions={<><OutlineAction icon={ImagePlus} onClick={() => setBulk(true)}>Bulk Photos</OutlineAction><OutlineAction icon={Upload} onClick={() => toast.info('To import products from a spreadsheet, see docs/SUPABASE_SETUP.md (npm run catalogue:import).')}>Import</OutlineAction><OutlineAction icon={Download} onClick={exportCsv}>Export</OutlineAction><PrimaryAction icon={Plus} onClick={openNew}>Add Product</PrimaryAction></>} />
       <WithPanel
         main={
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-              <StatCard compact icon={Package} tone="green" label="Total Products" value={live ? String(all.length) : '1,248'} delta={live ? undefined : '+12%'} filled={false} />
-              <StatCard compact icon={CircleCheck} tone="green" label="Active Products" value={live ? String(all.filter((p) => p.active).length) : '1,120'} delta={live ? undefined : '+8%'} note="" />
-              <StatCard compact icon={Box} tone="red" label="Out of Stock" value={live ? String(outOfStock) : '32'} delta={live ? undefined : '-15%'} dir="down" note="" filled={false} />
-              <StatCard compact icon={TriangleAlert} tone="red" label="Low Stock" value={live ? String(low) : '68'} delta={live ? undefined : '-22%'} dir="down" note="" filled={false} />
-              <StatCard compact icon={CircleX} tone="red" label="Inactive Products" value={live ? String(all.filter((p) => !p.active).length) : '96'} delta={live ? undefined : '+5%'} dir="down" note="" />
+              <StatCard compact icon={Package} tone="green" label="Total Products" value={String(all.length)} filled={false} />
+              <StatCard compact icon={CircleCheck} tone="green" label="Active Products" value={String(all.filter((p) => p.active).length)} note="" />
+              <StatCard compact icon={Box} tone="red" label="Out of Stock" value={String(outOfStock)} dir="down" note="" filled={false} />
+              <StatCard compact icon={TriangleAlert} tone="red" label="Low Stock" value={String(low)} dir="down" note="" filled={false} />
+              <StatCard compact icon={CircleX} tone="red" label="Inactive Products" value={String(all.filter((p) => !p.active).length)} dir="down" note="" />
             </div>
             <Card className="mt-4">
               <FilterBar>
@@ -103,12 +120,11 @@ function Page() {
                 <FilterSelect label="Stock" value={stockFilter} onChange={filter(setStockFilter)} options={[['', 'All Stock'], ['in', 'In Stock'], ['low', 'Low Stock'], ['out', 'Out of Stock']]} className="w-[125px]" />
                 <FilterSelect label="Photo" value={photo} onChange={filter(setPhoto)} options={[['', 'All Photos'], ['missing', `Needs photo (${needPhoto.toLocaleString('en-US')})`], ['has', 'Has photo']]} className="w-[175px]" />
               </FilterBar>
-              <Table head={[<Checkbox key="c" />, 'Image', <Sortable key="n">Product Name</Sortable>, 'Category', <Sortable key="p">Price</Sortable>, <Sortable key="s">Stock</Sortable>, 'Status', 'Actions']}>
+              <Table head={['Image', <Sortable key="n" k="name" sort={sort} onSort={onSort}>Product Name</Sortable>, 'Category', <Sortable key="p" k="price" sort={sort} onSort={onSort}>Price</Sortable>, <Sortable key="s" k="stock" sort={sort} onSort={onSort}>Stock</Sortable>, 'Status', 'Actions']}>
                 {shown.map((p) => {
                   const [label, tone] = stockLabel(p.stock, p.threshold);
                   return (
                     <Tr key={p.id}>
-                      <Td><Checkbox /></Td>
                       <Td>{p.image ? <img src={p.image} alt="" className="size-11 object-contain" /> : <button onClick={() => { setDupId(null); setEditId(p.id); }} title="Add a photo" className="grid size-11 place-items-center rounded border border-dashed border-[#c9d1da] bg-[#f8fafc] text-slate hover:border-[#077a52] hover:text-[#077a52]"><ImagePlus className="size-4" /></button>}</Td>
                       <Td><span className="block">{p.name}</span><span className="text-[12.5px] text-slate">{p.sku}</span></Td>
                       <Td><Badge tone={categoryTone[p.category] ?? 'gray'}>{p.category}</Badge></Td>
@@ -120,7 +136,7 @@ function Page() {
                   );
                 })}
               </Table>
-              <Pagination text={live ? `Showing ${rows.length ? (Math.min(page, pageCount) - 1) * PER_PAGE + 1 : 0}-${(Math.min(page, pageCount) - 1) * PER_PAGE + shown.length} of ${rows.length.toLocaleString('en-US')} products` : `Showing 1-${rows.length} of 1,248 products`} current={Math.min(page, pageCount)} pageCount={live ? pageCount : undefined} onPage={setPage} perPage={`${PER_PAGE} per page`} />
+              <Pagination text={`Showing ${rows.length ? (Math.min(page, pageCount) - 1) * PER_PAGE + 1 : 0}-${(Math.min(page, pageCount) - 1) * PER_PAGE + shown.length} of ${rows.length.toLocaleString('en-US')} products`} current={Math.min(page, pageCount)} pageCount={pageCount} onPage={setPage} />
             </Card>
           </>
         }
