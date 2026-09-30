@@ -100,7 +100,7 @@ export function BulkPhotoUpload({ products, onClose, onDone }: { products: Admin
         <div className="flex items-start justify-between border-b border-line px-6 py-4">
           <div>
             <h2 className="text-[20px] font-bold text-navy">Bulk Photo Upload</h2>
-            <p className="text-[13.5px] text-slate">Name each photo after its product code (e.g. <b>DM-7.3663.jpg</b>) or the product name. Photos are matched automatically; check the matches before uploading.</p>
+            <p className="text-[13.5px] text-slate">Name each photo after its product code (e.g. <b>5.296.jpg</b>) or the product name. Photos are matched automatically; check the matches before uploading.</p>
           </div>
           <button aria-label="Close" disabled={running} onClick={onClose} className="grid size-8 place-items-center rounded-full hover:bg-[#f1f4f7]"><X className="size-5" /></button>
         </div>

@@ -85,7 +85,7 @@ function Page() {
   }
   function exportCsv() {
     // Exports what the filters show, so "Needs photo" + Export gives staff a photo checklist with file names.
-    const lines = [['Name', 'Product code', 'Photo file name', 'Category', 'Price', 'Old Price', 'Stock', 'Status', 'Has photo'], ...rows.map((p) => [p.name, p.code, `${p.sku}.jpg`, p.category, String(p.price), String(p.oldPrice || ''), String(p.stock), p.active ? 'Active' : 'Inactive', p.hasPhoto ? 'Yes' : 'No'])];
+    const lines = [['Name', 'Product code', 'Photo file name', 'Category', 'Price', 'Old Price', 'Stock', 'Status', 'Has photo'], ...rows.map((p) => [p.name, p.code, `${p.code}.jpg`, p.category, String(p.price), String(p.oldPrice || ''), String(p.stock), p.active ? 'Active' : 'Inactive', p.hasPhoto ? 'Yes' : 'No'])];
     const url = URL.createObjectURL(new Blob(['\ufeff', lines.map((r) => r.map((c) => `"${c.replaceAll('"', '""')}"`).join(',')).join('\r\n')], { type: 'text/csv' }));
     const a = document.createElement('a'); a.href = url; a.download = 'delight-products.csv'; a.click(); URL.revokeObjectURL(url);
   }
@@ -143,7 +143,7 @@ function Page() {
         }
         panel={<ProductForm key={formKey} editId={editId} duplicateId={dupId} live={live} onSaved={() => { setEditId(null); setDupId(null); void reload(); }} onClose={openNew} />}
       />
-      {bulk && <BulkPhotoUpload products={all} onClose={() => setBulk(false)} onDone={() => void reload()} />}
+      {bulk && <BulkPhotoUpload products={all.filter((p) => p.active)} onClose={() => setBulk(false)} onDone={() => void reload()} />}
     </div>
   );
 }
