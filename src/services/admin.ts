@@ -66,14 +66,15 @@ export async function fetchAdminOrders(limit = 1000): Promise<AdminOrder[]> {
   });
 }
 
-const ADMIN_PRODUCT_COLUMNS = 'id,name,slug,sku,price,sale_price,status,updated_at,categories(name),branch_inventory(branch_id,current_stock,reserved_stock,low_stock_threshold,last_updated),product_images(url,is_primary)';
+const ADMIN_PRODUCT_COLUMNS = 'id,name,slug,sku,price,sale_price,status,updated_at,categories!inner(name,status),branch_inventory(branch_id,current_stock,reserved_stock,low_stock_threshold,last_updated),product_images(url,is_primary)';
 
 /** All products for the admin screens, read 1000 at a time (the database's page limit). */
 async function fetchAllProductRows() {
-  const { count, error } = await supabase.from('products').select('id', { count: 'exact', head: true });
+  // Products of removed categories (status DRAFT) are left out of the admin.
+  const { count, error } = await supabase.from('products').select('id,categories!inner(status)', { count: 'exact', head: true }).neq('categories.status', 'DRAFT');
   if (error) throw error;
   const pages = Math.max(1, Math.ceil((count ?? 0) / 1000));
-  const results = await Promise.all(Array.from({ length: pages }, (_, i) => supabase.from('products').select(ADMIN_PRODUCT_COLUMNS).in('branch_inventory.branch_id', scopeBranchIds()).order('name').order('id').range(i * 1000, i * 1000 + 999)));
+  const results = await Promise.all(Array.from({ length: pages }, (_, i) => supabase.from('products').select(ADMIN_PRODUCT_COLUMNS).neq('categories.status', 'DRAFT').in('branch_inventory.branch_id', scopeBranchIds()).order('name').order('id').range(i * 1000, i * 1000 + 999)));
   const failed = results.find((r) => r.error);
   if (failed?.error) throw failed.error;
   return results.flatMap((r) => r.data ?? []);

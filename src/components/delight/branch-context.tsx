@@ -50,7 +50,8 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
   // A signed-in customer's saved store wins on a device that has not chosen one.
   useEffect(() => {
-    if (!user || hasChosenBranch()) return;
+    // Not on admin pages (staff accounts are not shoppers).
+    if (!user || hasChosenBranch() || window.location.pathname.startsWith('/admin')) return;
     void supabase.from('profiles').select('preferred_branch_id').eq('id', user.id).maybeSingle().then(({ data }) => {
       if (data?.preferred_branch_id && data.preferred_branch_id !== id) setBranch(data.preferred_branch_id, { quiet: true });
     });

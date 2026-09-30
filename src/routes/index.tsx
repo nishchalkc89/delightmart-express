@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { StorePage } from '@/components/delight/store-shell';
 import { MobileHead, SectionHead } from '@/components/delight/section';
 import { ProductCard } from '@/components/delight/product-card';
-import { AppPromo, BannerLink, CarouselArrow, CommunityNewsletter, DealTimer, JustArrivedTitle, Newsletter } from '@/components/delight/home-parts';
+import { BannerLink, CarouselArrow, CommunityNewsletter, DealTimer, JustArrivedTitle } from '@/components/delight/home-parts';
 import { brands, NAV_CATEGORIES, type Category, type Collections, type StoreBanner } from '@/services/catalog';
 import { storefrontQuery } from '@/hooks/use-catalog';
 import { NewsletterForm } from '@/components/delight/newsletter-form';
@@ -281,10 +281,6 @@ function DesktopHome({ categories, collections, banners }: Data) {
         <SectionHead eyebrow="New Arrivals" title="Just Arrived" link="View All New Arrivals" extra={<JustArrivedTitle />} />
         <div className="grid grid-cols-6 gap-3.5">{collections.justArrived.slice(0, 6).map((p) => <ProductCard key={p.id} product={p} badge="new" showUnit={false} />)}</div>
       </section>
-      <section className="site-width mt-8 grid grid-cols-[1.28fr_1fr] gap-3.5">
-        <Newsletter />
-        <AppPromo />
-      </section>
       <section className="site-width mt-10">
         <SectionHead eyebrow="Special Offers" title="Shop More," accent="Save More" link="View All Offers" to="/categories/deals-offers" />
         {shopMore.length ? (
@@ -433,18 +429,6 @@ function MobileHome({ categories, collections, banners }: Data) {
           <BannerLink src={asset('save-baby')} alt="Baby care" to="/categories/baby-care" />
           <BannerLink src={asset('save-kitchen')} alt="Make home better" to="/categories/kitchen-household" />
         </div>
-      </section>
-
-      <section className="mt-6 flex items-center gap-3 overflow-hidden rounded-2xl bg-[#eef7f2] px-4 py-4">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-[17px] font-extrabold text-navy">Download Our App</h3>
-          <p className="text-[12.5px] text-ink">Shop Anytime, Anywhere</p>
-          <div className="mt-2.5 flex gap-2">
-            <Link to="/app"><img src={asset('google-play')} alt="Get the Delight app on Android" className="h-8 w-auto" /></Link>
-            <Link to="/app"><img src={asset('app-store')} alt="Get the Delight app on iPhone" className="h-8 w-auto" /></Link>
-          </div>
-        </div>
-        <img src={asset('app-phone')} alt="" className="-mb-4 h-[112px] w-auto self-end" />
       </section>
 
       <section className="mt-6 pb-2">

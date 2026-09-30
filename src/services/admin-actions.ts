@@ -27,7 +27,8 @@ export async function uploadImage(bucket: 'product-images' | 'category-images' |
 export type CategoryRow = { id: string; name: string; slug: string; description: string | null; image_url: string | null; parent_id: string | null; status: string; sort_order: number; created_at: string; products: number };
 
 export async function fetchCategories(): Promise<CategoryRow[]> {
-  const { data, error } = await supabase.from('categories').select('id,name,slug,description,image_url,parent_id,status,sort_order,created_at').order('sort_order');
+  // Removed categories (status DRAFT) are left out of the admin; switched-off ones (INACTIVE) still show.
+  const { data, error } = await supabase.from('categories').select('id,name,slug,description,image_url,parent_id,status,sort_order,created_at').neq('status', 'DRAFT').order('sort_order');
   fail(error);
   const counts = await Promise.all((data ?? []).map((c) => supabase.from('products').select('id', { count: 'exact', head: true }).eq('category_id', c.id)));
   return (data ?? []).map((c, i) => ({ ...c, products: counts[i]?.count ?? 0 }));

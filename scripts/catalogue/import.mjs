@@ -79,7 +79,7 @@ if (dryRun) {
 
 // 1. Categories
 const savedCategories = await api('POST', 'categories?on_conflict=slug',
-  CATEGORIES.map((c, i) => ({ slug: c.slug, name: c.name, description: c.description, status: c.hidden ? 'INACTIVE' : 'ACTIVE', sort_order: i + 1, parent_id: null })),
+  CATEGORIES.map((c, i) => ({ slug: c.slug, name: c.name, description: c.description, status: c.hidden ? 'DRAFT' : 'ACTIVE', sort_order: i + 1, parent_id: null })),
   'resolution=merge-duplicates,return=representation');
 const categoryId = Object.fromEntries(savedCategories.map((c) => [c.slug, c.id]));
 const allCategories = await selectAll('categories', 'id,slug,status');

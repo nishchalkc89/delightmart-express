@@ -97,7 +97,7 @@ export function CommunityNewsletter() {
         <p className="mt-1 text-[16px] leading-7 text-slate">Get the latest offers, new arrivals and exclusive deals<br />directly to your inbox.</p>
       </div>
       <div className="w-[524px] shrink-0">
-        <NewsletterForm size="lg" source="footer" />
+        <NewsletterForm size="lg" source="home" />
         <p className="mt-3 flex items-center gap-1.5 text-[13px] text-slate"><Lock className="size-3.5" /> We respect your privacy. No spam, ever.</p>
       </div>
       <img src={asset('good-things')} alt="Good Things Everyday" className="h-[128px] w-auto shrink-0 mix-blend-multiply" />

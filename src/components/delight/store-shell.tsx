@@ -226,12 +226,56 @@ const footerCols = {
   'About Delight': [['Our Story', '/about'], ['Store Location', '/store-location'], ['Careers', '/careers'], ['Terms & Conditions', '/terms'], ['Privacy Policy', '/privacy']],
 } as const;
 
+
+/** Both stores with address, hours, phone and directions (details come from Admin → Settings). */
+function FooterStores({ compact = false }: { compact?: boolean }) {
+  const { branches } = useBranch();
+  return (
+    <div className={compact ? 'mt-7 border-t border-white/15 pt-6' : 'site-width border-t border-white/15 py-7'}>
+      <h3 className={`${compact ? 'text-[15.5px]' : 'text-[17px]'} font-bold`}>Our Stores</h3>
+      {compact && <span className="mt-1.5 block h-0.5 w-8 bg-red" />}
+      <div className={`mt-4 grid gap-3 ${compact ? '' : 'grid-cols-2 xl:grid-cols-3'}`}>
+        {branches.map((b) => {
+          const tel = (b.phone ?? '').replace(/\D/g, '');
+          const hours = hoursText(b);
+          return (
+            <div key={b.id} className="rounded-xl bg-white/[0.06] p-4 text-[14px] leading-6 text-white/85">
+              <b className="flex flex-wrap items-center gap-2 text-[15.5px] text-white"><MapPin className="size-4 shrink-0 text-red" />{b.city} Store
+                {!b.acceptingOrders && <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-semibold">Online orders soon</span>}</b>
+              <p className="mt-1">{b.address}</p>
+              {hours && <p>Open daily, {hours}</p>}
+              <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+                {tel && <a href={`tel:+${tel}`} className="font-semibold text-white hover:underline">{b.phone}</a>}
+                {b.mapsUrl && <a href={b.mapsUrl} target="_blank" rel="noreferrer" className="font-semibold text-white hover:underline">Get directions</a>}
+                {!tel && !b.mapsUrl && <Link to="/store-location" className="font-semibold text-white hover:underline">Store details</Link>}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** App store badges, shown as "coming soon" until the apps are published. */
+function AppBadges({ size }: { size: 'sm' | 'md' }) {
+  return (
+    <div className={size === 'md' ? 'mt-4 space-y-2' : 'mt-3 flex flex-wrap gap-2.5'}>
+      {(['google-play', 'app-store'] as const).map((badge) => (
+        <span key={badge} className="relative block w-fit" title="Coming soon">
+          <img src={asset(badge)} alt={badge === 'google-play' ? 'Android app coming soon' : 'iPhone app coming soon'} className={`${size === 'md' ? 'h-11' : 'h-10'} w-auto opacity-45 grayscale`} />
+          <span className="absolute -right-2 -top-2 rounded-full bg-red px-2 py-0.5 text-[10.5px] font-bold text-white shadow">Coming soon</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function MobileFooter({ socials }: { socials: ReadonlyArray<readonly [typeof Facebook, string, string]> }) {
   return (
     <div className="site-width py-8 lg:hidden">
       <Logo variant="footer" className="h-[52px] w-auto" />
       <p className="mt-3 text-[14px] leading-6 text-white/85">Your Local Shopping Mart<br />Tulsipur &amp; Ghorahi, Dang, Nepal</p>
-      <a href="tel:+9779841234567" className="text-[14px] text-white/85">+977 9841234567</a>
       <div className="mt-4 flex gap-2.5">
         {socials.map(([Icon, href, name]) => <a key={name} href={href} target="_blank" rel="noreferrer" aria-label={name} className="grid size-9 place-items-center rounded-full bg-white text-footer"><Icon className="size-4" /></a>)}
       </div>
@@ -250,12 +294,11 @@ function MobileFooter({ socials }: { socials: ReadonlyArray<readonly [typeof Fac
 
       <div className="mt-7 border-t border-white/15 pt-6">
         <h3 className="text-[15.5px] font-bold">Download Our App</h3>
-        <p className="text-[14px] text-white/80">Shop Anytime, Anywhere</p>
-        <div className="mt-3 flex gap-2.5">
-          <Link to="/app"><img src={asset('google-play')} alt="Get the Delight app on Android" className="h-10 w-auto" /></Link>
-          <Link to="/app"><img src={asset('app-store')} alt="Get the Delight app on iPhone" className="h-10 w-auto" /></Link>
-        </div>
+        <p className="text-[14px] text-white/80">Our Android and iPhone apps are coming soon.</p>
+        <AppBadges size="sm" />
       </div>
+
+      <FooterStores compact />
 
       <div className="mt-7 space-y-1 border-t border-white/15 pt-5 text-[12.5px] text-white/70">
         <p>© 2024 Delight Shopping Mart Pvt. Ltd. All rights reserved.</p>
@@ -291,16 +334,12 @@ export function StoreFooter() {
         <div className="flex gap-6 border-l border-white/15 pl-10">
           <div>
             <h3 className="text-[17px] font-bold">Download Our App</h3>
-            <p className="mt-2 text-[15px] text-white/85">Shop Anytime, Anywhere</p>
-            <Link to="/app" className="block"><img src={asset('google-play')} alt="Get the Delight app on Android" className="mt-4 h-11 w-auto" /></Link>
-            <Link to="/app" className="block"><img src={asset('app-store')} alt="Get the Delight app on iPhone" className="mt-2 h-11 w-auto" /></Link>
-          </div>
-          <div className="pt-3 text-center">
-            <img src={asset('qr')} alt="QR code to download the app" className="size-[88px] rounded bg-white" />
-            <p className="mt-2 text-[12px] text-white/85">Scan to Download</p>
+            <p className="mt-2 text-[15px] text-white/85">Android &amp; iPhone apps<br />are coming soon.</p>
+            <AppBadges size="md" />
           </div>
         </div>
       </div>
+      <FooterStores />
       <div className="site-width flex items-center justify-between border-t border-white/15 py-5 text-[13px] text-white/85">
         <span>© 2024 Delight Shopping Mart Pvt. Ltd. All rights reserved.</span>
         <span className="flex items-center gap-2">Made with <Heart className="size-4 fill-red text-red" /> for a Happier Dang</span>

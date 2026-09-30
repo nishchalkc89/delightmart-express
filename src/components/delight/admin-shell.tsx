@@ -8,6 +8,7 @@ import { Logo } from './logo';
 import { useAuth } from './auth-context';
 import { supabase } from '@/services/supabase';
 import { useStaffName } from '@/services/admin';
+import { LogoLoader } from './logo-loader';
 import { AdminScopeProvider, fetchBranches, fetchStaffAccess, saveScope, savedScope, setAdminScopeValue, type AdminScope, type AdminScopeValue, type StaffAccess } from '@/services/admin-scope';
 import type { Branch } from '@/lib/branch';
 import { asset } from '@/lib/assets';
@@ -89,6 +90,8 @@ export function AdminShell() {
   const [access, setAccess] = useState<StaffAccess | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [checking, setChecking] = useState(true);
+  const [checkFailed, setCheckFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [pending, setPending] = useState(0);
   const [scope, setScopeState] = useState<AdminScope>('all');
   const role = access?.role ?? null;
@@ -98,15 +101,18 @@ export function AdminShell() {
     if (loading) return;
     if (!user) { router.history.replace(`/admin/login?redirect=${encodeURIComponent(path)}`); return; }
     setChecking(true);
+    setCheckFailed(false);
+    const slow = setTimeout(() => setCheckFailed(true), 12_000);
     void Promise.all([fetchStaffAccess(user.id), fetchBranches()]).then(([a, b]) => {
       setAccess(a);
       setBranches(b);
       const ids = a.isSuper ? b.map((x) => x.id) : a.branchIds;
       const saved = savedScope();
       setScopeState(saved && (ids.includes(saved) || (saved === 'all' && a.isSuper)) ? saved : a.isSuper ? 'all' : ids[0] ?? 'all');
-    }).finally(() => setChecking(false));
+    }).catch(() => setCheckFailed(true)).finally(() => { clearTimeout(slow); setChecking(false); });
+    return () => clearTimeout(slow);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, loading]);
+  }, [user, loading, attempt]);
 
   const allowed = useMemo(() => (access?.isSuper ? branches : branches.filter((b) => access?.branchIds.includes(b.id))), [access, branches]);
   // Loaders read the scope when pages mount, so set it before rendering them.
@@ -133,7 +139,22 @@ export function AdminShell() {
     router.history.replace('/admin/login');
   }
 
-  if (loading || checking || !user) return <div className="grid min-h-screen place-items-center bg-page text-slate">Checking access…</div>;
+  if (checkFailed && (checking || !access)) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-page p-6">
+        <div className="max-w-md rounded-2xl border border-line bg-white p-8 text-center">
+          <Logo className="mx-auto h-16 w-auto" />
+          <h1 className="mt-5 text-[22px] font-extrabold text-navy">Could not open the admin</h1>
+          <p className="mt-2 text-slate">The store server did not answer in time. Check the internet connection and try again.</p>
+          <div className="mt-5 flex justify-center gap-2">
+            <button onClick={() => setAttempt((n) => n + 1)} className="h-11 rounded-lg bg-[#077a52] px-6 font-semibold text-white">Try again</button>
+            <button onClick={() => window.location.reload()} className="h-11 rounded-lg border border-line px-6 font-semibold text-navy">Reload page</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (loading || checking || !user) return <LogoLoader label="Opening admin…" />;
   if (!role) {
     return (
       <div className="grid min-h-screen place-items-center bg-page p-6">

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { Crown, Eye, EyeOff, Loader2, Lock, Mail, Store } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
@@ -17,8 +17,12 @@ export const Route = createFileRoute('/admin_/login')({
 
 type Choice = 'owner' | string;
 
+/** Resolves with null instead of waiting forever. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
+  return Promise.race([p, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))]);
+}
+
 function Page() {
-  const router = useRouter();
   const { redirect } = Route.useSearch();
   const [branches, setBranches] = useState<Branch[]>(FALLBACK_BRANCHES);
   const [choice, setChoice] = useState<Choice>('owner');
@@ -41,13 +45,18 @@ function Page() {
     setError('');
     if (!email.trim() || !password) { setError('Enter the admin email and password.'); return; }
     setBusy(true);
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const signIn = await withTimeout(supabase.auth.signInWithPassword({ email: email.trim(), password }), 20_000);
+    if (!signIn) { setBusy(false); setError('The server is taking too long. Check your internet connection and try again.'); return; }
+    const { data, error: signInError } = signIn;
     if (signInError || !data.user) {
       setBusy(false);
       setError(/invalid/i.test(signInError?.message ?? '') ? 'Wrong email or password.' : signInError?.message ?? 'Could not sign in.');
       return;
     }
-    const access = await fetchStaffAccess(data.user.id);
+    const target = redirect ?? '/admin';
+    const access = await withTimeout(fetchStaffAccess(data.user.id).catch(() => null), 8_000);
+    // If the check is slow, open the admin anyway: it checks the account again (and the database enforces access).
+    if (!access) { saveScope(choice === 'owner' ? 'all' : choice); window.location.assign(target); return; }
     const refuse = async (msg: string) => { await supabase.auth.signOut(); setBusy(false); setError(msg); };
     if (!access.role) { await refuse('This account does not have admin access.'); return; }
     if (choice === 'owner' && !access.isSuper) {
@@ -61,7 +70,8 @@ function Page() {
     }
     saveScope(choice === 'owner' ? 'all' : choice);
     toast.success(choice === 'owner' ? 'Welcome back — all stores' : `Welcome back — ${chosen.title.replace(' Admin', '')} store`);
-    router.history.push(redirect ?? '/admin');
+    // A full page load starts the admin with a clean, signed-in session.
+    window.location.assign(target);
   }
 
   const field = 'flex h-12 items-center gap-3 rounded-lg border border-line bg-white px-3.5 focus-within:border-[#077a52]';

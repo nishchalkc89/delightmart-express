@@ -153,6 +153,12 @@
 .marquee-track { animation: marquee 45s linear infinite; }
 .marquee:hover .marquee-track { animation-play-state: paused; }
 
+/* Loading screen: the logo shrinks a little and grows back; a short bar slides underneath. */
+@keyframes logo-breathe { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.8); opacity: 0.75; } }
+.logo-breathe { animation: logo-breathe 1.4s ease-in-out infinite; transform-origin: center; }
+@keyframes loader-slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+.loader-bar > span { animation: loader-slide 1.1s ease-in-out infinite; }
+
 @utility site-width { width: calc(100% - 2 * clamp(16px, 4vw, 80px)); margin-inline: auto; }
 @utility no-scrollbar { scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
 @utility eyebrow { display: flex; align-items: center; gap: 1rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #4b5563; &::before { content: ""; width: 1.75rem; height: 2px; background: var(--color-red); } }
