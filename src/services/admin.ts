@@ -21,11 +21,11 @@ export type AdminOrder = {
   /** Store that sold the order. */
   branch: string;
   crossFee: number;
-  items: { name: string; quantity: number; unitPrice: number; lineTotal: number; image: string }[];
+  items: { name: string; code: string; quantity: number; unitPrice: number; lineTotal: number; image: string }[];
 };
 
 export type AdminProduct = {
-  id: string; name: string; slug: string; sku: string; category: string; price: number; oldPrice: number;
+  id: string; name: string; slug: string; sku: string; /** Store product code (e.g. 5.296), shown in admin only. */ code: string; category: string; price: number; oldPrice: number;
   stock: number; threshold: number; active: boolean; image: string; updatedAt: string;
   /** True when the product has its own photo (not a sample-data picture). */
   hasPhoto?: boolean;
@@ -46,7 +46,7 @@ const imageByName = new Map(demoCatalog.map((p) => [p.name.toLowerCase(), p.imag
 
 export async function fetchAdminOrders(limit = 1000): Promise<AdminOrder[]> {
   const { data, error } = await supabase.from('orders')
-    .select('id,order_number,status,total,subtotal,discount,delivery_fee,cross_branch_fee,branch_id,payment_method,created_at,delivery_instructions,user_id,order_items(product_name,quantity,unit_price,line_total)')
+    .select('id,order_number,status,total,subtotal,discount,delivery_fee,cross_branch_fee,branch_id,payment_method,created_at,delivery_instructions,user_id,order_items(product_name,sku,quantity,unit_price,line_total)')
     .in('branch_id', scopeBranchIds())
     .order('created_at', { ascending: false }).limit(limit);
   if (error) throw error;
@@ -61,7 +61,7 @@ export async function fetchAdminOrders(limit = 1000): Promise<AdminOrder[]> {
       id: o.id, number: o.order_number, status: o.status, total: Number(o.total), subtotal: Number(o.subtotal), discount: Number(o.discount), deliveryFee: Number(o.delivery_fee),
       paymentMethod: o.payment_method, createdAt: o.created_at, instructions: o.delivery_instructions ?? '', branch: o.branch_id, crossFee: Number(o.cross_branch_fee ?? 0),
       customer: { name: p?.full_name || recipient || 'Customer', phone, email: p?.email ?? '' },
-      items: o.order_items.map((i) => ({ name: i.product_name, quantity: i.quantity, unitPrice: Number(i.unit_price), lineTotal: Number(i.line_total), image: imageByName.get(i.product_name.toLowerCase()) ?? '' })),
+      items: o.order_items.map((i) => ({ name: i.product_name, code: productCode(i.sku), quantity: i.quantity, unitPrice: Number(i.unit_price), lineTotal: Number(i.line_total), image: imageByName.get(i.product_name.toLowerCase()) ?? '' })),
     };
   });
 }
@@ -94,7 +94,7 @@ export async function fetchAdminProducts(): Promise<AdminProduct[]> {
     const img = p.product_images?.find((i) => i.is_primary)?.url ?? p.product_images?.[0]?.url ?? imageBySlug.get(p.slug) ?? '';
     const onSale = p.sale_price !== null && Number(p.sale_price) < Number(p.price);
     return {
-      id: p.id, name: p.name, slug: p.slug, sku: p.sku, category: p.categories?.name ?? '—',
+      id: p.id, name: p.name, slug: p.slug, sku: p.sku, code: productCode(p.sku), category: p.categories?.name ?? '—',
       price: Number(onSale ? p.sale_price : p.price), oldPrice: onSale ? Number(p.price) : 0,
       stock: rows.reduce((s, r) => s + r.current_stock - r.reserved_stock, 0), threshold: rows.length ? rows.reduce((s, r) => s + r.low_stock_threshold, 0) : 10,
       byStore: Object.fromEntries(rows.map((r) => [r.branch_id, r.current_stock - r.reserved_stock])),
@@ -175,6 +175,9 @@ export function useAdminData<T>(load: () => Promise<T[]>, _demo?: T[]) {
   useEffect(() => { void reload(); }, [reload]);
   return { rows, setRows, live, loading, reload };
 }
+
+/** The store's product code from the SKU ("DM-5.296" → "5.296"). Admin only; never shown on the website. */
+export const productCode = (sku: string | null | undefined) => (sku ?? '').replace(/^DM-/, '');
 
 export const statusLabel = (s: string) => s.toLowerCase().split('_').map((w) => w[0]!.toUpperCase() + w.slice(1)).join(' ');
 export const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });

@@ -47,14 +47,15 @@ function Page() {
   const { rows: all, setRows, live, loading, reload } = useAdminData<AdminProduct>(fetchAdminProducts);
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState('');
-  const [status, setStatus] = useState('');
+  // Only products on the website by default; "Hidden" shows the rest (they can be switched back on).
+  const [status, setStatus] = useState('active');
   const [stockFilter, setStockFilter] = useState('');
   const [photo, setPhoto] = useState('');
   const [bulk, setBulk] = useState(false);
   const categories = [...new Set(all.map((p) => p.category))].sort();
   const needPhoto = all.filter((p) => !p.hasPhoto && p.active).length;
   const rows = all
-    .filter((p) => `${p.name} ${p.sku} ${p.category}`.toLowerCase().includes(query.toLowerCase()))
+    .filter((p) => `${p.name} ${p.sku} ${p.code} ${p.category}`.toLowerCase().includes(query.toLowerCase()))
     .filter((p) => !category || p.category === category)
     .filter((p) => !status || (status === 'active') === p.active)
     .filter((p) => !stockFilter || (stockFilter === 'out' ? p.stock <= 0 : stockFilter === 'low' ? p.stock > 0 && p.stock < p.threshold : p.stock >= p.threshold))
@@ -84,7 +85,7 @@ function Page() {
   }
   function exportCsv() {
     // Exports what the filters show, so "Needs photo" + Export gives staff a photo checklist with file names.
-    const lines = [['Name', 'SKU', 'Photo file name', 'Category', 'Price', 'Old Price', 'Stock', 'Status', 'Has photo'], ...rows.map((p) => [p.name, p.sku, `${p.sku}.jpg`, p.category, String(p.price), String(p.oldPrice || ''), String(p.stock), p.active ? 'Active' : 'Inactive', p.hasPhoto ? 'Yes' : 'No'])];
+    const lines = [['Name', 'Product code', 'Photo file name', 'Category', 'Price', 'Old Price', 'Stock', 'Status', 'Has photo'], ...rows.map((p) => [p.name, p.code, `${p.sku}.jpg`, p.category, String(p.price), String(p.oldPrice || ''), String(p.stock), p.active ? 'Active' : 'Inactive', p.hasPhoto ? 'Yes' : 'No'])];
     const url = URL.createObjectURL(new Blob(['\ufeff', lines.map((r) => r.map((c) => `"${c.replaceAll('"', '""')}"`).join(',')).join('\r\n')], { type: 'text/csv' }));
     const a = document.createElement('a'); a.href = url; a.download = 'delight-products.csv'; a.click(); URL.revokeObjectURL(url);
   }
@@ -110,13 +111,13 @@ function Page() {
               <StatCard compact icon={CircleCheck} tone="green" label="Active Products" value={String(all.filter((p) => p.active).length)} note="" />
               <StatCard compact icon={Box} tone="red" label="Out of Stock" value={String(outOfStock)} dir="down" note="" filled={false} />
               <StatCard compact icon={TriangleAlert} tone="red" label="Low Stock" value={String(low)} dir="down" note="" filled={false} />
-              <StatCard compact icon={CircleX} tone="red" label="Inactive Products" value={String(all.filter((p) => !p.active).length)} dir="down" note="" />
+              <StatCard compact icon={CircleX} tone="red" label="Hidden Products" value={String(all.filter((p) => !p.active).length)} dir="down" note="" />
             </div>
             <Card className="mt-4">
               <FilterBar>
                 <SearchBox placeholder="Search products by name, SKU or category..." value={query} onChange={(v) => { setQuery(v); setPage(1); }} className="w-[276px]" />
                 <FilterSelect label="Category" value={category} onChange={filter(setCategory)} options={[['', 'All Categories'], ...categories.map((c): [string, string] => [c, c])]} className="w-[170px]" />
-                <FilterSelect label="Status" value={status} onChange={filter(setStatus)} options={[['', 'All Status'], ['active', 'Active'], ['inactive', 'Inactive']]} className="w-[125px]" />
+                <FilterSelect label="Status" value={status} onChange={filter(setStatus)} options={[['active', 'On website'], ['inactive', 'Hidden'], ['', 'All products']]} className="w-[140px]" />
                 <FilterSelect label="Stock" value={stockFilter} onChange={filter(setStockFilter)} options={[['', 'All Stock'], ['in', 'In Stock'], ['low', 'Low Stock'], ['out', 'Out of Stock']]} className="w-[125px]" />
                 <FilterSelect label="Photo" value={photo} onChange={filter(setPhoto)} options={[['', 'All Photos'], ['missing', `Needs photo (${needPhoto.toLocaleString('en-US')})`], ['has', 'Has photo']]} className="w-[175px]" />
               </FilterBar>
@@ -126,7 +127,7 @@ function Page() {
                   return (
                     <Tr key={p.id}>
                       <Td>{p.image ? <img src={p.image} alt="" className="size-11 object-contain" /> : <button onClick={() => { setDupId(null); setEditId(p.id); }} title="Add a photo" className="grid size-11 place-items-center rounded border border-dashed border-[#c9d1da] bg-[#f8fafc] text-slate hover:border-[#077a52] hover:text-[#077a52]"><ImagePlus className="size-4" /></button>}</Td>
-                      <Td><span className="block">{p.name}</span><span className="text-[12.5px] text-slate">{p.sku}</span></Td>
+                      <Td><span className="block">{p.name}</span><span className="text-[12.5px] text-slate">Code {p.code}</span></Td>
                       <Td><Badge tone={categoryTone[p.category] ?? 'gray'}>{p.category}</Badge></Td>
                       <Td className="whitespace-nowrap"><span className="block">{npr(p.price)}</span>{p.oldPrice > 0 && <del className="text-[12.5px] text-slate">{npr(p.oldPrice)}</del>}</Td>
                       <Td><span className={`block ${tone === 'red' ? 'text-[#e3101a]' : ''}`}>{p.stock}</span><Badge tone={tone} className="!py-0.5 !text-[11.5px]">{label}</Badge></Td>

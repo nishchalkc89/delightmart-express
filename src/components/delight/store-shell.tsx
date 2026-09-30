@@ -221,7 +221,7 @@ export function MobileNav({ variant = 'default' }: { variant?: 'default' | 'acco
 /* ------------------------------------------------------------------ */
 
 const footerCols = {
-  'Quick Links': [['Home', '/'], ['All Categories', '/categories'], ['Offers & Deals', '/categories/deals-offers'], ['My Wishlist', '/wishlist'], ['Track Order', '/orders']],
+  'Quick Links': [['Home', '/'], ['All Categories', '/categories'], ['All Products', '/products'], ['My Wishlist', '/wishlist'], ['Track Order', '/orders']],
   'Customer Service': [['Help Center', '/account/help'], ['Returns & Refunds', '/returns'], ['Shipping Information', '/shipping'], ['FAQs', '/account/help'], ['Contact Us', '/store-location']],
   'About Delight': [['Our Story', '/about'], ['Store Location', '/store-location'], ['Careers', '/careers'], ['Terms & Conditions', '/terms'], ['Privacy Policy', '/privacy']],
 } as const;

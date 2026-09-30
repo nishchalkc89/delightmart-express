@@ -24,7 +24,7 @@ function Page() {
   const [limit, setLimit] = useState(10);
   const [query, setQuery] = useState(search.q ?? '');
   const [category, setCategory] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('active');
   const [sort, setSort] = useState('stock-asc');
   const [saving, setSaving] = useState(false);
   useEffect(() => { if (search.q !== undefined) setQuery(search.q); }, [search.q]);
@@ -37,7 +37,7 @@ function Page() {
     .filter((x) => tab === 0 || (tab === 1 ? isLow(x) : x.stock <= 0))
     .filter((x) => !category || x.category === category)
     .filter((x) => !status || (status === 'active') === x.active)
-    .filter((x) => `${x.name} ${x.sku}`.toLowerCase().includes(query.toLowerCase().trim()))
+    .filter((x) => `${x.name} ${x.sku} ${x.code}`.toLowerCase().includes(query.toLowerCase().trim()))
     .sort((a, b) => (sort === 'stock-desc' ? b.stock - a.stock : sort === 'name' ? a.name.localeCompare(b.name) : sort === 'updated' ? b.updatedAt.localeCompare(a.updatedAt) : a.stock - b.stock)),
   [all, tab, category, status, query, sort]);
   const pg = usePaged(rows, 50);
@@ -65,7 +65,7 @@ function Page() {
   }
 
   function exportCsv() {
-    const lines = [['Product', 'SKU', 'Category', 'Stock', 'Alert below', 'Status'], ...rows.map((x) => [x.name, x.sku, x.category, String(x.stock), String(x.threshold), x.active ? 'Active' : 'Hidden'])];
+    const lines = [['Product', 'Product code', 'Category', 'Stock', 'Alert below', 'Status'], ...rows.map((x) => [x.name, x.code, x.category, String(x.stock), String(x.threshold), x.active ? 'Active' : 'Hidden'])];
     const url = URL.createObjectURL(new Blob(['﻿', lines.map((r) => r.map((c) => `"${c.replaceAll('"', '""')}"`).join(',')).join('\r\n')], { type: 'text/csv' }));
     const a = document.createElement('a'); a.href = url; a.download = 'delight-inventory.csv'; a.click(); URL.revokeObjectURL(url);
   }
@@ -88,16 +88,16 @@ function Page() {
               <FilterBar>
                 <SearchBox placeholder="Search by product name or SKU..." value={query} onChange={(v) => { setQuery(v); reset(); }} className="w-[240px]" />
                 <FilterSelect label="Category" value={category} onChange={(v) => { setCategory(v); reset(); }} options={[['', 'All Categories'], ...categories.map((c): [string, string] => [c, c])]} className="w-[170px]" />
-                <FilterSelect label="Status" value={status} onChange={(v) => { setStatus(v); reset(); }} options={[['', 'All Status'], ['active', 'Active'], ['hidden', 'Hidden']]} className="w-[130px]" />
+                <FilterSelect label="Status" value={status} onChange={(v) => { setStatus(v); reset(); }} options={[['active', 'On website'], ['hidden', 'Hidden'], ['', 'All products']]} className="w-[140px]" />
                 <FilterSelect label="Sort" value={sort} onChange={setSort} options={sorts} className="w-[180px]" />
               </FilterBar>
-              <Table head={['Product', 'SKU', 'Category', 'Current Stock', 'Alert Below', 'Status', 'Last Updated', 'Actions']}>
+              <Table head={['Product', 'Product Code', 'Category', 'Current Stock', 'Alert Below', 'Status', 'Last Updated', 'Actions']}>
                 {pg.shown.map((x) => {
                   const low = isLow(x);
                   return (
                     <Tr key={x.id} active={x.id === p?.id} onClick={() => setSelId(x.id)}>
                       <Td><span className="flex items-center gap-2.5">{x.image && <img src={x.image} alt="" className="size-8 shrink-0 object-contain" />}<span className="leading-tight">{x.name}</span></span></Td>
-                      <Td className="text-slate">{x.sku}</Td>
+                      <Td className="font-mono text-[13px] text-slate">{x.code}</Td>
                       <Td className="text-slate">{x.category}</Td>
                       <Td className={x.stock <= 0 || low ? 'text-[#e3101a]' : ''}>{x.stock}</Td>
                       <Td>{x.threshold}</Td>
@@ -117,7 +117,7 @@ function Page() {
           <Panel title="Stock Details" onClose={() => setSelId(null)}>
             <div className="flex gap-4">
               {p.image ? <img src={p.image} alt="" className="size-[72px] object-contain" /> : <span className="size-[72px] shrink-0 rounded bg-[#f1f4f7]" />}
-              <div className="min-w-0"><b className="block text-[15px] font-semibold text-navy">{p.name}</b><span className="text-[13px] text-slate">{p.sku} · {p.category}</span><Badge tone={p.active ? 'green' : 'red'} className="mt-2 !flex w-fit items-center gap-1"><CircleCheck className="size-3.5" />{p.active ? 'Active' : 'Hidden'}</Badge></div>
+              <div className="min-w-0"><b className="block text-[15px] font-semibold text-navy">{p.name}</b><span className="text-[13px] text-slate">Code {p.code} · {p.category}</span><Badge tone={p.active ? 'green' : 'red'} className="mt-2 !flex w-fit items-center gap-1"><CircleCheck className="size-3.5" />{p.active ? 'Active' : 'Hidden'}</Badge></div>
             </div>
             {allowed.length > 1 && p.byStore && (
               <div className="mt-4 grid grid-cols-2 gap-2">

@@ -42,7 +42,7 @@ const esc = (t: string) => t.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt
 function printInvoice(o: AdminOrder, store?: Branch) {
   const w = window.open('', '_blank', 'width=720,height=900');
   if (!w) { toast.error('Allow pop-ups to print the invoice'); return; }
-  const rows = o.items.map((i) => `<tr><td>${esc(i.name)}</td><td class="r">${i.quantity}</td><td class="r">${npr(i.unitPrice)}</td><td class="r">${npr(i.lineTotal)}</td></tr>`).join('');
+  const rows = o.items.map((i) => `<tr><td>${esc(i.code)}</td><td>${esc(i.name)}</td><td class="r">${i.quantity}</td><td class="r">${npr(i.unitPrice)}</td><td class="r">${npr(i.lineTotal)}</td></tr>`).join('');
   w.document.write(`<!doctype html><html><head><title>Invoice ${esc(o.number)}</title><style>
     body{font-family:Arial,sans-serif;color:#13213a;margin:32px}h1{margin:0;font-size:22px}table{width:100%;border-collapse:collapse;margin-top:18px}
     th,td{padding:8px;border-bottom:1px solid #e8ecf0;text-align:left;font-size:14px}.r{text-align:right}.muted{color:#6b7385;font-size:13px}.tot td{font-weight:bold;font-size:16px}
@@ -50,7 +50,7 @@ function printInvoice(o: AdminOrder, store?: Branch) {
     <h1>${esc(STORE.name)}${store ? ` – ${esc(store.city)}` : ''}</h1><p class="muted">${esc(store?.address ?? 'Tulsipur, Dang')} · ${esc(store?.phone ?? STORE.phone)} · ${esc(store?.email ?? STORE.email)}</p>
     <h2 style="font-size:18px;margin-top:24px">Invoice ${esc(o.number)}</h2>
     <p class="muted">Date: ${fmtDate(o.createdAt)} ${fmtTime(o.createdAt)}<br>Customer: ${esc(o.customer.name)} ${esc(o.customer.phone)}<br>Deliver to: ${esc(addressOf(o))}<br>Payment: ${o.paymentMethod === 'COD' ? 'Cash on Delivery' : esc(o.paymentMethod)}</p>
-    <table><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr></thead><tbody>${rows}
+    <table><thead><tr><th>Code</th><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr></thead><tbody>${rows}
     <tr><td colspan="3" class="r">Subtotal</td><td class="r">${npr(o.subtotal)}</td></tr>
     ${o.discount ? `<tr><td colspan="3" class="r">Discount</td><td class="r">- ${npr(o.discount)}</td></tr>` : ''}
     <tr><td colspan="3" class="r">Delivery</td><td class="r">${o.deliveryFee ? npr(o.deliveryFee) : 'FREE'}</td></tr>
@@ -158,9 +158,9 @@ function Page() {
             <h3 className="mt-5 text-[15px] font-bold text-navy">Order Items ({o.items.length})</h3>
             <ul className="mt-2 space-y-2.5">
               {o.items.map((it) => (
-                <li key={it.name} className="flex items-center gap-3">
+                <li key={it.code + it.name} className="flex items-center gap-3">
                   {it.image ? <img src={it.image} alt="" className="size-11 object-contain" /> : <span className="size-11 rounded bg-[#f1f4f7]" />}
-                  <span className="flex-1 text-[13px] leading-5"><span className="block text-navy">{it.name}</span><span className="text-slate">{it.quantity} × {npr(it.unitPrice)}</span></span>
+                  <span className="flex-1 text-[13px] leading-5"><span className="block text-navy">{it.name}</span><span className="text-slate">{it.code && <b className="mr-1.5 rounded bg-[#eef1f4] px-1.5 py-0.5 font-mono text-[12px] text-navy">Code {it.code}</b>}{it.quantity} × {npr(it.unitPrice)}</span></span>
                   <span className="text-[13.5px] text-navy">{npr(it.lineTotal)}</span>
                 </li>
               ))}

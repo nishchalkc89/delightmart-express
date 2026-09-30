@@ -199,9 +199,13 @@ export async function fetchCategories(): Promise<Category[]> {
   try {
     const db = await client();
     if (!db) return [...categories, dealsCategory];
-    const { data, error } = await db.from('categories').select('name,slug,description,image_url,sort_order').eq('status', 'ACTIVE').is('parent_id', null).order('sort_order');
+    const [{ data, error }, deals] = await Promise.all([
+      db.from('categories').select('name,slug,description,image_url,sort_order').eq('status', 'ACTIVE').is('parent_id', null).order('sort_order'),
+      // "Deals & Offers" only shows while some product has a sale price.
+      db.from('products').select('id,categories!inner(status)', { count: 'exact', head: true }).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').not('sale_price', 'is', null),
+    ]);
     if (error || !data?.length) return [...categories, dealsCategory];
-    return [...withVisuals(data as Cat[]), dealsCategory];
+    return [...withVisuals(data as Cat[]), ...(deals.count ? [dealsCategory] : [])];
   } catch {
     return [...categories, dealsCategory];
   }

@@ -1,0 +1,1694 @@
+[
+ {
+  "code": "5.296",
+  "name": "Rico/pudding Jelly fruit flvr",
+  "uom": "PC",
+  "sold": 39,
+  "stock": 575,
+  "mrp": 90,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.631",
+  "name": "Marshmallow Pop small",
+  "uom": "PC",
+  "sold": 123,
+  "stock": 559,
+  "mrp": 40,
+  "supplier": "Heaven international"
+ },
+ {
+  "code": "5.929",
+  "name": "Lips Strawerry Candy 10g",
+  "uom": "Pcs",
+  "sold": 41,
+  "stock": 499,
+  "mrp": 30,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.867",
+  "name": "Geef Magic Pops 5.5g",
+  "uom": "Pcs",
+  "sold": 297,
+  "stock": 487,
+  "mrp": 20,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "3.122",
+  "name": "Mumlove standard neck nipple S.M.L",
+  "uom": "Pc",
+  "sold": 27,
+  "stock": 265,
+  "mrp": 50,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "5.794",
+  "name": "Candy Stick Punk 40g",
+  "uom": "Pcs",
+  "sold": 154,
+  "stock": 215,
+  "mrp": 80,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.933",
+  "name": "Strike mix wafer cocolate",
+  "uom": "Pcs",
+  "sold": 223,
+  "stock": 180,
+  "mrp": 25,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.66",
+  "name": "Jelly BBQ Stick Chocolate",
+  "uom": "PC",
+  "sold": 462,
+  "stock": 178,
+  "mrp": 40,
+  "supplier": "Heaven international"
+ },
+ {
+  "code": "4.69",
+  "name": "numbering candle",
+  "uom": "PC",
+  "sold": 6,
+  "stock": 164,
+  "mrp": 25,
+  "supplier": "Devank Enterprises GOYAL"
+ },
+ {
+  "code": "1.307",
+  "name": "Heartex Toilet paper clr",
+  "uom": "pc",
+  "sold": 133,
+  "stock": 151,
+  "mrp": 120,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.1113",
+  "name": "Kravour rolls choco/strawberry 50gm",
+  "uom": "Pcs",
+  "sold": 24,
+  "stock": 146,
+  "mrp": 99,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "9.594",
+  "name": "Pokemon / Naruto / Labubu card 6+",
+  "uom": "Pcs",
+  "sold": 116,
+  "stock": 146,
+  "mrp": 10,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "5.131",
+  "name": "White Rabbit 108g",
+  "uom": "pkt",
+  "sold": 59,
+  "stock": 139,
+  "mrp": 240,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "7.86",
+  "name": "Puorr Chicken Cube Pices",
+  "uom": "PC",
+  "sold": 422,
+  "stock": 138,
+  "mrp": 35,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "4.244",
+  "name": "Straw pice 25pcs colour packing",
+  "uom": "PC",
+  "sold": 12,
+  "stock": 114,
+  "mrp": 130,
+  "supplier": "Global gateway pvt.ltd"
+ },
+ {
+  "code": "4.1470",
+  "name": "SKI fridge bottle dash big 900ml",
+  "uom": "Pcs",
+  "sold": 2,
+  "stock": 106,
+  "mrp": 340,
+  "supplier": "Balajee Trading"
+ },
+ {
+  "code": "5.470",
+  "name": "Trident chewgum mix",
+  "uom": "PC",
+  "sold": 123,
+  "stock": 105,
+  "mrp": 275,
+  "supplier": "Pratham Trader Line Pvt.L td"
+ },
+ {
+  "code": "5.1059",
+  "name": "Hazelnut Cream With Cocoa & Breadstick 56g",
+  "uom": "Pcs",
+  "sold": 140,
+  "stock": 100,
+  "mrp": 150,
+  "supplier": "Heaven international"
+ },
+ {
+  "code": "5.1023",
+  "name": "Alfredo milk chocolate all flv 100gm",
+  "uom": "Pcs",
+  "sold": 74,
+  "stock": 99,
+  "mrp": 295,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "4.1467",
+  "name": "SKI fridge bottle hongkong 1000ml",
+  "uom": "Pcs",
+  "sold": 19,
+  "stock": 94,
+  "mrp": 300,
+  "supplier": "Balajee Trading"
+ },
+ {
+  "code": "5.778",
+  "name": "Amos peelerz lychee 65gm",
+  "uom": "pkt",
+  "sold": 156,
+  "stock": 91,
+  "mrp": 190,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "7.6",
+  "name": "Timur Chhop Pickle 400g",
+  "uom": "PC",
+  "sold": 55,
+  "stock": 88,
+  "mrp": 310,
+  "supplier": "Nepali Mann Udyog Pvt.Ltd"
+ },
+ {
+  "code": "10.448",
+  "name": "Raping paper cover",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 86,
+  "mrp": 20,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "5.1091",
+  "name": "Choco coco coconut bar 200gm",
+  "uom": "Pcs",
+  "sold": 41,
+  "stock": 80,
+  "mrp": 350,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.1119",
+  "name": "Kravour wafer biscuits all flv 60gm",
+  "uom": "Pcs",
+  "sold": 60,
+  "stock": 78,
+  "mrp": 110,
+  "supplier": "Heaven international"
+ },
+ {
+  "code": "5.170",
+  "name": "White Rabit 180g",
+  "uom": "pkt",
+  "sold": 50,
+  "stock": 78,
+  "mrp": 355,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "10.261",
+  "name": "Permanet Marker",
+  "uom": "Pcs",
+  "sold": 26,
+  "stock": 76,
+  "mrp": 50,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "5.787",
+  "name": "Milk Candy 160gm",
+  "uom": "Pcs",
+  "sold": 45,
+  "stock": 75,
+  "mrp": 350,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "4.251",
+  "name": "Duracell batteryAA4",
+  "uom": "PC",
+  "sold": 45,
+  "stock": 75,
+  "mrp": 250,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.492",
+  "name": "My chewy corn mix gelly 300g",
+  "uom": "pkt",
+  "sold": 108,
+  "stock": 71,
+  "mrp": 250,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "4.1469",
+  "name": "Kohinoor fridge bottle 1000ml",
+  "uom": "Pcs",
+  "sold": 10,
+  "stock": 70,
+  "mrp": 180,
+  "supplier": "Balajee Trading"
+ },
+ {
+  "code": "5.188",
+  "name": "Sweet rainbow Queen Jelly small 55g",
+  "uom": "pc",
+  "sold": 83,
+  "stock": 62,
+  "mrp": 130,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "3.634",
+  "name": "Eurosoft baby wet wipes",
+  "uom": "Pcs",
+  "sold": 4,
+  "stock": 59,
+  "mrp": 200,
+  "supplier": "Global gateway pvt.ltd"
+ },
+ {
+  "code": "5.915",
+  "name": "Madoc royal/lacmi 250g",
+  "uom": "Pcs",
+  "sold": 17,
+  "stock": 57,
+  "mrp": 265,
+  "supplier": "Heaven international"
+ },
+ {
+  "code": "17.255",
+  "name": "Side clip single buterfly",
+  "uom": "Pcs",
+  "sold": 13,
+  "stock": 57,
+  "mrp": 60,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "7.377",
+  "name": "Selva pasta all flvr 500g",
+  "uom": "pkt",
+  "sold": 44,
+  "stock": 56,
+  "mrp": 200,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "10.253",
+  "name": "ArlsAnd co mix pen0.5mm",
+  "uom": "Pcs",
+  "sold": 22,
+  "stock": 56,
+  "mrp": 50,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "7.4285",
+  "name": "Ego golden bear cream biscuits all flv",
+  "uom": "Pcs",
+  "sold": 10,
+  "stock": 55,
+  "mrp": 525,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.1083",
+  "name": "Exara bar all flv chocolate 90gm",
+  "uom": "Pcs",
+  "sold": 20,
+  "stock": 54,
+  "mrp": 120,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.1072",
+  "name": "Pules chocolate mix flv",
+  "uom": "Pcs",
+  "sold": 59,
+  "stock": 53,
+  "mrp": 125,
+  "supplier": "Pratham Trader Line Pvt.L td"
+ },
+ {
+  "code": "5.1039",
+  "name": "Marshmallow pop 30gm",
+  "uom": "Pcs",
+  "sold": 15,
+  "stock": 53,
+  "mrp": 100,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "7.4055",
+  "name": "A taste soda cracker sugar free 280gm",
+  "uom": "Pcs",
+  "sold": 80,
+  "stock": 52,
+  "mrp": 510,
+  "supplier": "G.D. INTERNATIONAL. PVT. LTD."
+ },
+ {
+  "code": "10.51",
+  "name": "mechanical pencil leads 2B",
+  "uom": "set",
+  "sold": 5,
+  "stock": 52,
+  "mrp": 20,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "17.313",
+  "name": "Rabbar 2pc set",
+  "uom": "Pcs",
+  "sold": 68,
+  "stock": 48,
+  "mrp": 80,
+  "supplier": "Smile Your Choice"
+ },
+ {
+  "code": "1.440",
+  "name": "Apple/Vinda Box Tissue 100",
+  "uom": "pc",
+  "sold": 37,
+  "stock": 47,
+  "mrp": 165,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "7.184",
+  "name": "BMC Meat Masala 100g",
+  "uom": "PC",
+  "sold": 16,
+  "stock": 47,
+  "mrp": 136,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "17.6",
+  "name": "Baby hair Band with stone Al-LIAN",
+  "uom": "Pcs",
+  "sold": 2,
+  "stock": 47,
+  "mrp": 100,
+  "supplier": "Smile Your Choice"
+ },
+ {
+  "code": "5.1116",
+  "name": "Diorec compound chocolate all flv 80gm",
+  "uom": "Pcs",
+  "sold": 26,
+  "stock": 46,
+  "mrp": 150,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "9.34",
+  "name": "Soft pu Ball 7.6 cm pu76",
+  "uom": "Pcs",
+  "sold": 20,
+  "stock": 44,
+  "mrp": 60,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "5.1121",
+  "name": "Trident chewgum spearmint",
+  "uom": "Pcs",
+  "sold": 17,
+  "stock": 43,
+  "mrp": 275,
+  "supplier": "Pratham Trader Line Pvt.L td"
+ },
+ {
+  "code": "4.1468",
+  "name": "SKI gridge bottle barcelona 1000ml",
+  "uom": "Pcs",
+  "sold": 18,
+  "stock": 43,
+  "mrp": 190,
+  "supplier": "Balajee Trading"
+ },
+ {
+  "code": "16.214",
+  "name": "Vinut popping bubble tea lychee 320ml",
+  "uom": "Pcs",
+  "sold": 24,
+  "stock": 40,
+  "mrp": 250,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "7.3713",
+  "name": "G4 chilli garlic mix 200gm",
+  "uom": "Pcs",
+  "sold": 7,
+  "stock": 40,
+  "mrp": 177,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.383",
+  "name": "Runiu Milk & Candy",
+  "uom": "PC",
+  "sold": 46,
+  "stock": 39,
+  "mrp": 650,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "17.329",
+  "name": "Hong tian side clip mix",
+  "uom": "Pcs",
+  "sold": 32,
+  "stock": 39,
+  "mrp": 75,
+  "supplier": "Smile Your Choice"
+ },
+ {
+  "code": "7.4440",
+  "name": "Samyang Tangle noodles 100g",
+  "uom": "Pcs",
+  "sold": 18,
+  "stock": 37,
+  "mrp": 260,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "10.554",
+  "name": "Lantu Pencil Led 2B",
+  "uom": "Pcs",
+  "sold": 5,
+  "stock": 37,
+  "mrp": 30,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "10.553",
+  "name": "Baiku Mechanical Pencil 2.0mm Bk-298",
+  "uom": "Pcs",
+  "sold": 7,
+  "stock": 37,
+  "mrp": 70,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "5.57",
+  "name": "Max Sweet Love rose 4 pc chocolate 50g",
+  "uom": "PC",
+  "sold": 12,
+  "stock": 36,
+  "mrp": 240,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.548",
+  "name": "Marshmallow pop 60g",
+  "uom": "Pcs",
+  "sold": 16,
+  "stock": 36,
+  "mrp": 170,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "9.35",
+  "name": "Soft pu Ball 10 cm pu10",
+  "uom": "Pcs",
+  "sold": 14,
+  "stock": 36,
+  "mrp": 100,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "4.501",
+  "name": "Bath Flowers Scrubber/Bath Ball 250",
+  "uom": "Pcs",
+  "sold": 116,
+  "stock": 36,
+  "mrp": 90,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "5.560",
+  "name": "Fortunna chocolate 8pc 100g",
+  "uom": "Pcs",
+  "sold": 17,
+  "stock": 34,
+  "mrp": 425,
+  "supplier": "Heaven international"
+ },
+ {
+  "code": "5.496",
+  "name": "Nuts crisp chocolate 250g",
+  "uom": "Pcs",
+  "sold": 26,
+  "stock": 34,
+  "mrp": 325,
+  "supplier": "Heaven international"
+ },
+ {
+  "code": "17.78",
+  "name": "Earing *jewelry",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 34,
+  "mrp": 380,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "7.744",
+  "name": "Hazelnut Duo Nusco Choco jaam 350g",
+  "uom": "pc",
+  "sold": 62,
+  "stock": 33,
+  "mrp": 650,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.1130",
+  "name": "Alfredo no sugar added 100gm",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 33,
+  "mrp": 695,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.422",
+  "name": "Rinda Almond Toffee 200g",
+  "uom": "PC",
+  "sold": 15,
+  "stock": 33,
+  "mrp": 90,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "17.265",
+  "name": "Butterfly clip 2pcs set",
+  "uom": "Pcs",
+  "sold": 27,
+  "stock": 33,
+  "mrp": 110,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "7.2739",
+  "name": "BMC chicken Masala 100g",
+  "uom": "Pcs",
+  "sold": 33,
+  "stock": 32,
+  "mrp": 136,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "10.556",
+  "name": "mechanical pencil leads 2B/0.5mm no.241",
+  "uom": "Pcs",
+  "sold": 28,
+  "stock": 32,
+  "mrp": 60,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "10.388",
+  "name": "Chren Enaser Pen NO3591",
+  "uom": "Pcs",
+  "sold": 5,
+  "stock": 31,
+  "mrp": 75,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "5.1131",
+  "name": "Alfredo chocolate 85%/73% 100gm",
+  "uom": "Pcs",
+  "sold": 4,
+  "stock": 30,
+  "mrp": 695,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "1.2217",
+  "name": "Eurosoft baby diaper pant M-42",
+  "uom": "Pcs",
+  "sold": 8,
+  "stock": 30,
+  "mrp": 1165,
+  "supplier": "Global gateway pvt.ltd"
+ },
+ {
+  "code": "3.312",
+  "name": "Mumlove Baby water teether A1090",
+  "uom": "PC",
+  "sold": 5,
+  "stock": 29,
+  "mrp": 125,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "4.1160",
+  "name": "Eveready AA battery 2pcs",
+  "uom": "Pcs",
+  "sold": 37,
+  "stock": 29,
+  "mrp": 55,
+  "supplier": "Pratham Trader Line Pvt.L td"
+ },
+ {
+  "code": "3.268",
+  "name": "Mothers Choice Baby wipes 100s",
+  "uom": "PC",
+  "sold": 35,
+  "stock": 29,
+  "mrp": 210,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "5.931",
+  "name": "Mix Flavoured Candy 100g",
+  "uom": "Pack",
+  "sold": 19,
+  "stock": 28,
+  "mrp": 75,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "17.198",
+  "name": "Mirror 2in 1 pocket",
+  "uom": "Pcs",
+  "sold": 16,
+  "stock": 28,
+  "mrp": 270,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "5.44",
+  "name": "Max/Fortunna sweet Chocolate heart 200g (16pc)",
+  "uom": "PKT",
+  "sold": 22,
+  "stock": 27,
+  "mrp": 750,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.1064",
+  "name": "Fulfire marshmallow 120gm",
+  "uom": "Pcs",
+  "sold": 17,
+  "stock": 27,
+  "mrp": 220,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "10.385",
+  "name": "Veiao V5 pen 0.5",
+  "uom": "Pcs",
+  "sold": 17,
+  "stock": 27,
+  "mrp": 60,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "5.883",
+  "name": "Doriva Coco World Coconut Bar 500gm",
+  "uom": "pkt",
+  "sold": 22,
+  "stock": 26,
+  "mrp": 810,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.215",
+  "name": "Soft Jelly orange jelly candy",
+  "uom": "pc",
+  "sold": 60,
+  "stock": 26,
+  "mrp": 250,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "10.376",
+  "name": "Baiku Mechanical Lead pen No.852",
+  "uom": "Pcs",
+  "sold": 6,
+  "stock": 26,
+  "mrp": 60,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "10.372",
+  "name": "Lead Pen Enjoy Writing pen",
+  "uom": "Pcs",
+  "sold": 14,
+  "stock": 26,
+  "mrp": 100,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "1.2203",
+  "name": "Tessa facial tissue 120pc",
+  "uom": "Pcs",
+  "sold": 5,
+  "stock": 25,
+  "mrp": 167,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "7.4286",
+  "name": "Ego swiss roll all flv",
+  "uom": "Pcs",
+  "sold": 13,
+  "stock": 25,
+  "mrp": 425,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "7.1270",
+  "name": "Dizzle paan masala mix flvr 140g",
+  "uom": "PC",
+  "sold": 34,
+  "stock": 25,
+  "mrp": 170,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "10.552",
+  "name": "Lantu Lead Pencil 2.0mm Mp8161",
+  "uom": "Pcs",
+  "sold": 11,
+  "stock": 25,
+  "mrp": 60,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "17.267",
+  "name": "kata 3768-20 no",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 24,
+  "mrp": 150,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "3.576",
+  "name": "Farlin Crystal Clear Silicone Nipple S.M.L AC-210011",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 23,
+  "mrp": 255,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "1.2216",
+  "name": "Eurosoft baby diaper pant XL-36",
+  "uom": "Pcs",
+  "sold": 6,
+  "stock": 23,
+  "mrp": 1200,
+  "supplier": "Global gateway pvt.ltd"
+ },
+ {
+  "code": "1.2198",
+  "name": "MInico Japan premium Disposabile Dipapers XXl36pcs",
+  "uom": "Pcs",
+  "sold": 4,
+  "stock": 23,
+  "mrp": 1240,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "9.787",
+  "name": "Keyring mix",
+  "uom": "Pcs",
+  "sold": 21,
+  "stock": 23,
+  "mrp": 100,
+  "supplier": "Smile Your Choice"
+ },
+ {
+  "code": "17.57",
+  "name": "Earing Top 925",
+  "uom": "Pcs",
+  "sold": 3,
+  "stock": 23,
+  "mrp": 520,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "5.965",
+  "name": "Cocomio x2 40gm",
+  "uom": "Pcs",
+  "sold": 122,
+  "stock": 22,
+  "mrp": 70,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "7.1992",
+  "name": "Weikfield Cocoa powder 150g",
+  "uom": "Pcs",
+  "sold": 9,
+  "stock": 22,
+  "mrp": 650,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "3.629",
+  "name": "Minico Paper Cotton Swabs 100pcs MI-CB02",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 22,
+  "mrp": 190,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "5.1067",
+  "name": "Vogs mugello wafer balls 250gm",
+  "uom": "Pcs",
+  "sold": 2,
+  "stock": 22,
+  "mrp": 700,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "7.4481",
+  "name": "Chef's choice american mustrad sauce 227gm",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 21,
+  "mrp": 285,
+  "supplier": "Global gateway pvt.ltd"
+ },
+ {
+  "code": "3.631",
+  "name": "Minico Paper Cotton Swabs 100 pcs MI-CB06",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 21,
+  "mrp": 150,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "7.4666",
+  "name": "Searious nacks crispy seaweed snacks 4gm",
+  "uom": "Pcs",
+  "sold": 6,
+  "stock": 21,
+  "mrp": 330,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.493",
+  "name": "Twinfish original oat choco 400g",
+  "uom": "pkt",
+  "sold": 35,
+  "stock": 21,
+  "mrp": 330,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "17.84",
+  "name": "Earing Stone long B.B Jwellary",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 21,
+  "mrp": 640,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "1.2197",
+  "name": "MInico Japan premium Disposabile Dipapers XL38pcs",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 20,
+  "mrp": 1240,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "17.72",
+  "name": "Earing mix925",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 20,
+  "mrp": 390,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "4.1421",
+  "name": "Baltra BF 288 table fan EVO 2.5w",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 20,
+  "mrp": 1025,
+  "supplier": "Balajee NP PVT.LTD."
+ },
+ {
+  "code": "5.1085",
+  "name": "Yummies jellido mix fruit jellies jar 240gm",
+  "uom": "Pcs",
+  "sold": 6,
+  "stock": 20,
+  "mrp": 310,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "4.1443",
+  "name": "Yera PJS 2000 glass jar 2000ml",
+  "uom": "Pcs",
+  "sold": 2,
+  "stock": 20,
+  "mrp": 425,
+  "supplier": "Balajee Trading"
+ },
+ {
+  "code": "7.4359",
+  "name": "Yuku Pizza ,Pasta Seasoning 75g",
+  "uom": "Pcs",
+  "sold": 4,
+  "stock": 19,
+  "mrp": 165,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "7.1269",
+  "name": "Herman Mayonnaise 473ml",
+  "uom": "PC",
+  "sold": 6,
+  "stock": 19,
+  "mrp": 350,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "1.984",
+  "name": "Trisa toothbrush fresh super clean m",
+  "uom": "PC",
+  "sold": 2,
+  "stock": 19,
+  "mrp": 345,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "7.4398",
+  "name": "Shin kimchi noodles 120gm",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 19,
+  "mrp": 210,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "1.2218",
+  "name": "Eurosoft baby diaper pant XXL-34",
+  "uom": "Pcs",
+  "sold": 6,
+  "stock": 19,
+  "mrp": 1200,
+  "supplier": "Global gateway pvt.ltd"
+ },
+ {
+  "code": "5.945",
+  "name": "Mell's caramel chocolate 250gm",
+  "uom": "Pcs",
+  "sold": 14,
+  "stock": 19,
+  "mrp": 650,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "7.108",
+  "name": "Dilmah Jasmine Green Tea Pure Green30g",
+  "uom": "PC",
+  "sold": 4,
+  "stock": 19,
+  "mrp": 470,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.1069",
+  "name": "Asuman marshmallow 100gm",
+  "uom": "Pcs",
+  "sold": 16,
+  "stock": 19,
+  "mrp": 190,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "4.1461",
+  "name": "Yera BM 360 beer mug",
+  "uom": "Pcs",
+  "sold": 3,
+  "stock": 19,
+  "mrp": 235,
+  "supplier": "Balajee Trading"
+ },
+ {
+  "code": "10.524",
+  "name": "Adhesive Book Cover 50836 cm",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 19,
+  "mrp": 220,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "5.204",
+  "name": "Vigos Compound Chocolate Yellow 500g",
+  "uom": "pkt",
+  "sold": 35,
+  "stock": 18,
+  "mrp": 595,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "9.919",
+  "name": "Yuefan Balloon 100pcs YF1660",
+  "uom": "Pack",
+  "sold": 6,
+  "stock": 18,
+  "mrp": 315,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "17.278",
+  "name": "Baby clip 2pc set mix",
+  "uom": "Pcs",
+  "sold": 31,
+  "stock": 18,
+  "mrp": 90,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "17.334",
+  "name": "Kata flower & Stone design mix",
+  "uom": "Pcs",
+  "sold": 41,
+  "stock": 18,
+  "mrp": 240,
+  "supplier": "Smile Your Choice"
+ },
+ {
+  "code": "10.526",
+  "name": "Smile Friends Chren pen",
+  "uom": "Pcs",
+  "sold": 12,
+  "stock": 18,
+  "mrp": 90,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "5.1115",
+  "name": "Choco quad chocolate box",
+  "uom": "box",
+  "sold": 1,
+  "stock": 17,
+  "mrp": 725,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "3.416",
+  "name": "Farlin pacifier glow 0m/6m+",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 17,
+  "mrp": 545,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "5.312",
+  "name": "Foreve/r only/fortunna loveChocolate Double decor T16 box 200g",
+  "uom": "PC",
+  "sold": 4,
+  "stock": 17,
+  "mrp": 650,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "3.292",
+  "name": "Baby toothbrush w/ watch K505",
+  "uom": "PC",
+  "sold": 26,
+  "stock": 17,
+  "mrp": 85,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "5.975",
+  "name": "Choco quad chocolate 400gm",
+  "uom": "Pcs",
+  "sold": 4,
+  "stock": 16,
+  "mrp": 595,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.364",
+  "name": "Nansi chocolate taste 500gm",
+  "uom": "PC",
+  "sold": 24,
+  "stock": 16,
+  "mrp": 625,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "2.1481",
+  "name": "Nail Cutter 5001-13",
+  "uom": "PC",
+  "sold": 1,
+  "stock": 16,
+  "mrp": 190,
+  "supplier": "Devank Enterprises GOYAL"
+ },
+ {
+  "code": "17.223",
+  "name": "Earing Jewelry925",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 16,
+  "mrp": 425,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "17.306",
+  "name": "Baby hair bank flower",
+  "uom": "Pcs",
+  "sold": 19,
+  "stock": 16,
+  "mrp": 120,
+  "supplier": "Smile Your Choice"
+ },
+ {
+  "code": "5.1073",
+  "name": "Orego cookies cream/choco cream 40gm",
+  "uom": "Pcs",
+  "sold": 81,
+  "stock": 15,
+  "mrp": 125,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "3.169",
+  "name": "Baby Teether Giraff A6119-2",
+  "uom": "PC",
+  "sold": 0,
+  "stock": 15,
+  "mrp": 325,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "5.1117",
+  "name": "Aksu truffica chocolate all flv 400gm",
+  "uom": "Pcs",
+  "sold": 27,
+  "stock": 15,
+  "mrp": 575,
+  "supplier": "Heaven international"
+ },
+ {
+  "code": "4.1308",
+  "name": "Baltra Cardio Sport bottle BSL-417",
+  "uom": "Pcs",
+  "sold": 2,
+  "stock": 15,
+  "mrp": 975,
+  "supplier": "Balajee NP PVT.LTD."
+ },
+ {
+  "code": "7.754",
+  "name": "Borges/Figaro Black Pitted Olives 340g",
+  "uom": "pc",
+  "sold": 16,
+  "stock": 15,
+  "mrp": 390,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "7.682",
+  "name": "Viva Italia Oregano 30g",
+  "uom": "pc",
+  "sold": 28,
+  "stock": 15,
+  "mrp": 210,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.1132",
+  "name": "Madoc lacmi milk chocolate 350gm",
+  "uom": "Pcs",
+  "sold": 7,
+  "stock": 15,
+  "mrp": 460,
+  "supplier": "Heaven international"
+ },
+ {
+  "code": "17.322",
+  "name": "Leidona kata",
+  "uom": "Pcs",
+  "sold": 11,
+  "stock": 15,
+  "mrp": 220,
+  "supplier": "Smile Your Choice"
+ },
+ {
+  "code": "17.256",
+  "name": "Side clip 2pcs set",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 15,
+  "mrp": 70,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "10.393",
+  "name": "Lovein gel pen G585",
+  "uom": "Pcs",
+  "sold": 5,
+  "stock": 15,
+  "mrp": 50,
+  "supplier": "STC Enterprises"
+ },
+ {
+  "code": "7.4540",
+  "name": "Golden nine mushrooms soda biscuit 230gm",
+  "uom": "Pcs",
+  "sold": 12,
+  "stock": 14,
+  "mrp": 452,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "3.624",
+  "name": "Mumlove Baby U-shanes Toothbrush no.1038-12",
+  "uom": "Pcs",
+  "sold": 2,
+  "stock": 14,
+  "mrp": 75,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "3.642",
+  "name": "4 pcs Baby Scissors Nail Clipper 8121-X",
+  "uom": "Pcs",
+  "sold": 2,
+  "stock": 14,
+  "mrp": 235,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "5.1114",
+  "name": "Altalita chocolate box 500gm",
+  "uom": "box",
+  "sold": 4,
+  "stock": 14,
+  "mrp": 725,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.970",
+  "name": "Wafesto almond&cocount chocolate 300gm",
+  "uom": "Pcs",
+  "sold": 11,
+  "stock": 14,
+  "mrp": 725,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "16.199",
+  "name": "Okf Water melon drink Juice 340ml",
+  "uom": "Pcs",
+  "sold": 13,
+  "stock": 14,
+  "mrp": 220,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.368",
+  "name": "Elvan truffle Assortment 150gm",
+  "uom": "PC",
+  "sold": 28,
+  "stock": 14,
+  "mrp": 350,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.1066",
+  "name": "BK rich cream fudge 400gm",
+  "uom": "Pcs",
+  "sold": 8,
+  "stock": 14,
+  "mrp": 340,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "4.1323",
+  "name": "Royal Serve Whisky glass Lavish /perk /Decent RSGS/205/204/206",
+  "uom": "Pcs",
+  "sold": 2,
+  "stock": 14,
+  "mrp": 750,
+  "supplier": "Balajee Trading"
+ },
+ {
+  "code": "17.228",
+  "name": "Earing Jewelry 925star",
+  "uom": "Pcs",
+  "sold": 5,
+  "stock": 14,
+  "mrp": 360,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "17.407",
+  "name": "Rose Flour Hair Bun Cover",
+  "uom": "Pcs",
+  "sold": 6,
+  "stock": 14,
+  "mrp": 260,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "17.80",
+  "name": "Earing *jewelry",
+  "uom": "Pcs",
+  "sold": 4,
+  "stock": 14,
+  "mrp": 180,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "5.1019",
+  "name": "Egg chocolate coin box 120pc",
+  "uom": "Pcs",
+  "sold": 18,
+  "stock": 13,
+  "mrp": 575,
+  "supplier": "Heaven international"
+ },
+ {
+  "code": "5.73",
+  "name": "Poky Twist Chocolate 500g",
+  "uom": "PKT",
+  "sold": 5,
+  "stock": 13,
+  "mrp": 895,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "3.334",
+  "name": "Mumlove Baby Silcone spoon D6318-2",
+  "uom": "Pcs",
+  "sold": 7,
+  "stock": 13,
+  "mrp": 135,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "7.1742",
+  "name": "Figaro pitted green olives 340g",
+  "uom": "PC",
+  "sold": 4,
+  "stock": 13,
+  "mrp": 350,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "5.348",
+  "name": "Elven cocos chocolate 500g",
+  "uom": "PC",
+  "sold": 12,
+  "stock": 13,
+  "mrp": 950,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.1118",
+  "name": "Kravour wafer biscuits all flv 100gm",
+  "uom": "Pcs",
+  "sold": 35,
+  "stock": 13,
+  "mrp": 160,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "1.2195",
+  "name": "MInico Japan premium Disposabile Dipapers L40pcs",
+  "uom": "Pcs",
+  "sold": 6,
+  "stock": 13,
+  "mrp": 1240,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "5.130",
+  "name": "Bonjen Compound Chocolate 500g",
+  "uom": "pkt",
+  "sold": 11,
+  "stock": 13,
+  "mrp": 595,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.126",
+  "name": "Rapinda Chocolate 400g",
+  "uom": "pkt",
+  "sold": 4,
+  "stock": 13,
+  "mrp": 595,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "5.912",
+  "name": "Nuts crips chocolate 400g",
+  "uom": "Pcs",
+  "sold": 19,
+  "stock": 13,
+  "mrp": 490,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "7.1334",
+  "name": "Naturesmith peri peri spice/garlic/onion powder 60g",
+  "uom": "PC",
+  "sold": 4,
+  "stock": 13,
+  "mrp": 210,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "9.46",
+  "name": "Pencil Box Set A- 8935",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 13,
+  "mrp": 285,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "9.47",
+  "name": "Pencil Box Set A- 776",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 13,
+  "mrp": 260,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "17.309",
+  "name": "Hair band moti mix",
+  "uom": "Pcs",
+  "sold": 6,
+  "stock": 13,
+  "mrp": 250,
+  "supplier": "Smile Your Choice"
+ },
+ {
+  "code": "7.915",
+  "name": "Viva Italia Rosemary 30g",
+  "uom": "Pc",
+  "sold": 26,
+  "stock": 13,
+  "mrp": 210,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "4.1436",
+  "name": "cool cute bus water bottle",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 13,
+  "mrp": 600,
+  "supplier": "Tri Gem Impex"
+ },
+ {
+  "code": "4.1437",
+  "name": "Keep fit water bottle 700ml",
+  "uom": "Pcs",
+  "sold": 3,
+  "stock": 13,
+  "mrp": 580,
+  "supplier": "Tri Gem Impex"
+ },
+ {
+  "code": "2.3117",
+  "name": "MG Goldline Matte Liquid Lipstick 7ml",
+  "uom": "Pcs",
+  "sold": 1,
+  "stock": 13,
+  "mrp": 425,
+  "supplier": "Gift Station"
+ },
+ {
+  "code": "17.41",
+  "name": "Rubber simple 2pcs rs 10",
+  "uom": "Pcs",
+  "sold": 45,
+  "stock": 13,
+  "mrp": 10,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "16.102",
+  "name": "Joiner all mix flavour 320ml",
+  "uom": "PC",
+  "sold": 91,
+  "stock": 12,
+  "mrp": 160,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "3.641",
+  "name": "Mumlove Baby Simple Nasal Aspirator A1032-A",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 12,
+  "mrp": 135,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "3.33",
+  "name": "Farlin The Easy Feeder BF-193A",
+  "uom": "PC",
+  "sold": 0,
+  "stock": 12,
+  "mrp": 395,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "7.3200",
+  "name": "Buldak Quattro Cheese 145gm",
+  "uom": "Pcs",
+  "sold": 30,
+  "stock": 12,
+  "mrp": 245,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "7.4670",
+  "name": "Maearon center filled biscuit 250gm",
+  "uom": "Pcs",
+  "sold": 13,
+  "stock": 12,
+  "mrp": 260,
+  "supplier": "Maa Mansa Impex"
+ },
+ {
+  "code": "1.2194",
+  "name": "MInico Japan premium Disposabile Dipapers NB30pcs",
+  "uom": "Pcs",
+  "sold": 4,
+  "stock": 12,
+  "mrp": 740,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "7.1661",
+  "name": "America garden Traditional pasta sauce 397g",
+  "uom": "PC",
+  "sold": 3,
+  "stock": 12,
+  "mrp": 650,
+  "supplier": "Pranav Store"
+ },
+ {
+  "code": "4.1423",
+  "name": "Baltra sports bottle ELLO BSL 421 500ml",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 12,
+  "mrp": 1375,
+  "supplier": "Balajee NP PVT.LTD."
+ },
+ {
+  "code": "9.951",
+  "name": "Water toy 650w",
+  "uom": "Pcs",
+  "sold": 0,
+  "stock": 12,
+  "mrp": 170,
+  "supplier": "Khatu International P. Ltd (farlin)"
+ },
+ {
+  "code": "4.1173",
+  "name": "Zipper bags 30pcs size 15*15cm",
+  "uom": "Pcs",
+  "sold": 2,
+  "stock": 12,
+  "mrp": 200,
+  "supplier": "Global gateway pvt.ltd"
+ },
+ {
+  "code": "17.272",
+  "name": "Earing flower desing mix",
+  "uom": "Pcs",
+  "sold": 9,
+  "stock": 12,
+  "mrp": 380,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "17.202",
+  "name": "Comb Brush Fashion",
+  "uom": "Pcs",
+  "sold": 13,
+  "stock": 12,
+  "mrp": 225,
+  "supplier": "Blue Bell"
+ },
+ {
+  "code": "17.362",
+  "name": "Honey Hair Clip Small",
+  "uom": "Pcs",
+  "sold": 10,
+  "stock": 12,
+  "mrp": 90,
+  "supplier": "Blue Bell"
+ }
+]

@@ -251,10 +251,12 @@ function DesktopHome({ categories, collections, banners }: Data) {
       {slider.length ? <div className="site-width mt-5"><BannerSlider items={slider} className="h-[444px]" /></div> : <DesktopHero />}
       <Services />
       <PopularCategories categories={categories} />
+      {collections.specialOffers.length > 0 && (
       <section className="site-width mt-12">
         <SectionHead eyebrow="Today's Best Deals" title="Today's" accent="Special Offers" link="View All Deals" to="/categories/deals-offers" extra={<DealTimer />} />
         <div className="grid grid-cols-6 gap-3.5">{collections.specialOffers.slice(0, 6).map((p) => <ProductCard key={p.id} product={p} />)}</div>
       </section>
+      )}
       {below.length ? (
         <section className="site-width mt-3 grid gap-3.5" style={{ gridTemplateColumns: `repeat(${Math.min(below.length, 3)}, minmax(0, 1fr))` }}>
           {below.slice(0, 3).map((b) => <a key={b.image} href={b.link} className="block overflow-hidden rounded-xl"><img src={b.image} alt={b.title} className="h-[185px] w-full object-cover" /></a>)}
@@ -282,7 +284,7 @@ function DesktopHome({ categories, collections, banners }: Data) {
         <div className="grid grid-cols-6 gap-3.5">{collections.justArrived.slice(0, 6).map((p) => <ProductCard key={p.id} product={p} badge="new" showUnit={false} />)}</div>
       </section>
       <section className="site-width mt-10">
-        <SectionHead eyebrow="Special Offers" title="Shop More," accent="Save More" link="View All Offers" to="/categories/deals-offers" />
+        <SectionHead eyebrow="Special Offers" title="Shop More," accent="Save More" link="Shop All Products" to="/products" />
         {shopMore.length ? (
           <div className="grid gap-3.5" style={{ gridTemplateColumns: `repeat(${Math.min(shopMore.length, 4)}, minmax(0, 1fr))` }}>
             {shopMore.slice(0, 4).map((b) => <a key={b.image} href={b.link} className="block overflow-hidden rounded-xl"><img src={b.image} alt={b.title} className="h-[171px] w-full object-cover" /></a>)}
@@ -350,12 +352,14 @@ function MobileHome({ categories, collections, banners }: Data) {
         ))}
       </section>
 
+      {collections.specialOffers.length > 0 && (
       <section className="mt-6">
         <MobileHead title="Today's" accent="Special Offers" to="/categories/deals-offers" extra={<DealTimer compact />} />
         <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1">
           {collections.specialOffers.map((p) => <div key={p.id} className="w-[31%] shrink-0 sm:w-[23%]"><ProductCard product={p} variant="mobile" /></div>)}
         </div>
       </section>
+      )}
 
       <section className="mt-6">
         <MobileHead title="Shop by Category" to="/categories" />
@@ -423,7 +427,7 @@ function MobileHome({ categories, collections, banners }: Data) {
       <MobileRow title="Just" accent="Arrived" to="/products" products={collections.justArrived} badge="new" />
 
       <section className="mt-6">
-        <MobileHead title="Shop More," accent="Save More" to="/categories/deals-offers" />
+        <MobileHead title="Shop More," accent="Save More" to="/products" />
         <div className="grid grid-cols-2 gap-2.5">
           <BannerLink src={asset('save-groceries')} alt="Up to 30% off daily essentials" to="/categories/groceries" className="col-span-2" />
           <BannerLink src={asset('save-baby')} alt="Baby care" to="/categories/baby-care" />
