@@ -5,10 +5,13 @@ export const STORE = {
   name: 'Delight Shopping Mart',
   phone: '+977 9841234567',
   whatsapp: '9779841234567',
-  email: 'info@delightmart.com.np',
+  email: 'info@delightshoppingmart.com',
   address: 'Ward No. 6, Tulsipur, Dang, Lumbini Province, Nepal',
   hours: 'Open daily, 7 AM – 9 PM',
-  mapQuery: 'Tulsipur, Dang, Nepal',
+  // Pin from the store's Google Maps listing ("Delight the shopping mart").
+  mapsUrl: 'https://maps.app.goo.gl/22sJUGhs3PJ9ZUtr8',
+  lat: 28.1288489,
+  lng: 82.2961992,
   socials: {
     facebook: 'https://www.facebook.com/',
     instagram: 'https://www.instagram.com/',

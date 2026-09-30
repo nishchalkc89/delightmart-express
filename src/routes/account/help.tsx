@@ -30,7 +30,7 @@ function Page() {
   });
   const phone = store?.phone || '+977 9841234567';
   const digits = phone.replace(/\D/g, '');
-  const email = store?.email || 'info@delightmart.com.np';
+  const email = store?.email || 'info@delightshoppingmart.com';
   const hours = store?.opening_time && store?.closing_time ? `${store.opening_time.slice(0, 5)} – ${store.closing_time.slice(0, 5)}` : '7:00 AM – 9:00 PM';
 
   const contacts = [

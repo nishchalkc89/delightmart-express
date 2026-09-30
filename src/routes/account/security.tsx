@@ -39,7 +39,7 @@ function Page() {
     void nav({ to: '/login', replace: true });
   }
 
-  const deleteMail = `mailto:info@delightmart.com.np?subject=${encodeURIComponent('Delete my Delight account')}&body=${encodeURIComponent(`Please delete my Delight Shopping Mart account and personal data.\n\nAccount email: ${user?.email ?? ''}`)}`;
+  const deleteMail = `mailto:info@delightshoppingmart.com?subject=${encodeURIComponent('Delete my Delight account')}&body=${encodeURIComponent(`Please delete my Delight Shopping Mart account and personal data.\n\nAccount email: ${user?.email ?? ''}`)}`;
   const field = 'mt-1 h-11 w-full rounded-lg border border-line px-3 text-[15px] outline-none focus:border-brand';
 
   return (
