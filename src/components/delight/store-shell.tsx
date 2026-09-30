@@ -11,8 +11,8 @@ import { supabase } from '@/services/supabase';
 import { useCart } from './cart-context';
 import { useAuth } from './auth-context';
 import { useWishlist } from './wishlist-context';
-import { useCheckout } from './checkout-context';
-import { AddressSheet } from './checkout-ui';
+import { StoreButton, useBranch } from './branch-context';
+import { hoursText } from '@/lib/branch';
 import { STORE, telLink } from '@/lib/store-info';
 import { NAV_CATEGORIES, type Category } from '@/services/catalog';
 import { useCategories } from '@/hooks/use-catalog';
@@ -24,13 +24,15 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 /* ------------------------------------------------------------------ */
 
 function TopBar() {
+  const { branch } = useBranch();
+  const hours = hoursText(branch);
   return (
     <div className="hidden bg-[#f1f8f6] text-[13px] text-ink lg:block">
       <div className="site-width flex h-9 items-center justify-between">
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5"><MapPin className="size-4 fill-ink text-[#f1f8f6]" />Tulsipur, Dang</span>
+          <StoreButton className="text-[13px]" />
           <span className="h-4 w-px bg-ink/40" />
-          <span>Open Daily: 7 AM - 9 PM</span>
+          <span>Open Daily: {hours || '7 AM – 9 PM'}</span>
         </div>
         <div className="flex items-center gap-10">
           <nav className="flex items-center gap-3">
@@ -45,7 +47,7 @@ function TopBar() {
             <a href={STORE.socials.youtube} target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube className="size-5 fill-navy text-[#f1f8f6]" /></a>
           </div>
           <span className="flex items-center gap-1.5 font-semibold text-brand">
-            <span className="text-brand">❖</span> Happier Tulsipur <Heart className="size-5 fill-red text-red" />
+            <span className="text-brand">❖</span> Happier Dang <Heart className="size-5 fill-red text-red" />
           </span>
         </div>
       </div>
@@ -138,33 +140,6 @@ export type MobileHeaderProps = {
 };
 
 /** Delivery location in the phone header: pick a saved address (signed in) or see where we deliver. */
-function Location() {
-  const { user } = useAuth();
-  const { details } = useCheckout();
-  const nav = useNavigate();
-  const [open, setOpen] = useState(false);
-  const label = details.addressId ? `${details.label ?? 'Home'} · ${details.city || 'Tulsipur'}` : 'Tulsipur, Dang';
-  return (
-    <>
-      <button type="button" onClick={() => setOpen(true)} aria-label={`Delivery location: ${label}. Change`} className="flex min-w-0 items-center gap-1 whitespace-nowrap text-[13.5px] font-medium text-ink min-[400px]:text-[14.5px]">
-        <MapPin className="size-[18px] shrink-0 fill-ink text-white" /> <span className="max-w-[140px] truncate">{label}</span> <ChevronDown className="size-4 shrink-0 text-brand" />
-      </button>
-      {user ? <AddressSheet open={open} onOpenChange={setOpen} /> : (
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="bottom" className="rounded-t-2xl p-5">
-            <SheetHeader className="p-0"><SheetTitle className="text-[18px] font-bold text-navy">Where do you want your order?</SheetTitle></SheetHeader>
-            <p className="mt-2 text-[14px] leading-6 text-slate">We deliver across Tulsipur and nearby areas in about 15–20 minutes. Sign in to choose or save your delivery address.</p>
-            <div className="mt-4 flex gap-2.5">
-              <button type="button" onClick={() => { setOpen(false); void nav({ to: '/login', search: { redirect: '/cart' } }); }} className="h-11 flex-1 rounded-xl bg-brand font-semibold text-white">Sign in</button>
-              <button type="button" onClick={() => { setOpen(false); void nav({ to: '/shipping' }); }} className="h-11 flex-1 rounded-xl border border-line font-semibold text-navy">Delivery areas</button>
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
-    </>
-  );
-}
-
 function MobileMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const close = () => onOpenChange(false);
   const categories = useCategories();
@@ -199,7 +174,7 @@ function MobileHeader({ variant = 'home', actions = ['wishlist', 'cart'], search
         {variant === 'back' && <button aria-label="Go back" onClick={() => router.history.back()} className="-ml-1 p-1"><ChevronLeft className="size-6 text-ink" strokeWidth={1.8} /></button>}
         <Link to="/" className="shrink-0"><Logo variant="mobile" className="h-9 w-auto min-[400px]:h-10" /></Link>
         <div className="ml-auto flex items-center gap-3">
-          <Location />
+          <StoreButton compact className="text-[13.5px] min-[400px]:text-[14.5px]" />
           {actions.includes('search') && <Link to="/search" search={{ q: '' }} aria-label="Search"><Search className="size-6 text-ink" /></Link>}
           {actions.includes('wishlist') && <Link to="/wishlist" aria-label="Wishlist" className="relative"><Heart className="size-6 text-ink" strokeWidth={1.7} />{wishlist.count > 0 && <span className="cart-count">{wishlist.count}</span>}</Link>}
           {actions.includes('bell') && <NotificationBell />}
@@ -255,7 +230,7 @@ function MobileFooter({ socials }: { socials: ReadonlyArray<readonly [typeof Fac
   return (
     <div className="site-width py-8 lg:hidden">
       <Logo variant="footer" className="h-[52px] w-auto" />
-      <p className="mt-3 text-[14px] leading-6 text-white/85">Your Local Shopping Mart<br />Tulsipur, Dang, Nepal</p>
+      <p className="mt-3 text-[14px] leading-6 text-white/85">Your Local Shopping Mart<br />Tulsipur &amp; Ghorahi, Dang, Nepal</p>
       <a href="tel:+9779841234567" className="text-[14px] text-white/85">+977 9841234567</a>
       <div className="mt-4 flex gap-2.5">
         {socials.map(([Icon, href, name]) => <a key={name} href={href} target="_blank" rel="noreferrer" aria-label={name} className="grid size-9 place-items-center rounded-full bg-white text-footer"><Icon className="size-4" /></a>)}
@@ -284,7 +259,7 @@ function MobileFooter({ socials }: { socials: ReadonlyArray<readonly [typeof Fac
 
       <div className="mt-7 space-y-1 border-t border-white/15 pt-5 text-[12.5px] text-white/70">
         <p>© 2024 Delight Shopping Mart Pvt. Ltd. All rights reserved.</p>
-        <p className="flex items-center gap-1.5">Made with <Heart className="size-3.5 fill-red text-red" /> for a Happier Tulsipur</p>
+        <p className="flex items-center gap-1.5">Made with <Heart className="size-3.5 fill-red text-red" /> for a Happier Dang</p>
       </div>
     </div>
   );
@@ -299,7 +274,7 @@ export function StoreFooter() {
       <div className="site-width grid grid-cols-[1.35fr_0.85fr_1fr_1fr_1.5fr] py-9">
         <div className="border-r border-white/15 pr-8">
           <Logo variant="footer" className="h-[66px] w-auto" />
-          <p className="mt-4 text-[14px] leading-6 text-white/85">Your Local Shopping Mart<br />Tulsipur, Dang, Nepal</p>
+          <p className="mt-4 text-[14px] leading-6 text-white/85">Your Local Shopping Mart<br />Tulsipur &amp; Ghorahi, Dang, Nepal</p>
           <div className="mt-5 flex gap-3">
             {socials.map(([Icon, href, name]) => <a key={name} href={href} target="_blank" rel="noreferrer" aria-label={name} className="grid size-8 place-items-center rounded-full bg-white text-footer"><Icon className="size-4" /></a>)}
           </div>
@@ -328,7 +303,7 @@ export function StoreFooter() {
       </div>
       <div className="site-width flex items-center justify-between border-t border-white/15 py-5 text-[13px] text-white/85">
         <span>© 2024 Delight Shopping Mart Pvt. Ltd. All rights reserved.</span>
-        <span className="flex items-center gap-2">Made with <Heart className="size-4 fill-red text-red" /> for a Happier Tulsipur</span>
+        <span className="flex items-center gap-2">Made with <Heart className="size-4 fill-red text-red" /> for a Happier Dang</span>
       </div>
       </div>
     </footer>

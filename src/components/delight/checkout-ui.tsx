@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useBranch } from './branch-context';
+import { crossFeeFor } from '@/lib/branch';
 import { Briefcase, Check, ChevronRight, House, Loader2, MapPin, Plus, ShoppingBag, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
@@ -32,33 +34,29 @@ export function paymentLabel(m: PaymentMethod) {
 /* Bill                                                                */
 /* ------------------------------------------------------------------ */
 
-type StoreSettings = { deliveryFee: number; minOrder: number; minutes: number };
+type StoreSettings = { deliveryFee: number; crossFee: number; minOrder: number; minutes: number; storeCity: string; acceptingOrders: boolean };
 
-/** Delivery fee, minimum order and delivery time set in Admin → Settings (the order function charges the same fee). */
-export function useStoreSettings(): StoreSettings {
-  const { data } = useQuery({
-    queryKey: ['store-settings'],
-    staleTime: 5 * 60_000,
-    queryFn: async (): Promise<StoreSettings> => {
-      const { data: row } = await supabase.from('store_settings').select('delivery_fee,min_order,estimated_delivery_minutes').order('updated_at', { ascending: false }).limit(1).maybeSingle();
-      return { deliveryFee: Number(row?.delivery_fee ?? 0), minOrder: Number(row?.min_order ?? 0), minutes: Number(row?.estimated_delivery_minutes ?? 20) };
-    },
-  });
-  return data ?? { deliveryFee: 0, minOrder: 0, minutes: 20 };
+/** Delivery fee, minimum order and delivery time of the shopper's store (the order function charges the same). */
+export function useStoreSettings(deliveryCity = ''): StoreSettings {
+  const { branch, branches } = useBranch();
+  const crossFee = crossFeeFor(branches, branch.id, deliveryCity);
+  return { deliveryFee: branch.deliveryFee, crossFee, minOrder: branch.minOrder, minutes: branch.minutes + (crossFee ? 30 : 0), storeCity: branch.city, acceptingOrders: branch.acceptingOrders && branch.deliveryAvailable };
 }
 
 export function useBill() {
   const cart = useCart();
   const checkout = useCheckout();
-  const settings = useStoreSettings();
+  const settings = useStoreSettings(checkout.details.addressId ? checkout.details.city : '');
   const itemTotal = cart.subtotal;
   const mrpTotal = cart.lines.reduce((s, l) => s + (l.product.oldPrice ?? l.product.price) * l.quantity, 0);
   const coupon = Math.min(checkout.discount, itemTotal);
   const deliveryFee = cart.lines.length ? settings.deliveryFee : 0;
+  const crossFee = cart.lines.length ? settings.crossFee : 0;
   return {
     count: cart.lines.reduce((s, l) => s + l.quantity, 0),
     itemTotal, mrpTotal, mrpSaving: mrpTotal - itemTotal, coupon, deliveryFee,
-    toPay: Math.max(0, itemTotal - coupon) + deliveryFee,
+    crossFee, storeCity: settings.storeCity, acceptingOrders: settings.acceptingOrders,
+    toPay: Math.max(0, itemTotal - coupon) + deliveryFee + crossFee,
     savings: mrpTotal - itemTotal + coupon,
     minOrder: settings.minOrder,
     belowMinimum: itemTotal < settings.minOrder,
@@ -134,11 +132,12 @@ export function BillSummary() {
         </Row>
         {bill.coupon > 0 && <Row label="Coupon Discount"><span className="font-semibold text-brand">− {formatNpr(bill.coupon)}</span></Row>}
         <Row label="Delivery Fee">{bill.deliveryFee > 0 ? formatNpr(bill.deliveryFee) : <span className="font-bold text-brand">FREE</span>}</Row>
+        {bill.crossFee > 0 && <Row label={`Delivery from ${bill.storeCity} store`}>{formatNpr(bill.crossFee)}</Row>}
         <Row label="Handling Fee"><span className="font-bold text-brand">FREE</span></Row>
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-dashed border-line pt-3">
         <b className="text-[16px] font-bold text-navy">To Pay</b>
-        <b className="text-[18px] font-extrabold text-navy">{bill.mrpSaving + bill.coupon > 0 && <del className="mr-1.5 text-[13px] font-medium text-slate">{formatNpr(bill.mrpTotal + bill.deliveryFee)}</del>}{formatNpr(bill.toPay)}</b>
+        <b className="text-[18px] font-extrabold text-navy">{bill.mrpSaving + bill.coupon > 0 && <del className="mr-1.5 text-[13px] font-medium text-slate">{formatNpr(bill.mrpTotal + bill.deliveryFee + bill.crossFee)}</del>}{formatNpr(bill.toPay)}</b>
       </div>
     </Box>
   );
@@ -212,6 +211,7 @@ export function AddressSheet({ open, onOpenChange }: { open: boolean; onOpenChan
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const showForm = adding || (!isLoading && saved.length === 0);
+  const { branches } = useBranch();
 
   function choose(a: SavedAddress) {
     checkout.setDetails({ ...checkout.details, recipientName: a.recipientName, phone: a.phone, addressLine: a.addressLine, city: a.city, province: a.province, label: a.label, addressId: a.id });
@@ -285,7 +285,7 @@ export function AddressSheet({ open, onOpenChange }: { open: boolean; onOpenChan
             <label className="block text-[13px] font-semibold text-navy">House / Flat / Street / Ward *<input className={field} value={form.addressLine} onChange={(e) => setForm({ ...form, addressLine: e.target.value })} placeholder="e.g. Ward 6, Bijaypur Road" /></label>
             <label className="block text-[13px] font-semibold text-navy">Nearby landmark<input className={field} value={form.landmark} onChange={(e) => setForm({ ...form, landmark: e.target.value })} placeholder="e.g. Opposite Tulsipur Hospital" /></label>
             <div className="grid grid-cols-2 gap-3">
-              <label className="block text-[13px] font-semibold text-navy">City<input className={field} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></label>
+              <label className="block text-[13px] font-semibold text-navy">Town / City<input className={field} list="delight-towns" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /><datalist id="delight-towns">{branches.map((b) => <option key={b.id} value={b.city} />)}</datalist></label>
               <label className="block text-[13px] font-semibold text-navy">Province<input className={field} value={form.province} onChange={(e) => setForm({ ...form, province: e.target.value })} /></label>
             </div>
             <p className="pt-1 text-[13px] font-semibold uppercase tracking-wide text-slate">Receiver details</p>

@@ -5,6 +5,8 @@ import { useCart } from '@/components/delight/cart-context';
 import { fetchProductsByIds } from '@/services/catalog';
 import { supabase } from '@/services/supabase';
 import { whatsappLink } from '@/lib/store-info';
+import { branchCity } from '@/lib/branch';
+import { useBranch } from '@/components/delight/branch-context';
 import { useEffect, useState } from 'react';
 import { StorePage } from '@/components/delight/store-shell';
 import { getMyOrders } from '@/services/orders';
@@ -32,6 +34,8 @@ function Page() {
   const { id } = Route.useParams();
   const { user, loading: authLoading } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
+  const { branches } = useBranch();
+  const orderStore = order ? branches.find((b) => b.id === order.branch_id) : undefined;
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -102,7 +106,7 @@ function Page() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h1 className="text-[28px] font-extrabold tracking-tight text-navy lg:text-[34px]">Order #{order.order_number}</h1>
-                <p className="text-[14px] text-slate">Placed on {new Date(order.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                <p className="text-[14px] text-slate">Placed on {new Date(order.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}{order.branch_id ? ` · ${branchCity(branches, order.branch_id)} store` : ''}</p>
               </div>
               <span className={`rounded-lg px-3 py-1.5 text-[14px] font-semibold ${orderStatusStyle[order.status] ?? ''}`}>{titleCase(order.status)}</span>
             </div>
@@ -143,7 +147,7 @@ function Page() {
 
             <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
               <button onClick={() => void reorder()} disabled={busy !== ''} className="flex h-11 items-center justify-center gap-2 rounded-lg bg-brand text-[14.5px] font-semibold text-white disabled:opacity-60">{busy === 'reorder' ? <Loader2 className="size-4 animate-spin" /> : <RotateCcw className="size-4" />} Reorder</button>
-              <a href={whatsappLink(`Hello Delight, I need help with order #${order.order_number}.`)} target="_blank" rel="noreferrer" className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-[14.5px] font-semibold text-navy"><MessageCircle className="size-4 text-brand" /> Get help</a>
+              <a href={orderStore?.whatsapp || orderStore?.phone ? `https://wa.me/${(orderStore.whatsapp || orderStore.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hello Delight, I need help with order #${order.order_number}.`)}` : whatsappLink(`Hello Delight, I need help with order #${order.order_number}.`)} target="_blank" rel="noreferrer" className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-[14.5px] font-semibold text-navy"><MessageCircle className="size-4 text-brand" /> Get help</a>
               {cancellable && <button onClick={() => void cancel()} disabled={busy !== ''} className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-lg border border-[#f3b3b6] bg-white text-[14.5px] font-semibold text-red disabled:opacity-60 sm:col-span-1">{busy === 'cancel' ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />} Cancel order</button>}
             </div>
 

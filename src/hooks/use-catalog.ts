@@ -1,15 +1,17 @@
 import { useRouterState } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { currentBranchId } from '@/lib/branch';
 import { categories as designedCategories, dealsCategory, fetchCategories, fetchProduct, fetchProducts, fetchStorefront, fetchSubcategories, type ProductFilter, type ProductPage } from '@/services/catalog';
 
 const minutes = (n: number) => n * 60_000;
 
-export const storefrontQuery = queryOptions({ queryKey: ['storefront'], queryFn: fetchStorefront, staleTime: minutes(5) });
+// Stock differs per store, so every product query is keyed by the shopper's store.
+export const storefrontQuery = (branch = currentBranchId()) => queryOptions({ queryKey: ['storefront', branch], queryFn: () => fetchStorefront(branch), staleTime: minutes(5) });
 export const categoriesQuery = queryOptions({ queryKey: ['categories'], queryFn: fetchCategories, staleTime: minutes(10) });
-export const productsQuery = (filter: ProductFilter) => queryOptions({ queryKey: ['products', filter], queryFn: () => fetchProducts(filter), staleTime: minutes(2), placeholderData: keepPreviousData });
+export const productsQuery = (filter: ProductFilter, branch = currentBranchId()) => queryOptions({ queryKey: ['products', branch, filter], queryFn: () => fetchProducts({ ...filter, branch }), staleTime: minutes(2), placeholderData: keepPreviousData });
 export const subcategoriesQuery = (category: string) => queryOptions({ queryKey: ['subcategories', category], queryFn: () => fetchSubcategories(category), staleTime: minutes(10) });
-export const productQuery = (slug: string) => queryOptions({ queryKey: ['product', slug], queryFn: () => fetchProduct(slug), staleTime: minutes(2) });
+export const productQuery = (slug: string, branch = currentBranchId()) => queryOptions({ queryKey: ['product', branch, slug], queryFn: () => fetchProduct(slug, branch), staleTime: minutes(2) });
 
 const fallbackCategories = [...designedCategories, dealsCategory];
 
@@ -31,7 +33,7 @@ export function useLoadingPage() {
  * The first page comes from the route loader (so the server HTML already has products).
  */
 export function useInfiniteProducts(filter: ProductFilter, first: ProductPage | null | undefined) {
-  const base = { ...filter, page: undefined };
+  const base = { ...filter, page: undefined, branch: filter.branch ?? currentBranchId() };
   const query = useInfiniteQuery({
     queryKey: ['products-infinite', base],
     queryFn: ({ pageParam }) => fetchProducts({ ...base, page: pageParam }),

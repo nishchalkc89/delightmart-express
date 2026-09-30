@@ -5,7 +5,7 @@ export const STORE = {
   name: 'Delight Shopping Mart',
   phone: '+977 9841234567',
   whatsapp: '9779841234567',
-  email: 'info@delightshoppingmart.com',
+  email: 'info@delightshoppingmart.com.np',
   address: 'Ward No. 6, Tulsipur, Dang, Lumbini Province, Nepal',
   hours: 'Open daily, 7 AM – 9 PM',
   // Pin from the store's Google Maps listing ("Delight the shopping mart").

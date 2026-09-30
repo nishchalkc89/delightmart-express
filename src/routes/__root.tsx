@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CartProvider } from "@/components/delight/cart-context";
 import { WishlistProvider } from '@/components/delight/wishlist-context';
 import { AuthProvider } from "@/components/delight/auth-context";
+import { BranchProvider } from "@/components/delight/branch-context";
 import { CheckoutProvider } from "@/components/delight/checkout-context";
 import { PwaRegister } from "@/components/delight/pwa-register";
 import { Toaster } from "@/components/ui/sonner";
@@ -133,7 +134,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <AuthProvider><CartProvider><WishlistProvider><CheckoutProvider><Outlet /></CheckoutProvider></WishlistProvider></CartProvider></AuthProvider>
+      <AuthProvider><BranchProvider><CartProvider><WishlistProvider><CheckoutProvider><Outlet /></CheckoutProvider></WishlistProvider></CartProvider></BranchProvider></AuthProvider>
       <PwaRegister />
       <Toaster richColors position="top-center" />
     </QueryClientProvider>

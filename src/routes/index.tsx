@@ -15,7 +15,7 @@ import storeHero from '@/assets/store-hero.jpg';
 
 export const Route = createFileRoute('/')({
   head: () => ({ meta: [{ title: 'Delight Shopping Mart — Tulsipur, Dang' }, { name: 'description', content: 'Shop groceries, fashion, baby care and home essentials locally in Tulsipur.' }, { property: 'og:title', content: 'Delight Shopping Mart — Tulsipur' }, { property: 'og:description', content: 'Everything you need under one roof.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(storefrontQuery),
+  loader: ({ context }) => context.queryClient.ensureQueryData(storefrontQuery()),
   component: Index,
 });
 

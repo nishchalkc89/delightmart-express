@@ -8,6 +8,7 @@ import { useAuth } from '@/components/delight/auth-context';
 import { AddButton } from '@/components/delight/product-card';
 import { ActionButton, AddressBar, AddressSheet, BillSummary, Box, CheckoutShell, EmptyCart, SavedBanner, SavingsCard, useAddresses, useBill } from '@/components/delight/checkout-ui';
 import { fetchProductsByIds, formatNpr } from '@/services/catalog';
+import { useBranch } from '@/components/delight/branch-context';
 import { ART_BACKGROUND } from '@/lib/product-art';
 
 export const Route = createFileRoute('/cart')({
@@ -21,6 +22,7 @@ function Page() {
   const cart = useCart();
   const checkout = useCheckout();
   const bill = useBill();
+  const { choose, branch } = useBranch();
   const { user, loading } = useAuth();
   const { data: addresses } = useAddresses();
   const nav = useNavigate();
@@ -37,19 +39,20 @@ function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses]);
 
-  // Saved carts can be days old: bring prices and stock up to date and drop items that are gone.
-  const checked = useRef(false);
+  // Saved carts can be days old, and stock differs per store: bring prices and stock up to date
+  // for the chosen store and drop items that are gone (again whenever the store changes).
+  const checked = useRef('');
   useEffect(() => {
-    if (checked.current || !cart.lines.length) return;
-    checked.current = true;
-    void fetchProductsByIds(cart.lines.map((l) => l.product.id)).then((current) => {
+    if (checked.current === branch.id || !cart.lines.length) return;
+    checked.current = branch.id;
+    void fetchProductsByIds(cart.lines.map((l) => l.product.id), branch.id).then((current) => {
       const r = cart.refresh(current);
       if (r.removed.length) toast.warning(`Removed (no longer available): ${r.removed.join(', ')}`);
       if (r.reduced.length) toast.info(`Only limited stock left for: ${r.reduced.join(', ')}`);
       if (r.priceChanged.length) toast.info(`Prices updated for: ${r.priceChanged.join(', ')}`);
-    }).catch(() => { checked.current = false; });
+    }).catch(() => { checked.current = ''; });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cart.lines.length]);
+  }, [cart.lines.length, branch.id]);
 
   async function applyCoupon() {
     setApplying(true);
@@ -71,7 +74,7 @@ function Page() {
     : (
       <>
         <AddressBar onChange={() => setSheet(true)} />
-        <ActionButton disabled={bill.belowMinimum} onClick={() => void nav({ to: '/payment' })}>
+        <ActionButton disabled={bill.belowMinimum || !bill.acceptingOrders} onClick={() => void nav({ to: '/payment' })}>
           <span className="flex flex-1 flex-col items-start pl-2 text-left leading-tight"><span className="text-[17px] font-extrabold">{formatNpr(bill.toPay)}</span><span className="text-[11.5px] font-medium opacity-90">TOTAL</span></span>
           <span className="flex items-center gap-1 pr-2">Proceed to Pay <ChevronRight className="size-5" /></span>
         </ActionButton>
@@ -85,7 +88,7 @@ function Page() {
       <Box>
         <div className="flex items-center gap-3 border-b border-line px-4 py-3">
           <span className="grid size-10 place-items-center rounded-full bg-[#eef8f3]"><Zap className="size-5 fill-brand text-brand" /></span>
-          <span><b className="block text-[16px] font-extrabold text-navy">Delivery in {bill.minutes} minutes</b><span className="text-[13px] text-slate">Shipment of {bill.count} item{bill.count === 1 ? '' : 's'}</span></span>
+          <span><b className="block text-[16px] font-extrabold text-navy">Delivery in {bill.minutes} minutes</b><span className="text-[13px] text-slate">From {bill.storeCity} store · {bill.count} item{bill.count === 1 ? '' : 's'} · <button type="button" onClick={choose} className="font-semibold text-brand">Change store</button></span></span>
           <button type="button" onClick={cart.clear} className="ml-auto flex items-center gap-1 text-[13px] font-semibold text-slate hover:text-red"><Trash2 className="size-4" /> Clear</button>
         </div>
         <div className="divide-y divide-line px-4">

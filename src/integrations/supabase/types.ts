@@ -285,6 +285,121 @@ export type Database = {
           },
         ]
       }
+      branch_inventory: {
+        Row: {
+          branch_id: string
+          current_stock: number
+          last_updated: string
+          low_stock_threshold: number
+          product_id: string
+          reserved_stock: number
+        }
+        Insert: {
+          branch_id: string
+          current_stock?: number
+          last_updated?: string
+          low_stock_threshold?: number
+          product_id: string
+          reserved_stock?: number
+        }
+        Update: {
+          branch_id?: string
+          current_stock?: number
+          last_updated?: string
+          low_stock_threshold?: number
+          product_id?: string
+          reserved_stock?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_inventory_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branch_inventory_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      branches: {
+        Row: {
+          accepting_orders: boolean
+          address: string
+          city: string
+          closing_time: string | null
+          created_at: string
+          cross_branch_fee: number
+          delivery_available: boolean
+          delivery_fee: number
+          email: string | null
+          estimated_delivery_minutes: number
+          id: string
+          latitude: number | null
+          longitude: number | null
+          maps_url: string | null
+          min_order: number
+          name: string
+          opening_time: string | null
+          phone: string | null
+          sort_order: number
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          accepting_orders?: boolean
+          address?: string
+          city: string
+          closing_time?: string | null
+          created_at?: string
+          cross_branch_fee?: number
+          delivery_available?: boolean
+          delivery_fee?: number
+          email?: string | null
+          estimated_delivery_minutes?: number
+          id: string
+          latitude?: number | null
+          longitude?: number | null
+          maps_url?: string | null
+          min_order?: number
+          name: string
+          opening_time?: string | null
+          phone?: string | null
+          sort_order?: number
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          accepting_orders?: boolean
+          address?: string
+          city?: string
+          closing_time?: string | null
+          created_at?: string
+          cross_branch_fee?: number
+          delivery_available?: boolean
+          delivery_fee?: number
+          email?: string | null
+          estimated_delivery_minutes?: number
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          maps_url?: string | null
+          min_order?: number
+          name?: string
+          opening_time?: string | null
+          phone?: string | null
+          sort_order?: number
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+        ]
+      }
       inventory: {
         Row: {
           current_stock: number
@@ -319,6 +434,7 @@ export type Database = {
       }
       inventory_adjustments: {
         Row: {
+          branch_id: string | null
           changed_by: string | null
           created_at: string
           id: string
@@ -328,6 +444,7 @@ export type Database = {
           reference: string | null
         }
         Insert: {
+          branch_id?: string | null
           changed_by?: string | null
           created_at?: string
           id?: string
@@ -337,6 +454,7 @@ export type Database = {
           reference?: string | null
         }
         Update: {
+          branch_id?: string | null
           changed_by?: string | null
           created_at?: string
           id?: string
@@ -346,6 +464,13 @@ export type Database = {
           reference?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_adjustments_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inventory_adjustments_product_id_fkey"
             columns: ["product_id"]
@@ -504,6 +629,8 @@ export type Database = {
       }
       orders: {
         Row: {
+          cross_branch_fee: number
+          branch_id: string
           address_id: string | null
           created_at: string
           delivery_fee: number
@@ -521,6 +648,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cross_branch_fee?: number
+          branch_id?: string
           address_id?: string | null
           created_at?: string
           delivery_fee?: number
@@ -538,6 +667,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cross_branch_fee?: number
+          branch_id?: string
           address_id?: string | null
           created_at?: string
           delivery_fee?: number
@@ -555,6 +686,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_address_id_fkey"
             columns: ["address_id"]
@@ -713,6 +851,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          preferred_branch_id: string | null
           avatar_url: string | null
           created_at: string
           email: string | null
@@ -723,6 +862,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          preferred_branch_id?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -733,6 +873,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          preferred_branch_id?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -776,6 +917,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_preferred_branch_id_fkey"
+            columns: ["preferred_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reviews_order_id_fkey"
             columns: ["order_id"]
@@ -867,6 +1015,32 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_branches: {
+        Row: {
+          branch_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_branches_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wishlist_items: {
         Row: { created_at: string; product_id: string; user_id: string }
         Insert: { created_at?: string; product_id: string; user_id: string }
@@ -883,7 +1057,7 @@ export type Database = {
         Returns: undefined
       }
       place_cod_order: {
-        Args: { p_address: Json; p_coupon?: string; p_items: Json }
+        Args: { p_address: Json; p_branch?: string; p_coupon?: string; p_items: Json }
         Returns: string
       }
     }

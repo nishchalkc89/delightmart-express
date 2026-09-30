@@ -8,6 +8,7 @@ import { useAuth } from '@/components/delight/auth-context';
 import { ActionButton, AddressBar, AddressSheet, BillSummary, Box, CheckoutShell, EmptyCart, PaymentIcon, Radio, SavingsCard, paymentOptions, useBill } from '@/components/delight/checkout-ui';
 import { formatNpr } from '@/services/catalog';
 import { placeOrder } from '@/services/orders';
+import { useBranch } from '@/components/delight/branch-context';
 
 export const Route = createFileRoute('/payment')({
   head: () => ({ meta: [{ title: 'Payment — Delight Shopping Mart' }, { name: 'description', content: 'Choose how to pay for your order.' }, { property: 'og:title', content: 'Payment — Delight' }, { property: 'og:description', content: 'Pay for your order.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
@@ -18,6 +19,7 @@ function Page() {
   const cart = useCart();
   const checkout = useCheckout();
   const bill = useBill();
+  const { branch } = useBranch();
   const { user, loading } = useAuth();
   const nav = useNavigate();
   const [placing, setPlacing] = useState(false);
@@ -38,7 +40,7 @@ function Page() {
     if (!method.available) { toast.error(`${method.title} is coming soon. Please choose Cash on Delivery.`); return; }
     setPlacing(true);
     try {
-      const order = await placeOrder({ userId: user.id, lines: cart.lines, subtotal: cart.subtotal, discount: checkout.discount, paymentMethod: 'COD', details: checkout.details, coupon: checkout.discount > 0 ? checkout.coupon : '' });
+      const order = await placeOrder({ userId: user.id, branch: branch.id, lines: cart.lines, subtotal: cart.subtotal, discount: checkout.discount, paymentMethod: 'COD', details: checkout.details, coupon: checkout.discount > 0 ? checkout.coupon : '' });
       cart.clear();
       checkout.setCoupon('');
       checkout.setDetails({ ...checkout.details, instructions: '' });
@@ -57,7 +59,7 @@ function Page() {
   const footer = (
     <>
       {ready && <AddressBar onChange={() => setSheet(true)} />}
-      <ActionButton onClick={() => void placeOrderNow()} disabled={placing || !ready || bill.belowMinimum}>
+      <ActionButton onClick={() => void placeOrderNow()} disabled={placing || !ready || bill.belowMinimum || !bill.acceptingOrders}>
         {placing ? <Loader2 className="size-5 animate-spin" /> : <><Lock className="size-4" /> {checkout.paymentMethod === 'COD' ? `Place Order · ${formatNpr(bill.toPay)}` : `Pay ${formatNpr(bill.toPay)}`}</>}
       </ActionButton>
     </>

@@ -1,6 +1,7 @@
 import type { Product } from '@/types/store';
 import { asset } from '@/lib/assets';
 import { productArt } from '@/lib/product-art';
+import { currentBranchId } from '@/lib/branch';
 
 export type Category = {
   name: string;
@@ -112,17 +113,34 @@ export const BANNER_POSITIONS = ['Homepage Slider', 'Below Slider', 'Shop More R
 export type StoreBanner = { title: string; image: string; link: string; position: string };
 export type Storefront = { categories: Category[]; banners: StoreBanner[]; collections: Collections; source: 'live' | 'demo' };
 export type ProductSort = 'featured' | 'price-asc' | 'price-desc' | 'name' | 'newest';
-export type ProductFilter = { category?: string | undefined; sub?: string | undefined; q?: string | undefined; sort?: ProductSort | undefined; inStock?: boolean | undefined; page?: number | undefined; size?: number | undefined };
+export type ProductFilter = { branch?: string | undefined; category?: string | undefined; sub?: string | undefined; q?: string | undefined; sort?: ProductSort | undefined; inStock?: boolean | undefined; page?: number | undefined; size?: number | undefined };
 export type ProductPage = { products: Product[]; total: number; page: number; pages: number };
 
-const LIST_COLUMNS = 'id,slug,name,brand,unit,price,sale_price,featured,created_at,specifications,categories!inner(name,slug,status),inventory(current_stock,reserved_stock),product_images(url,is_primary,sort_order)';
-const LIST_IN_STOCK = LIST_COLUMNS.replace('inventory(', 'inventory!inner(');
+const BASE_COLUMNS = 'id,slug,name,brand,unit,price,sale_price,featured,created_at,specifications,categories!inner(name,slug,status),product_images(url,is_primary,sort_order)';
 
+// Stock comes from the shopper's store. Until the stores update has been run on the database,
+// the old single-store stock table is used instead (switched automatically on the first error).
+let legacyStock = false;
+const listColumns = (inStock = false) => `${BASE_COLUMNS},${legacyStock ? 'inventory' : 'branch_inventory'}${inStock ? '!inner' : ''}(current_stock,reserved_stock)`;
+/** Filter that keeps only this store's stock row (a no-op in the old single-store setup). */
+const storeStock = (branch: string): Record<string, string> => (legacyStock ? {} : { 'branch_inventory.branch_id': branch });
+const stockColumn = () => (legacyStock ? 'inventory.current_stock' : 'branch_inventory.current_stock');
+async function withStock<R extends { error: { message: string } | null }>(run: () => PromiseLike<R>): Promise<R> {
+  const first = await run();
+  if (first.error && !legacyStock && /branch_inventory/.test(first.error.message)) {
+    legacyStock = true;
+    return run();
+  }
+  return first;
+}
+
+type StockRow = { current_stock: number; reserved_stock: number };
 type DbProduct = {
   id: string; slug: string; name: string; brand: string | null; unit: string; price: number; sale_price: number | null;
   featured: boolean; created_at: string; description?: string; specifications: unknown;
   categories: { name: string; slug: string } | null;
-  inventory: { current_stock: number; reserved_stock: number } | { current_stock: number; reserved_stock: number }[] | null;
+  inventory?: StockRow | StockRow[] | null;
+  branch_inventory?: StockRow | StockRow[] | null;
   product_images: { url: string; is_primary: boolean; sort_order: number }[] | null;
 };
 
@@ -130,7 +148,8 @@ const demoBySlug = new Map(products.map((x) => [x.slug, x]));
 
 function fromDb(row: DbProduct): Product {
   const demo = demoBySlug.get(row.slug);
-  const inv = Array.isArray(row.inventory) ? row.inventory[0] : row.inventory;
+  const stock = row.branch_inventory ?? row.inventory;
+  const inv = Array.isArray(stock) ? stock[0] : stock;
   const images = [...(row.product_images ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order).map((i) => i.url);
   const selling = Number(row.sale_price ?? row.price);
   const onSale = row.sale_price !== null && Number(row.sale_price) < Number(row.price);
@@ -207,12 +226,13 @@ function mixed(list: Product[], size = 12): Product[] {
 }
 
 /** Everything the homepage needs: categories, banners and a few short product rows. */
-export async function fetchStorefront(): Promise<Storefront> {
+export async function fetchStorefront(branch = currentBranchId()): Promise<Storefront> {
   const demo: Storefront = { categories: [...categories, dealsCategory], banners: [], collections: demoCollections, source: 'demo' };
   try {
     const db = await client();
     if (!db) return demo;
-    const list = () => db.from('products').select(LIST_COLUMNS).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE');
+    const list = () => db.from('products').select(listColumns()).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').match(storeStock(branch));
+    await withStock(() => list().limit(1));
     const [cats, banners, offers, popular, fresh, grocery] = await Promise.all([
       fetchCategories(),
       db.from('banners').select('title,image_url,link_url,position,starts_at,ends_at').eq('status', 'ACTIVE').order('sort_order'),
@@ -249,19 +269,23 @@ export async function fetchProducts(f: ProductFilter): Promise<ProductPage> {
   try {
     const db = await client();
     if (!db) return demoPage(f);
-    let query = db.from('products').select(f.inStock ? LIST_IN_STOCK : LIST_COLUMNS, { count: 'exact' }).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE');
-    if (f.category === 'deals-offers') query = query.not('sale_price', 'is', null);
-    else if (f.category) query = query.eq('categories.slug', f.category);
-    if (f.sub) query = query.eq('specifications->>subcategory', f.sub);
-    for (const word of escapeLike(f.q ?? '').split(/\s+/).filter(Boolean).slice(0, 6)) query = query.ilike('name', `%${word}%`);
-    if (f.inStock) query = query.gt('inventory.current_stock', 0);
-    const sort = f.sort ?? 'featured';
-    if (sort === 'price-asc') query = query.order('price', { ascending: true });
-    else if (sort === 'price-desc') query = query.order('price', { ascending: false });
-    else if (sort === 'newest') query = query.order('created_at', { ascending: false });
-    else if (sort === 'featured') query = query.order('featured', { ascending: false });
-    query = query.order('name');
-    const { data, error, count } = await query.range((page - 1) * size, page * size - 1);
+    const branch = f.branch ?? currentBranchId();
+    const build = () => {
+      let query = db.from('products').select(listColumns(f.inStock), { count: 'exact' }).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').match(storeStock(branch));
+      if (f.category === 'deals-offers') query = query.not('sale_price', 'is', null);
+      else if (f.category) query = query.eq('categories.slug', f.category);
+      if (f.sub) query = query.eq('specifications->>subcategory', f.sub);
+      for (const word of escapeLike(f.q ?? '').split(/\s+/).filter(Boolean).slice(0, 6)) query = query.ilike('name', `%${word}%`);
+      if (f.inStock) query = query.gt(stockColumn(), 0);
+      const sort = f.sort ?? 'featured';
+      if (sort === 'price-asc') query = query.order('price', { ascending: true });
+      else if (sort === 'price-desc') query = query.order('price', { ascending: false });
+      else if (sort === 'newest') query = query.order('created_at', { ascending: false });
+      else if (sort === 'featured') query = query.order('featured', { ascending: false });
+      query = query.order('name');
+      return query.range((page - 1) * size, page * size - 1);
+    };
+    const { data, error, count } = await withStock(build);
     if (error) throw error;
     const total = count ?? 0;
     return { products: ((data ?? []) as unknown as DbProduct[]).map(fromDb), total, page, pages: Math.max(1, Math.ceil(total / size)) };
@@ -290,13 +314,14 @@ export async function fetchSubcategories(category: string): Promise<Array<{ name
 }
 
 /** Current details (price, stock, photo) of specific products, in the order asked for; missing or hidden products are left out. */
-export async function fetchProductsByIds(ids: string[]): Promise<Product[]> {
+export async function fetchProductsByIds(ids: string[], branch = currentBranchId()): Promise<Product[]> {
   if (!ids.length) return [];
   const db = await client();
   if (!db) return products.filter((p) => ids.includes(p.id));
   const found: Product[] = [];
   for (let i = 0; i < ids.length; i += 150) {
-    const { data, error } = await db.from('products').select(LIST_COLUMNS).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').in('id', ids.slice(i, i + 150));
+    const chunk = ids.slice(i, i + 150);
+    const { data, error } = await withStock(() => db.from('products').select(listColumns()).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').match(storeStock(branch)).in('id', chunk));
     if (error) throw error;
     found.push(...((data ?? []) as unknown as DbProduct[]).map(fromDb));
   }
@@ -305,14 +330,14 @@ export async function fetchProductsByIds(ids: string[]): Promise<Product[]> {
 }
 
 /** A single product (with its description) and a few related products from the same subcategory. */
-export async function fetchProduct(slug: string): Promise<{ product: Product; related: Product[] } | null> {
+export async function fetchProduct(slug: string, branch = currentBranchId()): Promise<{ product: Product; related: Product[] } | null> {
   try {
     const db = await client();
     if (db) {
-      const { data, error } = await db.from('products').select(`${LIST_COLUMNS},description`).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').eq('slug', slug).maybeSingle();
+      const { data, error } = await withStock(() => db.from('products').select(`${listColumns()},description`).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').match(storeStock(branch)).eq('slug', slug).maybeSingle());
       if (!error && data) {
         const product = fromDb(data as unknown as DbProduct);
-        let rel = db.from('products').select(LIST_COLUMNS).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').neq('slug', slug).eq('categories.slug', product.categorySlug ?? '');
+        let rel = db.from('products').select(listColumns()).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').match(storeStock(branch)).neq('slug', slug).eq('categories.slug', product.categorySlug ?? '');
         if (product.subcategory) rel = rel.eq('specifications->>subcategory', product.subcategory);
         const related = await rel.order('featured', { ascending: false }).limit(8);
         return { product, related: ((related.data ?? []) as unknown as DbProduct[]).map(fromDb) };

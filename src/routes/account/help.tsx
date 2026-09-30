@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, Clock, Mail, MapPin, MessageCircle, Package, Phone } from 'lucide-react';
 import { AccountCard, AccountTitle } from '@/components/delight/account-ui';
-import { supabase } from '@/services/supabase';
+import { useBranch } from '@/components/delight/branch-context';
+import { hoursText } from '@/lib/branch';
+import { STORE } from '@/lib/store-info';
 
 export const Route = createFileRoute('/account/help')({
   head: () => ({ meta: [{ title: 'Help & Support — Delight' }, { name: 'description', content: 'Contact Delight Shopping Mart and find answers to common questions.' }] }),
@@ -16,26 +17,22 @@ const faqs = [
   ['Can I cancel my order?', 'Yes, before it is packed. Call us or message us on WhatsApp with your order number. Once it is out for delivery you can refuse it at the door.'],
   ['What if an item is missing or damaged?', 'Tell us within 24 hours with your order number and a photo. We will replace the item or refund you.'],
   ['How do I use a coupon code?', 'Open your cart, type the code in “Coupons & Offers” and tap Apply. You can see all active codes in My Account → Offers & Coupons.'],
-  ['Do you deliver outside Tulsipur?', 'We currently deliver within Tulsipur and nearby areas. Add your address at checkout; if we cannot reach it we will call you.'],
+  ['Which store delivers my order?', 'The store you choose at the top of the page (Tulsipur or Ghorahi). You can order from either store; delivery to the other store’s town costs a little extra, shown in your bill before you pay.'],
+  ['Do you deliver outside Tulsipur and Ghorahi?', 'We deliver in and around Tulsipur and Ghorahi. Add your address at checkout; if we cannot reach it we will call you.'],
 ] as const;
 
 function Page() {
-  const { data: store } = useQuery({
-    queryKey: ['store-contact'],
-    staleTime: 10 * 60_000,
-    queryFn: async () => {
-      const { data } = await supabase.from('store_settings').select('phone,email,address,opening_time,closing_time').order('updated_at', { ascending: false }).limit(1).maybeSingle();
-      return data;
-    },
-  });
-  const phone = store?.phone || '+977 9841234567';
+  // Contact details of the shopper's store (Admin → Settings → Store details).
+  const { branch } = useBranch();
+  const phone = branch.phone || STORE.phone;
   const digits = phone.replace(/\D/g, '');
-  const email = store?.email || 'info@delightshoppingmart.com';
-  const hours = store?.opening_time && store?.closing_time ? `${store.opening_time.slice(0, 5)} – ${store.closing_time.slice(0, 5)}` : '7:00 AM – 9:00 PM';
+  const whatsapp = (branch.whatsapp || branch.phone || STORE.whatsapp).replace(/\D/g, '');
+  const email = branch.email || STORE.email;
+  const hours = hoursText(branch) || '7:00 AM – 9:00 PM';
 
   const contacts = [
     [Phone, 'Call us', phone, `tel:+${digits}`],
-    [MessageCircle, 'WhatsApp', 'Chat with the store', `https://wa.me/${digits}`],
+    [MessageCircle, 'WhatsApp', `Chat with the ${branch.city} store`, `https://wa.me/${whatsapp}`],
     [Mail, 'Email', email, `mailto:${email}`],
   ] as const;
 
@@ -68,7 +65,7 @@ function Page() {
       </AccountCard>
 
       <AccountCard title="Visit the store">
-        <p className="flex items-start gap-2 text-[14px] text-navy"><MapPin className="mt-0.5 size-4 shrink-0 text-brand" /> {store?.address || 'Ward No. 6, Tulsipur, Dang, Lumbini Province, Nepal'}</p>
+        <p className="flex items-start gap-2 text-[14px] text-navy"><MapPin className="mt-0.5 size-4 shrink-0 text-brand" /> {branch.address || STORE.address}</p>
         <p className="mt-2 flex items-center gap-2 text-[14px] text-navy"><Clock className="size-4 shrink-0 text-brand" /> Open daily, {hours}</p>
       </AccountCard>
     </div>
