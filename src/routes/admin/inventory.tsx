@@ -44,8 +44,10 @@ function Page() {
   const p = all.find((x) => x.id === selId) ?? rows[0];
   useEffect(() => { if (p) { setQty(p.stock); setLimit(p.threshold); } }, [p?.id, p?.stock, p?.threshold]); // eslint-disable-line react-hooks/exhaustive-deps
   const { data: history = [], isLoading: historyLoading } = useQuery({ queryKey: ['stock-history', p?.id], enabled: Boolean(p), queryFn: () => fetchStockHistory(p!.id) });
-  const lowCount = all.filter(isLow).length;
-  const outCount = all.filter((x) => x.stock <= 0).length;
+  // Counts are for products on the website (hidden products are not sold).
+  const onSite = all.filter((x) => x.active);
+  const lowCount = onSite.filter(isLow).length;
+  const outCount = onSite.filter((x) => x.stock <= 0).length;
   const reset = () => pg.reset();
 
   async function save() {
@@ -78,8 +80,8 @@ function Page() {
         main={
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatCard icon={Package} tone="green" label="Total Products" value={all.length.toLocaleString()} note="" filled={false} />
-              <StatCard icon={CircleCheck} tone="green" label="In Stock" value={(all.length - outCount).toLocaleString()} note="" />
+              <StatCard icon={Package} tone="green" label="On Website" value={onSite.length.toLocaleString()} note="" filled={false} />
+              <StatCard icon={CircleCheck} tone="green" label="In Stock" value={(onSite.length - outCount).toLocaleString()} note="" />
               <StatCard icon={TriangleAlert} tone="amber" label="Low Stock" value={String(lowCount)} note="below alert level" />
               <StatCard icon={CircleX} tone="red" label="Out of Stock" value={String(outCount)} note="" />
             </div>

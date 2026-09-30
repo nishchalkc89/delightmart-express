@@ -71,8 +71,10 @@ function Page() {
   const filter = (fn: (v: string) => void) => (v: string) => { fn(v); setPage(1); };
   const pageCount = Math.max(1, Math.ceil(rows.length / PER_PAGE));
   const shown = rows.slice((Math.min(page, pageCount) - 1) * PER_PAGE, Math.min(page, pageCount) * PER_PAGE);
-  const outOfStock = all.filter((p) => p.stock <= 0).length;
-  const low = all.filter((p) => p.stock > 0 && p.stock < p.threshold).length;
+  // Counts are for products on the website (hidden products are not sold).
+  const onSite = all.filter((p) => p.active);
+  const outOfStock = onSite.filter((p) => p.stock <= 0).length;
+  const low = onSite.filter((p) => p.stock > 0 && p.stock < p.threshold).length;
 
   function openNew() { setEditId(null); setDupId(null); setFormKey((k) => k + 1); }
   async function remove(p: AdminProduct) {
@@ -107,8 +109,8 @@ function Page() {
         main={
           <>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-              <StatCard compact icon={Package} tone="green" label="Total Products" value={String(all.length)} filled={false} />
-              <StatCard compact icon={CircleCheck} tone="green" label="Active Products" value={String(all.filter((p) => p.active).length)} note="" />
+              <StatCard compact icon={Package} tone="green" label="On Website" value={String(onSite.length)} filled={false} />
+              <StatCard compact icon={CircleCheck} tone="green" label="In Stock" value={String(onSite.length - outOfStock)} note="" />
               <StatCard compact icon={Box} tone="red" label="Out of Stock" value={String(outOfStock)} dir="down" note="" filled={false} />
               <StatCard compact icon={TriangleAlert} tone="red" label="Low Stock" value={String(low)} dir="down" note="" filled={false} />
               <StatCard compact icon={CircleX} tone="red" label="Hidden Products" value={String(all.filter((p) => !p.active).length)} dir="down" note="" />

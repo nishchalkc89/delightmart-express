@@ -3,6 +3,7 @@
 //
 //   node scripts/catalogue/final-list.mjs            (dry run: shows what would change)
 //   node scripts/catalogue/final-list.mjs --apply    (makes the changes)
+//   add --copy-stock-to=ghorahi to give Ghorahi the same starting stock
 //
 // For each row: product code → SKU "DM-<code>" (shown in admin only), price = MRP, Tulsipur stock = closing
 // stock. Products that sat in removed categories move to the closest active category.
@@ -117,6 +118,15 @@ for (const batch of chunk(plan, 200)) {
   await api('POST', 'branch_inventory?on_conflict=branch_id,product_id', batch.map((x) => ({ branch_id: 'tulsipur', product_id: x.p.id, current_stock: Math.max(0, Math.round(Number(x.r.stock) || 0)), reserved_stock: 0, last_updated: now })), 'resolution=merge-duplicates,return=minimal');
 }
 console.log('Tulsipur stock set.');
+
+// --copy-stock-to=ghorahi : give another store the same starting stock (its staff correct it in Admin → Inventory).
+const copyTo = process.argv.find((a) => a.startsWith('--copy-stock-to='))?.split('=')[1];
+if (copyTo) {
+  for (const batch of chunk(plan, 200)) {
+    await api('POST', 'branch_inventory?on_conflict=branch_id,product_id', batch.map((x) => ({ branch_id: copyTo, product_id: x.p.id, current_stock: Math.max(0, Math.round(Number(x.r.stock) || 0)), reserved_stock: 0, last_updated: now })), 'resolution=merge-duplicates,return=minimal');
+  }
+  console.log(`${copyTo} starting stock set from the list.`);
+}
 
 for (const batch of chunk(hide, 200)) await api('PATCH', `products?id=in.(${batch.map((p) => p.id).join(',')})`, { status: 'INACTIVE', featured: false, updated_at: now });
 console.log(`Hidden: ${hide.length} products.`);

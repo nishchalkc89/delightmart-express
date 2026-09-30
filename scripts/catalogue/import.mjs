@@ -102,7 +102,7 @@ for (const batch of chunk(products, 500)) {
     unit: p.unit || '1 pc',
     status: 'ACTIVE',
     featured: p.featured === 'yes',
-    description: `${p.name} (${p.unit}) — available at Delight Shopping Mart, Tulsipur. Order online for home delivery or pick it up from the store.`,
+    description: `${p.name} (${p.unit}) — available at Delight Shopping Mart in Tulsipur and Ghorahi. Order online for home delivery.`,
     specifications: { subcategory: p.subcategory, display_order: Number(p.display_order) || null },
   }));
   saved.push(...await api('POST', 'products?on_conflict=slug&select=id,slug', rows, 'resolution=merge-duplicates,return=representation'));
