@@ -5,21 +5,21 @@
 export const CATEGORIES = [
   { slug: 'groceries', name: 'Groceries & Staples', description: 'Daily Essentials' },
   { slug: 'snacks', name: 'Snacks & Sweets', description: 'Biscuits, Chips & Chocolates' },
-  { slug: 'beverages', name: 'Beverages', description: 'Tea, Coffee, Juice & Drinks' },
-  { slug: 'dairy-frozen', name: 'Dairy, Bakery & Frozen', description: 'Fresh & Chilled' },
+  { slug: 'beverages', name: 'Beverages', description: 'Tea, Coffee, Juice & Drinks', hidden: true },
+  { slug: 'dairy-frozen', name: 'Dairy, Bakery & Frozen', description: 'Fresh & Chilled', hidden: true },
   { slug: 'beauty-skincare', name: 'Beauty & Personal Care', description: 'Look Good, Feel Good' },
-  { slug: 'health-hygiene', name: 'Health & Hygiene', description: 'Care for You & Family' },
+  { slug: 'health-hygiene', name: 'Health & Hygiene', description: 'Care for You & Family', hidden: true },
   { slug: 'baby-care', name: 'Baby Care', description: 'For Your Little Ones' },
   { slug: 'cleaning', name: 'Cleaning & Laundry', description: 'Clean Home, Happy Home' },
   { slug: 'kitchen-household', name: 'Kitchen & Dining', description: 'Make Home Better' },
-  { slug: 'home-living', name: 'Home & Living', description: 'Storage, Decor & Utility' },
+  { slug: 'home-living', name: 'Home & Living', description: 'Storage, Decor & Utility', hidden: true },
   { slug: 'stationery', name: 'Stationery & School', description: 'Study Made Easy' },
   { slug: 'toys', name: 'Toys, Games & Sports', description: 'Play & Learn' },
-  { slug: 'ladies-wear', name: 'Fashion & Accessories', description: 'Trendy Fashion' },
-  { slug: 'electronics', name: 'Electronics & Appliances', description: 'Smart Living' },
+  { slug: 'ladies-wear', name: 'Fashion & Accessories', description: 'Trendy Fashion', hidden: true },
+  { slug: 'electronics', name: 'Electronics & Appliances', description: 'Smart Living', hidden: true },
   { slug: 'gifts-puja', name: 'Gifts, Puja & Festive', description: 'Celebrate Every Moment' },
   { slug: 'pet-care', name: 'Pet Care', description: 'For Your Furry Friends' },
-  { slug: 'liquor-smoking', name: 'Liquor & Smoking (18+)', description: 'For Adults Only' },
+  { slug: 'liquor-smoking', name: 'Liquor & Smoking (18+)', description: 'For Adults Only', hidden: true },
 ];
 
 /** A rule; `not` is an optional pattern that must not appear anywhere in the name. */

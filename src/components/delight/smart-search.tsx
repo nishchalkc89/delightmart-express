@@ -7,7 +7,7 @@ import { useCategories } from '@/hooks/use-catalog';
 import { ART_BACKGROUND } from '@/lib/product-art';
 import type { Product } from '@/types/store';
 
-const WORDS = ['rice', 'Coke', 'Maggi', 'shampoo', 'diapers', 'biscuits', 'cooking oil', 'chocolate', 'notebook', 'toothpaste', 'dal', 'detergent', 'tea', 'baby lotion'];
+const WORDS = ['rice', 'noodles', 'Maggi', 'shampoo', 'diapers', 'biscuits', 'soap', 'chocolate', 'notebook', 'toothpaste', 'dal', 'detergent', 'tea', 'baby lotion'];
 
 /** "Search for rice" typed and erased word by word, like quick-commerce apps. Static when motion is reduced. */
 function useTypingPlaceholder(enabled: boolean, prefix = 'Search for ') {

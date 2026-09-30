@@ -29,25 +29,18 @@ const drawn = (slug: string, name: string, short: string, tagline: string): Cate
 export const categories: Category[] = [
   designed('groceries', 'Groceries & Staples', 'Groceries', 'Daily Essentials'),
   drawn('snacks', 'Snacks & Sweets', 'Snacks', 'Biscuits, Chips & Chocolates'),
-  drawn('beverages', 'Beverages', 'Beverages', 'Tea, Coffee, Juice & Drinks'),
-  drawn('dairy-frozen', 'Dairy, Bakery & Frozen', 'Dairy & Frozen', 'Fresh & Chilled'),
   designed('beauty-skincare', 'Beauty & Personal Care', 'Beauty', 'Look Good, Feel Good'),
-  drawn('health-hygiene', 'Health & Hygiene', 'Health', 'Care for You & Family'),
   designed('baby-care', 'Baby Care', 'Baby Care', 'For Your Little Ones'),
   drawn('cleaning', 'Cleaning & Laundry', 'Cleaning', 'Clean Home, Happy Home'),
   designed('kitchen-household', 'Kitchen & Dining', 'Kitchen', 'Make Home Better'),
-  drawn('home-living', 'Home & Living', 'Home', 'Storage, Decor & Utility'),
   designed('stationery', 'Stationery & School', 'Stationery', 'Study Made Easy'),
   designed('toys', 'Toys, Games & Sports', 'Toys', 'Play & Learn'),
-  designed('ladies-wear', 'Fashion & Accessories', 'Fashion', 'Trendy Fashion'),
-  drawn('electronics', 'Electronics & Appliances', 'Electronics', 'Smart Living'),
   drawn('gifts-puja', 'Gifts, Puja & Festive', 'Gifts & Puja', 'Celebrate Every Moment'),
   drawn('pet-care', 'Pet Care', 'Pets', 'For Your Furry Friends'),
-  drawn('liquor-smoking', 'Liquor & Smoking (18+)', 'Liquor (18+)', 'For Adults Only'),
 ];
 export const dealsCategory: Category = { ...designed('deals-offers', 'Deals & Offers', 'Deals', 'Save More'), virtual: true };
 /** Categories shown in the desktop category bar (the rest are under "All Categories"). */
-export const NAV_CATEGORIES = ['groceries', 'snacks', 'beverages', 'beauty-skincare', 'baby-care', 'cleaning', 'kitchen-household', 'ladies-wear', 'stationery'];
+export const NAV_CATEGORIES = ['groceries', 'snacks', 'beauty-skincare', 'baby-care', 'cleaning', 'kitchen-household', 'stationery', 'toys', 'gifts-puja'];
 
 /** Design photos for grocery subcategories (other subcategories are shown as text chips). */
 export const subcategoryImages: Record<string, string> = {
@@ -62,8 +55,6 @@ export const subcategories: Array<{ name: string; image: string; category?: stri
   { name: 'Noodles, Pasta & Soup', image: asset('sub-noodles-pasta') },
   { name: 'Spices & Masala', image: asset('sub-spices-masala') },
   { name: 'Biscuits & Cookies', image: asset('sub-biscuits-snacks'), category: 'snacks' },
-  { name: 'Soft Drinks & Soda', image: asset('sub-beverages'), category: 'beverages' },
-  { name: 'Milk, Butter & Cheese', image: asset('sub-dairy-eggs'), category: 'dairy-frozen' },
   { name: 'Sauces, Pickles & Spreads', image: asset('sub-canned-food') },
 ];
 
@@ -124,7 +115,7 @@ export type ProductSort = 'featured' | 'price-asc' | 'price-desc' | 'name' | 'ne
 export type ProductFilter = { category?: string | undefined; sub?: string | undefined; q?: string | undefined; sort?: ProductSort | undefined; inStock?: boolean | undefined; page?: number | undefined; size?: number | undefined };
 export type ProductPage = { products: Product[]; total: number; page: number; pages: number };
 
-const LIST_COLUMNS = 'id,slug,name,brand,unit,price,sale_price,featured,created_at,specifications,categories!inner(name,slug),inventory(current_stock,reserved_stock),product_images(url,is_primary,sort_order)';
+const LIST_COLUMNS = 'id,slug,name,brand,unit,price,sale_price,featured,created_at,specifications,categories!inner(name,slug,status),inventory(current_stock,reserved_stock),product_images(url,is_primary,sort_order)';
 const LIST_IN_STOCK = LIST_COLUMNS.replace('inventory(', 'inventory!inner(');
 
 type DbProduct = {
@@ -221,7 +212,7 @@ export async function fetchStorefront(): Promise<Storefront> {
   try {
     const db = await client();
     if (!db) return demo;
-    const list = () => db.from('products').select(LIST_COLUMNS).eq('status', 'ACTIVE');
+    const list = () => db.from('products').select(LIST_COLUMNS).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE');
     const [cats, banners, offers, popular, fresh, grocery] = await Promise.all([
       fetchCategories(),
       db.from('banners').select('title,image_url,link_url,position,starts_at,ends_at').eq('status', 'ACTIVE').order('sort_order'),
@@ -258,7 +249,7 @@ export async function fetchProducts(f: ProductFilter): Promise<ProductPage> {
   try {
     const db = await client();
     if (!db) return demoPage(f);
-    let query = db.from('products').select(f.inStock ? LIST_IN_STOCK : LIST_COLUMNS, { count: 'exact' }).eq('status', 'ACTIVE');
+    let query = db.from('products').select(f.inStock ? LIST_IN_STOCK : LIST_COLUMNS, { count: 'exact' }).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE');
     if (f.category === 'deals-offers') query = query.not('sale_price', 'is', null);
     else if (f.category) query = query.eq('categories.slug', f.category);
     if (f.sub) query = query.eq('specifications->>subcategory', f.sub);
@@ -287,7 +278,7 @@ export async function fetchSubcategories(category: string): Promise<Array<{ name
     if (!db) return [];
     const counts = new Map<string, number>();
     for (let from = 0; from < 20000; from += 1000) {
-      const { data, error } = await db.from('products').select('sub:specifications->>subcategory,categories!inner(slug)').eq('status', 'ACTIVE').eq('categories.slug', category).range(from, from + 999);
+      const { data, error } = await db.from('products').select('sub:specifications->>subcategory,categories!inner(slug,status)').eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').eq('categories.slug', category).range(from, from + 999);
       if (error) break;
       for (const row of (data ?? []) as unknown as Array<{ sub: string | null }>) if (row.sub) counts.set(row.sub, (counts.get(row.sub) ?? 0) + 1);
       if ((data ?? []).length < 1000) break;
@@ -305,7 +296,7 @@ export async function fetchProductsByIds(ids: string[]): Promise<Product[]> {
   if (!db) return products.filter((p) => ids.includes(p.id));
   const found: Product[] = [];
   for (let i = 0; i < ids.length; i += 150) {
-    const { data, error } = await db.from('products').select(LIST_COLUMNS).eq('status', 'ACTIVE').in('id', ids.slice(i, i + 150));
+    const { data, error } = await db.from('products').select(LIST_COLUMNS).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').in('id', ids.slice(i, i + 150));
     if (error) throw error;
     found.push(...((data ?? []) as unknown as DbProduct[]).map(fromDb));
   }
@@ -318,10 +309,10 @@ export async function fetchProduct(slug: string): Promise<{ product: Product; re
   try {
     const db = await client();
     if (db) {
-      const { data, error } = await db.from('products').select(`${LIST_COLUMNS},description`).eq('status', 'ACTIVE').eq('slug', slug).maybeSingle();
+      const { data, error } = await db.from('products').select(`${LIST_COLUMNS},description`).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').eq('slug', slug).maybeSingle();
       if (!error && data) {
         const product = fromDb(data as unknown as DbProduct);
-        let rel = db.from('products').select(LIST_COLUMNS).eq('status', 'ACTIVE').neq('slug', slug).eq('categories.slug', product.categorySlug ?? '');
+        let rel = db.from('products').select(LIST_COLUMNS).eq('status', 'ACTIVE').eq('categories.status', 'ACTIVE').neq('slug', slug).eq('categories.slug', product.categorySlug ?? '');
         if (product.subcategory) rel = rel.eq('specifications->>subcategory', product.subcategory);
         const related = await rel.order('featured', { ascending: false }).limit(8);
         return { product, related: ((related.data ?? []) as unknown as DbProduct[]).map(fromDb) };

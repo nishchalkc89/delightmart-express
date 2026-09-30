@@ -127,6 +127,8 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    /* Stops small badges at the screen edge from making phones scroll sideways (clip keeps sticky headers working). */
+    overflow-x: clip;
   }
 
   body {

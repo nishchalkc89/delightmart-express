@@ -37,7 +37,7 @@ function Index() {
 /* Desktop                                                             */
 /* ------------------------------------------------------------------ */
 
-const heroList = [['Groceries', 'Fashion', 'Baby Care', 'Stationery', 'Toys'], ['Kitchen Items', 'Beauty & Skincare', 'Fast Food', 'And More']];
+const heroList = [['Groceries', 'Snacks', 'Baby Care', 'Stationery', 'Toys'], ['Kitchen Items', 'Beauty & Skincare', 'Fast Food', 'And More']];
 
 function Bullets({ rows, className, gap = 'gap-x-3.5' }: { rows: string[][]; className: string; gap?: string }) {
   return (
@@ -260,9 +260,8 @@ function DesktopHome({ categories, collections, banners }: Data) {
           {below.slice(0, 3).map((b) => <a key={b.image} href={b.link} className="block overflow-hidden rounded-xl"><img src={b.image} alt={b.title} className="h-[185px] w-full object-cover" /></a>)}
         </section>
       ) : (
-        <section className="site-width mt-3 grid grid-cols-[1.03fr_1fr_1.03fr] gap-3.5">
+        <section className="site-width mt-3 grid grid-cols-2 gap-3.5">
           <BannerLink src={asset('promo-groceries')} alt="Groceries for a Better Tomorrow" to="/categories/groceries" />
-          <BannerLink src={asset('promo-fashion')} alt="Fashion for Every You" to="/categories/ladies-wear" />
           <BannerLink src={asset('promo-stationery')} alt="Stationery & School Essentials" to="/categories/stationery" />
         </section>
       )}
@@ -293,9 +292,8 @@ function DesktopHome({ categories, collections, banners }: Data) {
             {shopMore.slice(0, 4).map((b) => <a key={b.image} href={b.link} className="block overflow-hidden rounded-xl"><img src={b.image} alt={b.title} className="h-[171px] w-full object-cover" /></a>)}
           </div>
         ) : (
-        <div className="grid grid-cols-[1.04fr_1fr_1fr_1.04fr] gap-3.5">
+        <div className="grid grid-cols-3 gap-3.5">
           <BannerLink src={asset('save-groceries')} alt="Up to 30% off daily essentials" to="/categories/groceries" />
-          <BannerLink src={asset('save-fashion')} alt="Trendy styles for every you" to="/categories/ladies-wear" />
           <BannerLink src={asset('save-baby')} alt="Baby care" to="/categories/baby-care" />
           <BannerLink src={asset('save-kitchen')} alt="Make home better" to="/categories/kitchen-household" />
         </div>
@@ -381,8 +379,7 @@ function MobileHome({ categories, collections, banners }: Data) {
       <section className="mt-3 grid grid-cols-2 gap-2.5">
         {below.length ? below.slice(0, 2).map((b) => <a key={b.image} href={b.link} className="block overflow-hidden rounded-xl"><img src={b.image} alt={b.title} className="aspect-[2/1] w-full object-cover" /></a>) : (
           <>
-            <BannerLink src={asset('m-banner-groceries')} alt="Healthy Living Everyday" to="/categories/groceries" />
-            <BannerLink src={asset('m-banner-fashion')} alt="Style for Every You" to="/categories/ladies-wear" />
+            <BannerLink src={asset('m-banner-groceries')} alt="Healthy Living Everyday" to="/categories/groceries" className="col-span-2" />
           </>
         )}
       </section>
@@ -422,7 +419,7 @@ function MobileHome({ categories, collections, banners }: Data) {
       </section>
 
       <section className="no-scrollbar -mx-4 mt-6 flex gap-2.5 overflow-x-auto px-4">
-        {([['promo-groceries', 'Groceries for a Better Tomorrow', '/categories/groceries'], ['promo-fashion', 'Fashion for Every You', '/categories/ladies-wear'], ['promo-stationery', 'Stationery & School Essentials', '/categories/stationery'], ['season-monsoon', 'Monsoon Essentials', '/products'], ['season-school', 'Back to School', '/categories/stationery'], ['season-fresh', 'Fresh Food Everyday', '/categories/groceries']] as const).map(([img, alt, to]) => (
+        {([['promo-groceries', 'Groceries for a Better Tomorrow', '/categories/groceries'], ['promo-stationery', 'Stationery & School Essentials', '/categories/stationery'], ['season-monsoon', 'Monsoon Essentials', '/products'], ['season-school', 'Back to School', '/categories/stationery'], ['season-fresh', 'Fresh Food Everyday', '/categories/groceries']] as const).map(([img, alt, to]) => (
           <BannerLink key={img} src={asset(img)} alt={alt} to={to} className="w-[78%] shrink-0 sm:w-[46%]" />
         ))}
       </section>
@@ -432,8 +429,7 @@ function MobileHome({ categories, collections, banners }: Data) {
       <section className="mt-6">
         <MobileHead title="Shop More," accent="Save More" to="/categories/deals-offers" />
         <div className="grid grid-cols-2 gap-2.5">
-          <BannerLink src={asset('save-groceries')} alt="Up to 30% off daily essentials" to="/categories/groceries" />
-          <BannerLink src={asset('save-fashion')} alt="Trendy styles for every you" to="/categories/ladies-wear" />
+          <BannerLink src={asset('save-groceries')} alt="Up to 30% off daily essentials" to="/categories/groceries" className="col-span-2" />
           <BannerLink src={asset('save-baby')} alt="Baby care" to="/categories/baby-care" />
           <BannerLink src={asset('save-kitchen')} alt="Make home better" to="/categories/kitchen-household" />
         </div>
