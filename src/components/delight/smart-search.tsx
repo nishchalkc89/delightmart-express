@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type R
 import { fetchProducts, formatNpr } from '@/services/catalog';
 import { useCategories } from '@/hooks/use-catalog';
 import { ART_BACKGROUND } from '@/lib/product-art';
+import { ProductThumb } from './product-tile';
 import type { Product } from '@/types/store';
 
 const WORDS = ['rice', 'noodles', 'Maggi', 'shampoo', 'diapers', 'biscuits', 'soap', 'chocolate', 'notebook', 'toothpaste', 'dal', 'detergent', 'tea', 'baby lotion'];
@@ -205,7 +206,7 @@ function ProductRow({ p, q, active, onPick }: { p: Product; q: string; active: b
   return (
     <Row active={active} onPick={onPick}>
       <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-line" style={{ background: p.art ? ART_BACKGROUND[p.categorySlug ?? ''] : '#fff' }}>
-        <img src={p.image} alt="" className={p.art ? 'size-6' : 'size-full object-contain'} />
+        {p.noPhoto ? <ProductThumb product={p} className="size-full" /> : <img src={p.image} alt="" className={p.art ? 'size-6' : 'size-full object-contain'} />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="line-clamp-1 text-[14px] text-slate"><Highlight text={p.name} query={q} /></span>

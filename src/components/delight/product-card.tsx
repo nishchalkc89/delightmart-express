@@ -7,6 +7,7 @@ import { useWishlist } from './wishlist-context';
 import { formatNpr } from '@/services/catalog';
 import type { Product } from '@/types/store';
 import { ART_BACKGROUND } from '@/lib/product-art';
+import { NameTile } from './product-tile';
 
 export function Stars({ rating, reviews, className = 'size-4' }: { rating: number; reviews?: number; className?: string }) {
   const full = Math.floor(rating);
@@ -70,8 +71,10 @@ export function ProductCard({ product, variant = 'desktop', badge = 'discount', 
       <Link to="/products/$slug" params={{ slug: product.slug }} className="relative block">
         <div className="relative aspect-square overflow-hidden rounded-xl border border-line"
           style={{ background: product.art ? ART_BACKGROUND[product.categorySlug ?? ''] ?? '#f3f6f8' : '#ffffff' }}>
+          {product.noPhoto ? <NameTile product={product} /> : (
           <img src={product.image} alt={product.name} loading="lazy"
             className={`absolute inset-0 m-auto transition-transform duration-300 group-hover:scale-105 ${product.art ? 'h-[52%] w-[52%]' : 'h-[88%] w-[88%] object-contain'}`} />
+          )}
         </div>
         {badge === 'discount' && product.discount ? <span className="absolute left-0 top-2 rounded-r-md bg-red px-1.5 py-0.5 text-[10.5px] font-bold text-white lg:text-[12px]">{product.discount}% OFF</span> : null}
         {badge === 'new' && <span className="absolute left-0 top-2 rounded-r-md bg-brand px-2 py-0.5 text-[11px] font-semibold text-white lg:text-[12px]">NEW</span>}
@@ -84,10 +87,11 @@ export function ProductCard({ product, variant = 'desktop', badge = 'discount', 
       <Link to="/products/$slug" params={{ slug: product.slug }} className="mt-1.5 flex flex-1 flex-col">
         <div className={big ? 'flex flex-wrap items-center gap-x-1.5 gap-y-0.5' : 'flex flex-col items-start gap-0.5'}>
           <strong className={`rounded-md bg-brand px-1.5 py-0.5 font-extrabold text-white ${big ? 'text-[15px]' : 'text-[13px]'}`}>{formatNpr(product.price)}</strong>
-          {product.oldPrice ? <del className={`text-slate ${big ? 'text-[13.5px]' : 'text-[11.5px]'}`}>{formatNpr(product.oldPrice)}</del> : !big && <span aria-hidden className="text-[11.5px]">&nbsp;</span>}
+          {product.oldPrice ? <del className={`text-slate ${big ? 'text-[13.5px]' : 'text-[11.5px]'}`}>{formatNpr(product.oldPrice)}</del> : null}
         </div>
-        <p className={`mt-1 border-b border-dashed border-line pb-1 font-bold text-brand ${big ? 'text-[12.5px]' : 'text-[11px]'}`}>{off > 0 ? `NPR ${off.toLocaleString('en-US')} OFF` : ' '}</p>
-        <h3 className={`mt-1 line-clamp-2 font-semibold leading-snug text-ink ${big ? 'min-h-[2.6em] text-[14.5px]' : 'min-h-[2.6em] text-[12.5px]'}`}>{product.name}</h3>
+        {/* Savings line only when there is a saving, so the name sits right under the price. */}
+        {off > 0 && <p className={`mt-1 border-b border-dashed border-line pb-1 font-bold text-brand ${big ? 'text-[12.5px]' : 'text-[11px]'}`}>NPR {off.toLocaleString('en-US')} OFF</p>}
+        <h3 className={`mt-1.5 line-clamp-2 font-semibold leading-snug text-ink ${big ? 'min-h-[2.6em] text-[14.5px]' : 'min-h-[2.6em] text-[12.5px]'}`}>{product.name}</h3>
         {showUnit && <p className={`mt-0.5 line-clamp-1 text-slate ${big ? 'text-[13px]' : 'text-[11.5px]'}`}>{product.unit || ' '}</p>}
         {product.reviews > 0 && <div className={`mt-1 ${big ? 'text-[13px]' : 'text-[11px]'}`}><Stars rating={product.rating} reviews={product.reviews} className={big ? 'size-3.5' : 'size-3'} /></div>}
       </Link>

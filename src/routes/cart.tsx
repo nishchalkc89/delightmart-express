@@ -10,6 +10,7 @@ import { ActionButton, AddressBar, AddressSheet, BillSummary, Box, CheckoutShell
 import { fetchProductsByIds, formatNpr } from '@/services/catalog';
 import { useBranch } from '@/components/delight/branch-context';
 import { ART_BACKGROUND } from '@/lib/product-art';
+import { ProductThumb } from '@/components/delight/product-tile';
 
 export const Route = createFileRoute('/cart')({
   head: () => ({ meta: [{ title: 'Cart — Delight Shopping Mart' }, { name: 'description', content: 'Review your Delight Shopping Mart cart.' }, { property: 'og:title', content: 'Your Cart — Delight' }, { property: 'og:description', content: 'Review your items before checkout.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
@@ -95,7 +96,7 @@ function Page() {
           {cart.lines.map(({ product: p, quantity }) => (
             <div key={p.id} className="flex items-center gap-3 py-3">
               <Link to="/products/$slug" params={{ slug: p.slug }} className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-line" style={{ background: p.art ? ART_BACKGROUND[p.categorySlug ?? ''] : '#fff' }}>
-                <img src={p.image} alt={p.name} className={p.art ? 'size-8' : 'size-full object-contain p-1'} />
+                {p.noPhoto ? <ProductThumb product={p} className="size-full" /> : <img src={p.image} alt={p.name} className={p.art ? 'size-8' : 'size-full object-contain p-1'} />}
               </Link>
               <div className="min-w-0 flex-1">
                 <p className="line-clamp-2 text-[14px] font-medium leading-snug text-navy">{p.name}</p>

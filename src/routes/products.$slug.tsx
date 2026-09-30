@@ -12,6 +12,7 @@ import { rememberViewed, useRecentlyViewed } from '@/lib/recently-viewed';
 import { formatNpr } from '@/services/catalog';
 import { productQuery } from '@/hooks/use-catalog';
 import { ART_BACKGROUND } from '@/lib/product-art';
+import { NameTile } from '@/components/delight/product-tile';
 
 export const Route = createFileRoute('/products/$slug')({
   loader: async ({ params, context }) => {
@@ -43,7 +44,7 @@ function ProductPage() {
       toast.success('Link copied — paste it to share');
     } catch { /* share sheet closed */ }
   }
-  const gallery = p.gallery ?? [p.image];
+  const gallery = p.noPhoto ? [] : p.gallery ?? [p.image];
 
   function addToCart() {
     if (p.stock <= 0) { toast.error('This product is out of stock right now'); return; }
@@ -67,7 +68,9 @@ function ProductPage() {
             ))}
           </div>
           <div className="flex items-start justify-center pt-2">
-            {p.art
+            {p.noPhoto
+              ? <div className="aspect-square w-full max-w-[480px] overflow-hidden rounded-2xl"><NameTile product={p} size="large" /></div>
+              : p.art
               ? <div className="grid aspect-square w-full max-w-[480px] place-items-center rounded-2xl" style={{ background: ART_BACKGROUND[p.categorySlug ?? ''] ?? '#f3f6f8' }}><img src={p.image} alt={p.name} className="w-[55%]" /></div>
               : <img src={gallery[active]} alt={p.name} className="w-full max-w-[480px] object-contain drop-shadow-sm" />}
           </div>

@@ -12,6 +12,8 @@ export type Product = {
   image: string;
   /** True when `image` is a product-type illustration rather than a photo of the product. */
   art?: boolean | undefined;
+  /** No real photo yet: shown as a name tile. */
+  noPhoto?: boolean | undefined;
   gallery?: string[] | undefined;
   discount?: number | undefined;
   stock: number;

@@ -170,6 +170,7 @@ function fromDb(row: DbProduct): Product {
     // Real product photos only; until a photo is uploaded the product shows a plain "Photo coming soon" card.
     image: images[0] ?? demo?.image ?? NO_PHOTO,
     art: false,
+    noPhoto: !images[0] && !demo?.image,
     gallery: images.length > 1 ? images : demo?.gallery,
     stock: inv ? Math.max(0, inv.current_stock - inv.reserved_stock) : 0,
     rating: demo?.rating ?? 0,
