@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowUpLeft, Loader2, ScanLine, Search } from 'lucide-react';
+import { ArrowUpLeft, Loader2, Mic, Search } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { fetchProducts, formatNpr } from '@/services/catalog';
 import { useCategories } from '@/hooks/use-catalog';
@@ -33,6 +33,33 @@ function useTypingPlaceholder(enabled: boolean, prefix = 'Search for ') {
   return text;
 }
 
+type Recognition = { lang: string; interimResults: boolean; maxAlternatives: number; start: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null };
+
+/** Speak to search, where the browser supports it (Chrome on Android, Safari on iPhone). */
+function useVoiceSearch(onText: (text: string) => void) {
+  const [supported, setSupported] = useState(false);
+  const [listening, setListening] = useState(false);
+  useEffect(() => {
+    const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+    setSupported(Boolean(w.SpeechRecognition ?? w.webkitSpeechRecognition));
+  }, []);
+  function start() {
+    const w = window as unknown as { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
+    const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+    if (!Ctor || listening) return;
+    const rec = new Ctor();
+    rec.lang = 'en-IN';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e) => { const text = e.results[0]?.[0]?.transcript?.trim(); if (text) onText(text); };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    setListening(true);
+    rec.start();
+  }
+  return { supported, listening, start };
+}
+
 function useDebounced<T>(value: T, ms = 220) {
   const [v, setV] = useState(value);
   useEffect(() => { const t = setTimeout(() => setV(value), ms); return () => clearTimeout(t); }, [value, ms]);
@@ -59,6 +86,7 @@ export function SmartSearch({ variant, placeholder }: { variant: 'desktop' | 'mo
   const [active, setActive] = useState(-1);
   const animated = !placeholder || placeholder.startsWith('Search for groceries');
   const typing = useTypingPlaceholder(animated);
+  const voice = useVoiceSearch((text) => { setQuery(text); searchAll(text); });
   const q = useDebounced(query.trim());
   const categories = useCategories();
 
@@ -153,7 +181,11 @@ export function SmartSearch({ variant, placeholder }: { variant: 'desktop' | 'mo
       <div className="flex h-12 items-center gap-3 rounded-xl border border-[#dde6ea] bg-[#f5fbfc] px-4 focus-within:border-brand/60">
         <Search className="size-5 text-ink" />
         {input}
-        <ScanLine className="size-5 text-ink" />
+        {voice.supported && (
+          <button type="button" onClick={voice.start} aria-label={voice.listening ? 'Listening… speak now' : 'Search by voice'} className={`grid size-8 place-items-center rounded-full ${voice.listening ? 'animate-pulse bg-red text-white' : 'text-ink'}`}>
+            <Mic className="size-5" />
+          </button>
+        )}
       </div>
       {panel}
     </form>

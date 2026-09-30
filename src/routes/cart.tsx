@@ -1,13 +1,13 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { ChevronRight, Clock, Loader2, Percent, Trash2, Zap } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useCart } from '@/components/delight/cart-context';
 import { useCheckout } from '@/components/delight/checkout-context';
 import { useAuth } from '@/components/delight/auth-context';
 import { AddButton } from '@/components/delight/product-card';
 import { ActionButton, AddressBar, AddressSheet, BillSummary, Box, CheckoutShell, EmptyCart, SavedBanner, SavingsCard, useAddresses, useBill } from '@/components/delight/checkout-ui';
-import { formatNpr } from '@/services/catalog';
+import { fetchProductsByIds, formatNpr } from '@/services/catalog';
 import { ART_BACKGROUND } from '@/lib/product-art';
 
 export const Route = createFileRoute('/cart')({
@@ -36,6 +36,20 @@ function Page() {
     checkout.setDetails({ ...d, recipientName: a.recipientName, phone: a.phone, addressLine: a.addressLine, city: a.city, province: a.province, label: a.label, addressId: a.id });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses]);
+
+  // Saved carts can be days old: bring prices and stock up to date and drop items that are gone.
+  const checked = useRef(false);
+  useEffect(() => {
+    if (checked.current || !cart.lines.length) return;
+    checked.current = true;
+    void fetchProductsByIds(cart.lines.map((l) => l.product.id)).then((current) => {
+      const r = cart.refresh(current);
+      if (r.removed.length) toast.warning(`Removed (no longer available): ${r.removed.join(', ')}`);
+      if (r.reduced.length) toast.info(`Only limited stock left for: ${r.reduced.join(', ')}`);
+      if (r.priceChanged.length) toast.info(`Prices updated for: ${r.priceChanged.join(', ')}`);
+    }).catch(() => { checked.current = false; });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.lines.length]);
 
   async function applyCoupon() {
     setApplying(true);

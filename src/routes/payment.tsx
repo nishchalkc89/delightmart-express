@@ -91,7 +91,7 @@ function Page() {
         </Box>
       ))}
 
-      <p className="px-1 text-center text-[12.5px] text-slate">By placing this order you agree to our <Link to="/" className="font-semibold text-brand">Terms &amp; Conditions</Link>. <Link to="/cart" className="font-semibold text-red">Back to cart</Link></p>
+      <p className="px-1 text-center text-[12.5px] text-slate">By placing this order you agree to our <Link to="/terms" className="font-semibold text-brand">Terms &amp; Conditions</Link>. <Link to="/cart" className="font-semibold text-red">Back to cart</Link></p>
       <AddressSheet open={sheet} onOpenChange={setSheet} />
     </CheckoutShell>
   );

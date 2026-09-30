@@ -298,6 +298,21 @@ export async function fetchSubcategories(category: string): Promise<Array<{ name
   }
 }
 
+/** Current details (price, stock, photo) of specific products, in the order asked for; missing or hidden products are left out. */
+export async function fetchProductsByIds(ids: string[]): Promise<Product[]> {
+  if (!ids.length) return [];
+  const db = await client();
+  if (!db) return products.filter((p) => ids.includes(p.id));
+  const found: Product[] = [];
+  for (let i = 0; i < ids.length; i += 150) {
+    const { data, error } = await db.from('products').select(LIST_COLUMNS).eq('status', 'ACTIVE').in('id', ids.slice(i, i + 150));
+    if (error) throw error;
+    found.push(...((data ?? []) as unknown as DbProduct[]).map(fromDb));
+  }
+  const byId = new Map(found.map((p) => [p.id, p]));
+  return ids.map((id) => byId.get(id)).filter((p): p is Product => Boolean(p));
+}
+
 /** A single product (with its description) and a few related products from the same subcategory. */
 export async function fetchProduct(slug: string): Promise<{ product: Product; related: Product[] } | null> {
   try {

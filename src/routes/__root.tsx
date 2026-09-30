@@ -12,27 +12,28 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CartProvider } from "@/components/delight/cart-context";
+import { WishlistProvider } from '@/components/delight/wishlist-context';
 import { AuthProvider } from "@/components/delight/auth-context";
 import { CheckoutProvider } from "@/components/delight/checkout-context";
 import { PwaRegister } from "@/components/delight/pwa-register";
 import { Toaster } from "@/components/ui/sonner";
+import { Logo } from "@/components/delight/logo";
 
 function NotFoundComponent() {
+  const links = [['/', 'Home'], ['/categories', 'All Categories'], ['/categories/deals-offers', "Today's Deals"], ['/account/help', 'Help']] as const;
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
+    <div className="flex min-h-screen items-center justify-center bg-white px-4">
+      <div className="w-full max-w-md text-center">
+        <Link to="/" aria-label="Delight Shopping Mart home"><Logo className="mx-auto h-[56px] w-auto" /></Link>
+        <img src="/art/shopping_cart.svg" alt="" className="mx-auto mt-8 size-20" />
+        <h1 className="mt-4 text-[26px] font-extrabold text-navy">This page is not on our shelves</h1>
+        <p className="mt-2 text-[15px] text-slate">The link may be old or mistyped. Search for what you need, or pick a place to start:</p>
+        <form className="mt-5 flex h-12 overflow-hidden rounded-xl border border-line" onSubmit={(e) => { e.preventDefault(); const q = new FormData(e.currentTarget).get('q'); window.location.assign(`/search?q=${encodeURIComponent(String(q ?? ''))}`); }}>
+          <input name="q" aria-label="Search products" placeholder="Search rice, Maggi, shampoo…" className="min-w-0 flex-1 px-4 text-[15px] outline-none" />
+          <button className="bg-red px-5 font-semibold text-white">Search</button>
+        </form>
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          {links.map(([to, label]) => <Link key={to} to={to as '/'} className="rounded-full border border-line px-4 py-2 text-[14px] font-medium text-navy hover:border-brand hover:text-brand">{label}</Link>)}
         </div>
       </div>
     </div>
@@ -132,7 +133,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <AuthProvider><CartProvider><CheckoutProvider><Outlet /></CheckoutProvider></CartProvider></AuthProvider>
+      <AuthProvider><CartProvider><WishlistProvider><CheckoutProvider><Outlet /></CheckoutProvider></WishlistProvider></CartProvider></AuthProvider>
       <PwaRegister />
       <Toaster richColors position="top-center" />
     </QueryClientProvider>

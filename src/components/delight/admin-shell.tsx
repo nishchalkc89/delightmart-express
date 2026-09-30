@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import {
-  BadgePercent, Bell, ChartColumn, ChevronDown, ClipboardList, Folder, Images, LayoutDashboard, MapPin, Menu, Package,
+  BadgePercent, Bell, ChartColumn, Mail, ChevronDown, ClipboardList, Folder, Images, LayoutDashboard, MapPin, Menu, Package,
   Search, Settings, Star, Store, Truck, UserRound, UsersRound, WalletCards, X,
 } from 'lucide-react';
 import { Logo } from './logo';
@@ -21,6 +21,7 @@ const nav = [
   ['/admin/delivery', Truck, 'Delivery Management'],
   ['/admin/payments', WalletCards, 'Payments'],
   ['/admin/reviews', Star, 'Reviews'],
+  ['/admin/subscribers', Mail, 'Subscribers'],
   ['/admin/reports', ChartColumn, 'Reports'],
   ['/admin/users', UsersRound, 'Users & Roles'],
   ['/admin/settings', Settings, 'Settings'],

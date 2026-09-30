@@ -7,6 +7,8 @@ import { ProductCard } from '@/components/delight/product-card';
 import { AppPromo, BannerLink, CarouselArrow, CommunityNewsletter, DealTimer, JustArrivedTitle, Newsletter } from '@/components/delight/home-parts';
 import { brands, NAV_CATEGORIES, type Category, type Collections, type StoreBanner } from '@/services/catalog';
 import { storefrontQuery } from '@/hooks/use-catalog';
+import { NewsletterForm } from '@/components/delight/newsletter-form';
+import { useRecentlyViewed } from '@/lib/recently-viewed';
 import { asset } from '@/lib/assets';
 import { shouldOnboard } from '@/lib/onboarding';
 import storeHero from '@/assets/store-hero.jpg';
@@ -212,7 +214,7 @@ function ExploreCategories({ categories }: Pick<Data, 'categories'>) {
 function Brands() {
   return (
     <section className="site-width mt-8">
-      <SectionHead eyebrow="Top Brands" title="Trusted Brands at Delight" link="View All Brands" />
+      <SectionHead eyebrow="Top Brands" title="Trusted Brands at Delight" link="Shop All Products" to="/products" />
       <div className="marquee relative overflow-hidden py-1 [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]">
         <div className="marquee-track flex w-max gap-3.5">
           {[...brands, ...brands].map((b, i) => (
@@ -264,6 +266,7 @@ function DesktopHome({ categories, collections, banners }: Data) {
           <BannerLink src={asset('promo-stationery')} alt="Stationery & School Essentials" to="/categories/stationery" />
         </section>
       )}
+      <RecentlyViewed variant="desktop" />
       <section className="site-width mt-8">
         <SectionHead eyebrow="Featured Products" title="Popular Products" link="View All Products" />
         <div className="grid grid-cols-6 gap-3.5">{collections.popular.slice(0, 6).map((p) => <ProductCard key={p.id} product={p} badge="none" />)}</div>
@@ -391,6 +394,7 @@ function MobileHome({ categories, collections, banners }: Data) {
         </div>
       </section>
 
+      <RecentlyViewed variant="mobile" />
       <MobileRow title="Daily" accent="Essentials" to="/categories/groceries" products={collections.groceryPopular} />
 
       <section className="mt-6">
@@ -440,8 +444,8 @@ function MobileHome({ categories, collections, banners }: Data) {
           <h3 className="text-[17px] font-extrabold text-navy">Download Our App</h3>
           <p className="text-[12.5px] text-ink">Shop Anytime, Anywhere</p>
           <div className="mt-2.5 flex gap-2">
-            <img src={asset('google-play')} alt="Get it on Google Play" className="h-8 w-auto" />
-            <img src={asset('app-store')} alt="Download on the App Store" className="h-8 w-auto" />
+            <Link to="/app"><img src={asset('google-play')} alt="Get the Delight app on Android" className="h-8 w-auto" /></Link>
+            <Link to="/app"><img src={asset('app-store')} alt="Get the Delight app on iPhone" className="h-8 w-auto" /></Link>
           </div>
         </div>
         <img src={asset('app-phone')} alt="" className="-mb-4 h-[112px] w-auto self-end" />
@@ -464,10 +468,7 @@ function MobileHome({ categories, collections, banners }: Data) {
         <p className="text-[11px] font-semibold tracking-[0.18em] text-slate">JOIN OUR COMMUNITY</p>
         <h3 className="mt-1 text-[19px] font-extrabold text-navy">Stay Updated with Delight</h3>
         <p className="mt-1 text-[13px] text-slate">Latest offers, new arrivals and exclusive deals.</p>
-        <form onSubmit={(e) => e.preventDefault()} className="mt-3 flex h-11 overflow-hidden rounded-lg border border-line bg-white">
-          <input type="email" required className="min-w-0 flex-1 px-3 text-[14px] outline-none placeholder:text-slate" placeholder="Enter your email" aria-label="Email address" />
-          <button className="bg-red px-4 text-[14px] font-semibold text-white">Subscribe</button>
-        </form>
+        <NewsletterForm size="sm" source="home" className="mt-3" />
       </section>
 
       <section className="mt-5 grid grid-cols-2 gap-2.5 pb-4">
@@ -491,6 +492,19 @@ function MobileRow({ title, accent, to, products, badge = 'discount' }: { title:
       <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
         {products.map((p) => <div key={p.id} className="w-[31%] shrink-0 sm:w-[22%]"><ProductCard product={p} variant="mobile" badge={badge} /></div>)}
       </div>
+    </section>
+  );
+}
+
+/** Products this device opened recently (hidden until there are some). */
+function RecentlyViewed({ variant }: { variant: 'desktop' | 'mobile' }) {
+  const recent = useRecentlyViewed();
+  if (recent.length < 2) return null;
+  if (variant === 'mobile') return <MobileRow title="Recently" accent="Viewed" to="/products" products={recent} badge="none" />;
+  return (
+    <section className="site-width mt-8">
+      <SectionHead eyebrow="Pick up where you left off" title="Recently" accent="Viewed" link="View All Products" />
+      <div className="grid grid-cols-6 gap-3.5">{recent.slice(0, 6).map((p) => <ProductCard key={p.id} product={p} badge="none" />)}</div>
     </section>
   );
 }

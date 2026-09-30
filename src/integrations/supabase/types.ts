@@ -355,6 +355,12 @@ export type Database = {
           },
         ]
       }
+      newsletter_subscribers: {
+        Row: { created_at: string; email: string; id: string; source: string; status: string }
+        Insert: { created_at?: string; email: string; id?: string; source?: string; status?: string }
+        Update: { created_at?: string; email?: string; id?: string; source?: string; status?: string }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string
@@ -861,11 +867,21 @@ export type Database = {
         }
         Relationships: []
       }
+      wishlist_items: {
+        Row: { created_at: string; product_id: string; user_id: string }
+        Insert: { created_at?: string; product_id: string; user_id: string }
+        Update: { created_at?: string; product_id?: string; user_id?: string }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      cancel_my_order: {
+        Args: { p_order: string }
+        Returns: undefined
+      }
       place_cod_order: {
         Args: { p_address: Json; p_coupon?: string; p_items: Json }
         Returns: string

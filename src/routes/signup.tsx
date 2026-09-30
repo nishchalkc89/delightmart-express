@@ -54,7 +54,7 @@ function Page() {
         <IconField icon={Lock} label="Confirm Password" name="confirm" type="password" value={confirm} onChange={setConfirm} autoComplete="new-password" />
         <label className="flex cursor-pointer items-start gap-3 pt-2 text-[15px] leading-6 text-slate">
           <button type="button" role="checkbox" aria-checked={agree} onClick={() => setAgree(!agree)} className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-md ${agree ? 'bg-brand text-white' : 'border-2 border-line'}`}>{agree && <Check className="size-4" strokeWidth={3} />}</button>
-          <span>I agree to the <Link to="/" className="text-brand underline">Terms &amp; Conditions</Link> and <Link to="/" className="text-brand underline">Privacy Policy</Link></span>
+          <span>I agree to the <Link to="/terms" target="_blank" className="text-brand underline">Terms &amp; Conditions</Link> and <Link to="/privacy" target="_blank" className="text-brand underline">Privacy Policy</Link></span>
         </label>
         <div className="pt-3"><GreenButton disabled={busy}>{busy ? 'Creating account…' : 'Sign Up'}</GreenButton></div>
       </form>

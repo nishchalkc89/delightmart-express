@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 import { StorePage } from '@/components/delight/store-shell';
 import { ProductCard } from '@/components/delight/product-card';
@@ -20,10 +20,16 @@ export const Route = createFileRoute('/categories/$slug')({
     sort: sorts.some(([k]) => k === s['sort']) ? (s['sort'] as ProductSort) : undefined,
   }),
   loaderDeps: ({ search }) => ({ sub: search.sub, sort: search.sort }),
-  loader: ({ context, params, deps }) => Promise.all([
-    context.queryClient.ensureQueryData(productsQuery(filterOf(params.slug, deps))),
-    context.queryClient.ensureQueryData(subcategoriesQuery(params.slug)),
-  ]),
+  loader: async ({ context, params, deps }) => {
+    const result = await Promise.all([
+      context.queryClient.ensureQueryData(productsQuery(filterOf(params.slug, deps))),
+      context.queryClient.ensureQueryData(subcategoriesQuery(params.slug)),
+    ] as const);
+    // A mistyped or removed category shows the "not found" page instead of an empty list.
+    const known = [...knownCategories, dealsCategory].some((c) => c.slug === params.slug);
+    if (!known && !result[0].total && !deps.sub) throw notFound();
+    return result;
+  },
   head: ({ params }) => {
     const c = [...knownCategories, dealsCategory].find((x) => x.slug === params.slug);
     return { meta: [{ title: `${c?.name ?? 'Category'} — Delight Shopping Mart` }, { name: 'description', content: `Shop ${c?.name ?? 'products'} at Delight Shopping Mart, Tulsipur.` }, { property: 'og:title', content: `${c?.name ?? 'Category'} — Delight Shopping Mart` }, { property: 'og:description', content: 'Great products at local prices.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] };

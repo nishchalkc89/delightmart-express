@@ -1,8 +1,9 @@
 import { Heart, Minus, Plus, Star, StarHalf } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useState, type MouseEvent } from 'react';
+import { type MouseEvent } from 'react';
 import { toast } from 'sonner';
 import { useCart } from './cart-context';
+import { useWishlist } from './wishlist-context';
 import { formatNpr } from '@/services/catalog';
 import type { Product } from '@/types/store';
 import { ART_BACKGROUND } from '@/lib/product-art';
@@ -59,7 +60,8 @@ export function AddButton({ product, size = 'md', className = '' }: { product: P
 }
 
 export function ProductCard({ product, variant = 'desktop', badge = 'discount', showUnit = true }: Props) {
-  const [liked, setLiked] = useState(false);
+  const wishlist = useWishlist();
+  const liked = wishlist.has(product.id);
   const big = variant === 'desktop';
   const off = product.oldPrice ? product.oldPrice - product.price : 0;
 
@@ -74,7 +76,7 @@ export function ProductCard({ product, variant = 'desktop', badge = 'discount', 
         {badge === 'discount' && product.discount ? <span className="absolute left-0 top-2 rounded-r-md bg-red px-1.5 py-0.5 text-[10.5px] font-bold text-white lg:text-[12px]">{product.discount}% OFF</span> : null}
         {badge === 'new' && <span className="absolute left-0 top-2 rounded-r-md bg-brand px-2 py-0.5 text-[11px] font-semibold text-white lg:text-[12px]">NEW</span>}
       </Link>
-      <button aria-label={liked ? 'Remove from wishlist' : 'Add to wishlist'} onClick={() => setLiked(!liked)} className="absolute right-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-white/85">
+      <button aria-label={liked ? 'Remove from wishlist' : 'Add to wishlist'} onClick={() => wishlist.toggle(product)} className="absolute right-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-white/85">
         <Heart className={`size-4 ${liked ? 'fill-red text-red' : 'text-ink'}`} strokeWidth={1.8} />
       </button>
       <div className="relative -mt-5 flex justify-end pr-1.5"><AddButton product={product} size={big ? 'md' : 'sm'} /></div>

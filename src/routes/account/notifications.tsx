@@ -40,7 +40,10 @@ function Page() {
         const [title, body] = statusText[o.status] ?? ['Order update', `Status: ${o.status}`];
         return { id: `order-${o.id}`, orderId: o.id, title: `${title} · ${o.order_number}`, body, created_at: o.updated_at ?? o.created_at, read_at: o.updated_at ?? o.created_at };
       });
-      setItems([...(notes.data ?? []), ...updates].sort((a, b) => b.created_at.localeCompare(a.created_at)));
+      // Once the store sends order messages itself, don't repeat them.
+      const told = (notes.data ?? []).map((n) => n.body).join(' ');
+      const extra = updates.filter((u) => !told.includes(u.title.split(' · ')[1] ?? '~'));
+      setItems([...(notes.data ?? []), ...extra].sort((a, b) => b.created_at.localeCompare(a.created_at)));
       setLoading(false);
     });
   }, [user]);

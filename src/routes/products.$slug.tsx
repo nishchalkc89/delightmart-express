@@ -1,11 +1,14 @@
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
 import { ArrowRight, CircleCheck, Headphones, Heart, Leaf, Minus, Percent, Play, Plus, RefreshCw, Share2, ShieldCheck, ShoppingCart, Truck, Waves, Award, Soup } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { StorePage } from '@/components/delight/store-shell';
 import { ProductCard, Stars } from '@/components/delight/product-card';
 import { ProductReviews } from '@/components/delight/product-reviews';
 import { useCart } from '@/components/delight/cart-context';
+import { useWishlist } from '@/components/delight/wishlist-context';
+import { useCheckout } from '@/components/delight/checkout-context';
+import { rememberViewed, useRecentlyViewed } from '@/lib/recently-viewed';
 import { formatNpr } from '@/services/catalog';
 import { productQuery } from '@/hooks/use-catalog';
 import { ART_BACKGROUND } from '@/lib/product-art';
@@ -26,10 +29,24 @@ function ProductPage() {
   const nav = useNavigate();
   const [q, setQ] = useState(1);
   const [active, setActive] = useState(0);
-  const [liked, setLiked] = useState(false);
+  const wishlist = useWishlist();
+  const liked = wishlist.has(p.id);
+  const checkout = useCheckout();
+  const recent = useRecentlyViewed(p.id);
+  useEffect(() => { rememberViewed(p); setQ(1); setActive(0); }, [p]);
+
+  async function share() {
+    const url = window.location.href;
+    try {
+      if (navigator.share) { await navigator.share({ title: p.name, text: `${p.name} — ${formatNpr(p.price)} at Delight Shopping Mart`, url }); return; }
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied — paste it to share');
+    } catch { /* share sheet closed */ }
+  }
   const gallery = p.gallery ?? [p.image];
 
   function addToCart() {
+    if (p.stock <= 0) { toast.error('This product is out of stock right now'); return; }
     add(p, q);
     toast.success(`${p.name} added to cart`);
   }
@@ -58,8 +75,8 @@ function ProductPage() {
             <div className="flex items-center justify-between">
               {p.discount ? <span className="rounded-[5px] bg-red px-1.5 py-0.5 text-[11px] font-bold text-white lg:px-2.5 lg:py-1 lg:text-[15px]">{p.discount}% OFF</span> : <span />}
               <div className="flex items-center gap-3 lg:gap-5">
-                <button aria-label="Share" onClick={() => { void navigator.clipboard?.writeText(window.location.href); toast.success('Link copied'); }}><Share2 className="size-[18px] text-ink lg:size-6" /></button>
-                <button aria-label="Wishlist" onClick={() => setLiked(!liked)}><Heart className={`size-[18px] lg:size-6 ${liked ? 'fill-red text-red' : 'text-ink'}`} /></button>
+                <button aria-label="Share" onClick={() => void share()}><Share2 className="size-[18px] text-ink lg:size-6" /></button>
+                <button aria-label={liked ? 'Remove from wishlist' : 'Save to wishlist'} onClick={() => wishlist.toggle(p)}><Heart className={`size-[18px] lg:size-6 ${liked ? 'fill-red text-red' : 'text-ink'}`} /></button>
               </div>
             </div>
             <h1 className="mt-2.5 text-[16.5px] font-extrabold leading-tight text-navy min-[400px]:text-[18px] lg:mt-4 lg:text-[34px]">{p.name}</h1>
@@ -73,9 +90,13 @@ function ProductPage() {
               <strong className="text-[19px] font-extrabold text-red lg:text-[36px]">{formatNpr(p.price)}</strong>
               {p.oldPrice && <del className="text-[12px] text-slate lg:text-[20px]">{formatNpr(p.oldPrice)}</del>}
             </div>
-            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[#e7f6ee] px-2 py-0.5 text-[11px] font-semibold text-brand lg:mt-3 lg:px-3 lg:py-1 lg:text-[16px]">
-              <CircleCheck className="size-3.5 fill-brand text-white lg:size-5" /> {p.stock > 0 ? 'In Stock' : 'Out of Stock'}
-            </span>
+            {p.stock > 0 ? (
+              <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[#e7f6ee] px-2 py-0.5 text-[11px] font-semibold text-brand lg:mt-3 lg:px-3 lg:py-1 lg:text-[16px]">
+                <CircleCheck className="size-3.5 fill-brand text-white lg:size-5" /> {p.stock <= 5 ? `Only ${p.stock} left — order soon` : 'In Stock'}
+              </span>
+            ) : (
+              <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[#fdecec] px-2 py-0.5 text-[11px] font-semibold text-red lg:mt-3 lg:px-3 lg:py-1 lg:text-[16px]">Out of Stock</span>
+            )}
             <p className="mt-2 text-[11.5px] leading-[1.45] text-slate lg:mt-4 lg:text-[17px] lg:leading-7">{p.description}</p>
             <dl className="mt-2 space-y-0.5 text-[11.5px] lg:mt-4 lg:space-y-1.5 lg:text-[17px]">
               {p.brand && <div className="flex gap-2"><dt className="font-semibold text-navy">Brand:</dt><dd className="text-slate">{p.brand}</dd></div>}
@@ -91,8 +112,8 @@ function ProductPage() {
         </section>
 
         <section className="mt-3 grid grid-cols-2 gap-2 lg:mt-8 lg:gap-4">
-          <button onClick={addToCart} className="flex h-11 items-center justify-center gap-2 rounded-lg border border-brand/60 bg-[#f7fcfa] text-[15px] font-semibold text-brand lg:h-14 lg:text-[19px]"><ShoppingCart className="size-5 fill-brand lg:size-6" /> Add to Cart</button>
-          <button onClick={() => { add(p, q); void nav({ to: '/cart' }); }} className="h-11 rounded-lg bg-red text-[15px] font-semibold text-white shadow-md shadow-red/20 lg:h-14 lg:text-[19px]">Buy Now</button>
+          <button onClick={addToCart} disabled={p.stock <= 0} className="flex h-11 items-center justify-center gap-2 rounded-lg border border-brand/60 bg-[#f7fcfa] disabled:opacity-50 text-[15px] font-semibold text-brand lg:h-14 lg:text-[19px]"><ShoppingCart className="size-5 fill-brand lg:size-6" /> Add to Cart</button>
+          <button onClick={() => { add(p, q); void nav({ to: '/cart' }); }} disabled={p.stock <= 0} className="h-11 rounded-lg bg-red disabled:opacity-50 text-[15px] font-semibold text-white shadow-md shadow-red/20 lg:h-14 lg:text-[19px]">Buy Now</button>
         </section>
 
         <section className="mt-3 grid grid-cols-4 rounded-xl bg-[#f3f9fc] py-3 lg:mt-5 lg:py-5">
@@ -122,17 +143,26 @@ function ProductPage() {
         <section className="mt-5 lg:mt-10">
           <div className="mb-2.5 flex items-center justify-between">
             <h2 className="text-[19px] font-extrabold text-navy lg:text-[28px]">You May Also Like</h2>
-            <Link to="/products" className="flex items-center gap-1 text-[13.5px] font-semibold text-brand lg:text-[16px]">View All <ArrowRight className="size-4" /></Link>
+            <Link to="/categories/$slug" params={{ slug: p.categorySlug ?? 'groceries' }} search={p.subcategory ? { sub: p.subcategory } : {}} className="flex items-center gap-1 text-[13.5px] font-semibold text-brand lg:text-[16px]">View All <ArrowRight className="size-4" /></Link>
           </div>
-          <div className="grid grid-cols-4 gap-1.5 lg:gap-4">
-            {related.map((x) => <ProductCard key={x.id} product={x} variant="grid" badge="none" button="Add" />)}
+          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 lg:grid-cols-6 lg:gap-4">
+            {related.map((x) => <ProductCard key={x.id} product={x} variant="grid" badge="none" />)}
           </div>
         </section>
+
+        {recent.length > 0 && (
+          <section className="mt-5 lg:mt-10">
+            <h2 className="mb-2.5 text-[19px] font-extrabold text-navy lg:text-[28px]">Recently Viewed</h2>
+            <div className="no-scrollbar -mx-3 flex gap-2.5 overflow-x-auto px-3 lg:mx-0 lg:grid lg:grid-cols-6 lg:gap-4 lg:px-0">
+              {recent.slice(0, 6).map((x) => <div key={x.id} className="w-[31%] shrink-0 lg:w-auto"><ProductCard product={x} variant="grid" badge="none" /></div>)}
+            </div>
+          </section>
+        )}
 
         <section className="mt-3 flex items-center gap-3 rounded-xl bg-[#fdeff1] px-3 py-3 lg:mt-6 lg:gap-5 lg:px-7 lg:py-5">
           <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f46b6f] lg:size-14"><Percent className="size-5 text-white lg:size-7" strokeWidth={3} /></span>
           <span className="min-w-0 flex-1"><b className="block text-[15px] font-extrabold text-red lg:text-[22px]">Get Extra 5% OFF</b><span className="text-[11.5px] text-ink lg:text-[16px]">On orders above NPR 3,000</span></span>
-          <button onClick={() => { void navigator.clipboard?.writeText('DELIGHT5'); toast.success('Code DELIGHT5 copied'); }} className="shrink-0 rounded-md border border-red bg-white px-2.5 py-2 text-[11.5px] font-semibold text-red lg:px-6 lg:py-3 lg:text-[16px]">Use Code: DELIGHT5</button>
+          <button onClick={() => { checkout.setCoupon('DELIGHT5'); void navigator.clipboard?.writeText('DELIGHT5').catch(() => undefined); toast.success('DELIGHT5 is ready in your cart — tap Apply at checkout'); }} className="shrink-0 rounded-md border border-red bg-white px-2.5 py-2 text-[11.5px] font-semibold text-red lg:px-6 lg:py-3 lg:text-[16px]">Use Code: DELIGHT5</button>
         </section>
         <div className="h-6 lg:h-12" />
       </div>

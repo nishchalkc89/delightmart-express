@@ -63,5 +63,16 @@ Careful: `catalogue:prepare` rebuilds `data/catalogue.csv` from scratch (your ed
 When the shop's product list changes, replace `data/store-products.csv` with the new export and run both commands again.
 Category rules are in `scripts/catalogue/taxonomy.mjs`; estimated prices are in `scripts/catalogue/prepare.mjs`.
 
+## 8. Newsletter, wishlist, order cancelling and order notifications
+If your database was set up before 30 September 2026, run `supabase/migrations/20260930090000_shopper_features.sql` once in **SQL Editor** (paste the whole file → Run). It adds:
+- the newsletter subscriber list (Subscribe boxes on the website; view/export in **Admin → Subscribers**),
+- saved wishlists that follow a customer across devices,
+- “Cancel order” for customers before the order is packed,
+- automatic notifications to the customer whenever an order’s status changes.
+It is safe to run twice. New projects get it automatically from `supabase/setup.sql`.
+
+## Store contact details
+Phone, WhatsApp, email, address and social media links used across the site are in `src/lib/store-info.ts`. Help & Support also reads the phone and email saved in **Admin → Settings**.
+
 ## Updating an existing database later
 New changes are added as files in `supabase/migrations/`. Run only the new file(s) in the SQL Editor, or use the Supabase CLI: `supabase link` then `supabase db push`.

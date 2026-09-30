@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { AlarmClock, Bell, ChevronLeft, ChevronRight, Leaf, Lock, Mail, MapPin, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { asset } from '@/lib/assets';
+import { NewsletterForm } from './newsletter-form';
 
 /** Live "Deal Ends In" countdown, starting from 08:24:15 like the reference screens. */
 export function useCountdown(start = 8 * 3600 + 24 * 60 + 15) {
@@ -54,10 +55,7 @@ export function Newsletter() {
         <h3 className="whitespace-nowrap text-[23px] font-extrabold text-navy">Stay Updated with Delight</h3>
         <p className="mt-1 text-[15px] leading-6 text-slate">Get the latest offers, new arrivals<br />and exclusive deals.</p>
       </div>
-      <form onSubmit={(e) => e.preventDefault()} className="ml-auto flex h-[44px] w-[340px] min-w-0 shrink overflow-hidden rounded-md border border-line bg-white">
-        <input type="email" required className="min-w-0 flex-1 px-4 text-[14px] outline-none placeholder:text-slate" placeholder="Enter your email address" aria-label="Email address" />
-        <button className="bg-red px-7 text-[15px] font-semibold text-white">Subscribe</button>
-      </form>
+      <NewsletterForm className="ml-auto w-[340px] min-w-0 shrink" source="home" />
     </div>
   );
 }
@@ -73,8 +71,8 @@ export function AppPromo() {
       <div className="z-10 shrink-0">
         <h3 className="text-[22px] font-extrabold text-navy">Download Our App</h3>
         <p className="text-[14px] text-ink">Shop Anytime, Anywhere</p>
-        <img src={asset('google-play')} alt="Get it on Google Play" className="mt-3 h-[36px] w-auto" />
-        <img src={asset('app-store')} alt="Download on the App Store" className="mt-1.5 h-[36px] w-auto" />
+        <Link to="/app" className="block"><img src={asset('google-play')} alt="Get the Delight app on Android" className="mt-3 h-[36px] w-auto" /></Link>
+        <Link to="/app" className="block"><img src={asset('app-store')} alt="Get the Delight app on iPhone" className="mt-1.5 h-[36px] w-auto" /></Link>
       </div>
       <img src={asset('app-phone')} alt="" className="-mb-3 ml-4 h-[146px] w-auto self-end" />
       <div className="ml-auto flex gap-5">
@@ -99,10 +97,7 @@ export function CommunityNewsletter() {
         <p className="mt-1 text-[16px] leading-7 text-slate">Get the latest offers, new arrivals and exclusive deals<br />directly to your inbox.</p>
       </div>
       <div className="w-[524px] shrink-0">
-        <form onSubmit={(e) => e.preventDefault()} className="flex h-[48px] overflow-hidden rounded-md border border-line bg-white">
-          <input type="email" required className="min-w-0 flex-1 px-4 text-[15px] outline-none placeholder:text-slate" placeholder="Enter your email address" aria-label="Email address" />
-          <button className="bg-red px-8 text-[17px] font-semibold text-white">Subscribe</button>
-        </form>
+        <NewsletterForm size="lg" source="footer" />
         <p className="mt-3 flex items-center gap-1.5 text-[13px] text-slate"><Lock className="size-3.5" /> We respect your privacy. No spam, ever.</p>
       </div>
       <img src={asset('good-things')} alt="Good Things Everyday" className="h-[128px] w-auto shrink-0 mix-blend-multiply" />
