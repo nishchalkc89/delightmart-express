@@ -5,6 +5,7 @@ import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContaine
 import { Avatar, Card, DataBadge, downloadCsv, Field, FilterSelect, IconBtn, inPeriod, PageHeader, PeriodSelect, periodStart, PERIODS, PrimaryAction, StatCard, Status, Table, Td, Tr, type BadgeTone, Badge } from '@/components/delight/admin-ui';
 import { fetchAdminOrders, fmtDate, fmtTime, statusLabel, useAdminData, type AdminOrder } from '@/services/admin';
 import { npr } from '@/components/delight/admin-data';
+import { StoreComparison } from '@/components/delight/admin-stores';
 
 export const Route = createFileRoute('/admin/reports')({
   head: () => ({ meta: [{ title: 'Reports & Analytics — Delight Admin' }, { name: 'description', content: 'Business performance insights.' }, { property: 'og:title', content: 'Reports & Analytics — Delight Admin' }, { property: 'og:description', content: 'Sales and order analytics.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
@@ -27,8 +28,8 @@ function daysIn(period: string, rows: AdminOrder[]) {
 
 function exportSales(rows: AdminOrder[], period: string) {
   downloadCsv(`delight-sales-${period}-${today()}.csv`, [
-    ['Order', 'Date', 'Customer', 'Phone', 'Items', 'Subtotal', 'Discount', 'Delivery fee', 'Total', 'Payment', 'Status'],
-    ...rows.map((o) => [o.number, `${fmtDate(o.createdAt)} ${fmtTime(o.createdAt)}`, o.customer.name, o.customer.phone, o.items.reduce((s, i) => s + i.quantity, 0), o.subtotal, o.discount, o.deliveryFee, o.total, o.paymentMethod, statusLabel(o.status)]),
+    ['Order', 'Store', 'Date', 'Customer', 'Phone', 'Items', 'Subtotal', 'Discount', 'Delivery fee', 'Total', 'Payment', 'Status'],
+    ...rows.map((o) => [o.number, o.branch, `${fmtDate(o.createdAt)} ${fmtTime(o.createdAt)}`, o.customer.name, o.customer.phone, o.items.reduce((s, i) => s + i.quantity, 0), o.subtotal, o.discount, o.deliveryFee, o.total, o.paymentMethod, statusLabel(o.status)]),
   ]);
 }
 
@@ -99,6 +100,7 @@ function Page() {
         <StatCard icon={Users} tone="amber" label="Customers" value={String(customers)} note="who ordered" />
         <StatCard icon={Box} tone="purple" label="Avg. Order Value" value={npr(valid.length ? Math.round(revenue / valid.length) : 0)} filled={false} />
       </div>
+      <StoreComparison orders={all} periodLabel={periodName(period)} />
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)_360px]">
         <Card className="p-5">

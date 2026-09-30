@@ -7,6 +7,7 @@ import { npr } from '@/components/delight/admin-data';
 import { asset } from '@/lib/assets';
 import { fmtDate, fmtTime, useAdminData } from '@/services/admin';
 import { fetchPayments, type PaymentRow } from '@/services/admin-actions';
+import { useAdminScope } from '@/services/admin-scope';
 
 export const Route = createFileRoute('/admin/payments')({
   head: () => ({ meta: [{ title: 'Payments — Delight Admin' }, { name: 'description', content: 'Track payments, transactions and settlements.' }, { property: 'og:title', content: 'Payments — Delight Admin' }, { property: 'og:description', content: 'Payment management.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
@@ -19,6 +20,8 @@ const statusText = (s: string) => (s === 'PAID' ? 'Success' : s === 'PENDING' ? 
 
 function Page() {
   const { rows: list, live, loading } = useAdminData<PaymentRow>(fetchPayments);
+  const { scope, allowed, branches } = useAdminScope();
+  const showStore = scope === 'all' && allowed.length > 1;
   const [tab, setTab] = useState(0);
   const [query, setQuery] = useState('');
   const [method, setMethod] = useState('all');
@@ -75,7 +78,7 @@ function Page() {
                 <FilterSelect label="Payment method" value={method} onChange={(v) => { setMethod(v); pg.reset(); }} options={[['all', 'All Payment Methods'], ...Object.entries(providerName)]} className="w-[180px]" />
                 <PeriodSelect value={period} onChange={(v) => { setPeriod(v); pg.reset(); }} />
               </FilterBar>
-              <Table head={['#', 'Transaction ID', 'Order ID', 'Customer', 'Amount', 'Payment Method', 'Status', 'Date & Time', 'Actions']}>
+              <Table head={['#', 'Transaction ID', 'Order ID', ...(showStore ? ['Store'] : []), 'Customer', 'Amount', 'Payment Method', 'Status', 'Date & Time', 'Actions']}>
                 {pg.shown.map((p, i) => {
                   const st = statusText(p.status);
                   const method = providerName[p.provider] ?? p.provider;
@@ -85,6 +88,7 @@ function Page() {
                     <Td>{pg.from + i}</Td>
                     <Td className="whitespace-nowrap">{p.txn ?? `TXN-${p.id.slice(0, 6).toUpperCase()}`}</Td>
                     <Td className="whitespace-nowrap">{p.orderNumber}</Td>
+                    {showStore && <Td className="text-slate">{branches.find((b) => b.id === p.branch)?.city ?? p.branch}</Td>}
                     <Td><span className="flex items-center gap-2.5 whitespace-nowrap"><Avatar name={p.customer} size="size-8" />{p.customer}</span></Td>
                     <Td className="whitespace-nowrap">{npr(p.amount)}</Td>
                     <Td><span className="flex items-center gap-2 whitespace-nowrap text-[12.5px]"><img src={asset(methodIcon[p.provider] ?? 'pay-cod')} alt="" className="h-5 w-6 object-contain" />{method}</span></Td>

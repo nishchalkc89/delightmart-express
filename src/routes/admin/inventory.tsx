@@ -4,6 +4,7 @@ import { CircleCheck, CircleX, Download, ExternalLink, Minus, Package, Pencil, P
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge, Card, DataBadge, FilterBar, FilterSelect, IconBtn, OutlineAction, PageHeader, Pagination, Panel, SearchBox, StatCard, Table, Tabs, Td, Tr, WithPanel, usePaged } from '@/components/delight/admin-ui';
+import { useAdminScope } from '@/services/admin-scope';
 import { fetchAdminProducts, fetchStockHistory, fmtDate, fmtTime, setStock, setThreshold, useAdminData, type AdminProduct } from '@/services/admin';
 
 export const Route = createFileRoute('/admin/inventory')({
@@ -28,6 +29,7 @@ function Page() {
   const [saving, setSaving] = useState(false);
   useEffect(() => { if (search.q !== undefined) setQuery(search.q); }, [search.q]);
   const { rows: all, setRows, live, loading } = useAdminData<AdminProduct>(fetchAdminProducts);
+  const { stockBranch, label, allowed } = useAdminScope();
   const isLow = (x: AdminProduct) => x.stock > 0 && x.stock < x.threshold;
   const categories = useMemo(() => [...new Set(all.map((p) => p.category))].sort(), [all]);
 
@@ -117,7 +119,15 @@ function Page() {
               {p.image ? <img src={p.image} alt="" className="size-[72px] object-contain" /> : <span className="size-[72px] shrink-0 rounded bg-[#f1f4f7]" />}
               <div className="min-w-0"><b className="block text-[15px] font-semibold text-navy">{p.name}</b><span className="text-[13px] text-slate">{p.sku} · {p.category}</span><Badge tone={p.active ? 'green' : 'red'} className="mt-2 !flex w-fit items-center gap-1"><CircleCheck className="size-3.5" />{p.active ? 'Active' : 'Hidden'}</Badge></div>
             </div>
-            <p className="mt-5 text-[14px] font-medium text-navy">Stock</p>
+            {allowed.length > 1 && p.byStore && (
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {allowed.map((b) => <span key={b.id} className={`rounded-lg border px-3 py-2 text-[13px] ${b.id === stockBranch ? 'border-[#0a8a5b] bg-[#f0fbf5]' : 'border-line'}`}><span className="block text-slate">{b.city}</span><b className="text-[16px] text-navy">{p.byStore?.[b.id] ?? 0}</b></span>)}
+              </div>
+            )}
+            {!stockBranch ? (
+              <p className="mt-4 rounded-lg bg-[#fff8e6] p-3 text-[13px] leading-5 text-[#8a5a00]">You are viewing <b>All stores</b>, so the stock shown is the total. Choose a store at the top of the page to change its stock.</p>
+            ) : <>
+            <p className="mt-5 text-[14px] font-medium text-navy">Stock at {label}</p>
             <div className="mt-2 flex h-10 w-fit items-center rounded-lg border border-line">
               <button aria-label="Decrease" onClick={() => setQty(Math.max(0, qty - 1))} className="grid h-full w-10 place-items-center"><Minus className="size-4" /></button>
               <input aria-label="Stock quantity" type="number" min={0} value={qty} onChange={(e) => setQty(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="h-full w-20 border-x border-line text-center text-[15px] outline-none" />
@@ -127,6 +137,7 @@ function Page() {
             <input aria-label="Low-stock alert level" type="number" min={0} value={limit} onChange={(e) => setLimit(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="mt-2 h-10 w-32 rounded-lg border border-line px-3 text-[15px] outline-none focus:border-[#077a52]" />
             <p className="mt-1 text-[12px] text-slate">The product shows as “Low Stock” below this number.</p>
             <button onClick={() => void save()} disabled={saving || !changed} className="mt-4 h-11 w-full rounded-lg bg-[#077a52] text-[15px] font-semibold text-white disabled:opacity-50">{saving ? 'Saving…' : 'Save changes'}</button>
+            </>}
             <h3 className="mt-6 text-[15px] font-bold text-navy">Stock History</h3>
             <ul className="mt-2 divide-y divide-line">
               {history.map((h, i) => (

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type 
 import { toast } from 'sonner';
 import { Field, Panel, Toggle } from './admin-ui';
 import { fetchCategories, fetchProductForEdit, saveProduct, uploadImage, type CategoryRow, type ProductInput } from '@/services/admin-actions';
+import { useAdminScope } from '@/services/admin-scope';
 
 /* ------------------------------------------------------------------ */
 /* Controlled form controls matching the admin design                  */
@@ -107,6 +108,7 @@ const emptyProduct: ProductInput = { name: '', sku: '', categoryId: '', brand: '
 export function ProductForm({ editId, duplicateId, live, onSaved, onClose }: { editId: string | null; duplicateId?: string | null; live: boolean; onSaved: () => void; onClose: () => void }) {
   const [tab, setTab] = useState(0);
   const [p, setP] = useState<ProductInput>(emptyProduct);
+  const { stockBranch, label } = useAdminScope();
   const [cats, setCats] = useState<CategoryRow[]>([]);
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof ProductInput>(k: K, v: ProductInput[K]) => setP((x) => ({ ...x, [k]: v }));
@@ -123,7 +125,7 @@ export function ProductForm({ editId, duplicateId, live, onSaved, onClose }: { e
   const subs = cats.filter((c) => c.parent_id && c.parent_id === (cats.find((x) => x.id === p.categoryId)?.parent_id ?? p.categoryId));
 
   async function submit() {
-    if (!live) { toast.info('Sample data — sign in with a staff account to add real products.'); return; }
+
     if (!p.name.trim() || !p.sku.trim() || !p.categoryId) { setTab(0); toast.error('Product name, SKU and category are required'); return; }
     if (!(p.price > 0)) { setTab(1); toast.error('Enter the product price'); return; }
     if (p.salePrice !== null && p.salePrice >= p.price) { setTab(1); toast.error('Sale price must be lower than the price'); return; }
@@ -168,8 +170,10 @@ export function ProductForm({ editId, duplicateId, live, onSaved, onClose }: { e
           <Field label="Price (NPR)" required><Input type="number" value={p.price || ''} onChange={(v) => set('price', Number(v))} placeholder="e.g. 1499" /></Field>
           <Field label="Sale Price (NPR)" hint="Leave empty when the product is not on sale"><Input type="number" value={p.salePrice ?? ''} onChange={(v) => set('salePrice', v === '' ? null : Number(v))} placeholder="e.g. 1199" /></Field>
           <Field label="Unit"><Input value={p.unit} onChange={(v) => set('unit', v)} placeholder="e.g. 5kg, 1L, 1 pc" /></Field>
-          <Field label="Current Stock"><Input type="number" value={p.stock} onChange={(v) => set('stock', Math.max(0, Number(v)))} /></Field>
+          {stockBranch ? <>
+          <Field label={`Current Stock (${label})`}><Input type="number" value={p.stock} onChange={(v) => set('stock', Math.max(0, Number(v)))} /></Field>
           <Field label="Low Stock Threshold" hint="Get notified when stock is below this level"><Input type="number" value={p.threshold} onChange={(v) => set('threshold', Math.max(0, Number(v)))} /></Field>
+          </> : <p className="rounded-lg bg-[#fff8e6] p-3 text-[13px] leading-5 text-[#8a5a00]">Stock is kept per store. Choose a store at the top of the page to set this product’s stock there (new products start at 0 in every store).</p>}
         </div>
       )}
       {tab === 2 && <Field label="Product Image"><ImageUpload bucket="product-images" value={p.imageUrl} onChange={(v) => set('imageUrl', v)} extra="Square images look best" searchText={p.name} /></Field>}

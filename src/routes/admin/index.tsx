@@ -3,6 +3,8 @@ import { ChartColumn, ChevronRight, CircleDot, Coins, LayoutGrid, Package, Shopp
 import { useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Avatar, Badge, Card, DataBadge, PeriodSelect, StatCard, Status, Table, Td, Tr, PERIODS, periodStart } from '@/components/delight/admin-ui';
+import { StoreComparison } from '@/components/delight/admin-stores';
+import { useAdminScope } from '@/services/admin-scope';
 import { fetchAdminOrders, fetchAdminProducts, statusLabel, useAdminData, useStaffName, type AdminOrder, type AdminProduct } from '@/services/admin';
 import { npr } from '@/components/delight/admin-data';
 
@@ -20,6 +22,7 @@ function Page() {
   const orders = useAdminData<AdminOrder>(fetchAdminOrders);
   const stock = useAdminData<AdminProduct>(fetchAdminProducts);
   const name = useStaffName();
+  const { label } = useAdminScope();
   const [period, setPeriod] = useState('7d');
   const periodLabel = PERIODS.find(([v]) => v === period)?.[1].toLowerCase() ?? '';
 
@@ -63,7 +66,7 @@ function Page() {
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[32px] font-extrabold leading-tight tracking-tight text-navy lg:text-[36px]">Welcome back, {name}!<DataBadge live={orders.live} loading={orders.loading} /></h1>
-          <p className="text-[17px] text-slate">Here's what's happening at Delight Shopping Mart.</p>
+          <p className="text-[17px] text-slate">Here's what's happening at Delight Shopping Mart{label === 'All stores' ? '' : ` – ${label}`}.</p>
         </div>
         <PeriodSelect value={period} onChange={setPeriod} className="mt-2 w-[180px]" />
       </div>
@@ -75,6 +78,7 @@ function Page() {
         <StatCard icon={Truck} tone="red" label="Out for Delivery" value={String(orders.rows.filter((x) => x.status === 'OUT_FOR_DELIVERY').length)} note="right now" />
         <StatCard icon={Users} tone="purple" label="Customers" value={String(customers)} note={`ordered ${periodLabel}`} />
       </div>
+      <StoreComparison orders={inRange} periodLabel={PERIODS.find(([v]) => v === period)?.[1] ?? ''} />
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.62fr)_minmax(0,1fr)_325px]">
         <Card className="p-5">

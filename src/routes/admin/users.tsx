@@ -5,7 +5,8 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { Avatar, Badge, Card, DataBadge, FilterSelect, IconBtn, PageHeader, Pagination, Panel, PanelTitle, PrimaryAction, SearchBox, StatCard, Status, Table, Tabs, Td, Tr, usePaged, WithPanel, type BadgeTone } from '@/components/delight/admin-ui';
 import { Select } from '@/components/delight/admin-forms';
 import { fmtDate, useAdminData } from '@/services/admin';
-import { fetchUsersWithRoles, setProfileStatus, setUserRole, type StaffRow } from '@/services/admin-actions';
+import { fetchUsersWithRoles, setProfileStatus, setStaffStores, setUserRole, type StaffRow } from '@/services/admin-actions';
+import { useAdminScope } from '@/services/admin-scope';
 import { toast } from 'sonner';
 
 type Role = StaffRow['roles'][number];
@@ -39,6 +40,16 @@ function Page() {
   const n = (i: number) => live_rows.filter(tabFilters[i]!).length;
   const liveDist = [{ n: 'Super Admin', v: live_rows.filter((u) => mainRole(u) === 'SUPER_ADMIN').length, c: '#8b5cf6' }, { n: 'Manager', v: live_rows.filter((u) => mainRole(u) === 'MANAGER').length, c: '#2f80ed' }, { n: 'Delivery Partner', v: n(2), c: '#0a8a5b' }, { n: 'Staff', v: n(3), c: '#f59f0b' }, { n: 'Customer', v: n(4), c: '#cbd5e1' }];
 
+  const { branches, isSuper } = useAdminScope();
+  const storeValue = (u: StaffRow) => (u.stores.length > 1 ? 'both' : u.stores[0] ?? '');
+  async function changeStores(u: StaffRow, v: string) {
+    const ids = v === 'both' ? branches.map((b) => b.id) : v ? [v] : [];
+    try {
+      await setStaffStores(u.id, ids);
+      setRows((list) => list.map((x) => (x.id === u.id ? { ...x, stores: ids } : x)));
+      toast.success(ids.length ? `${u.name} now works for ${ids.map((id) => branches.find((b) => b.id === id)?.city ?? id).join(' & ')}` : `${u.name} is not linked to a store`);
+    } catch (e) { toast.error(e instanceof Error ? (e.message.includes('row-level') ? 'Only the owner (Super Admin) can assign stores' : e.message) : 'Could not change the store'); }
+  }
   async function changeRole(u: StaffRow, role: Role) {
     try {
       await setUserRole(u.id, role);
@@ -73,7 +84,7 @@ function Page() {
                 <FilterSelect label="Role" value={roleF} onChange={(v) => { setRoleF(v); pg.reset(); }} options={[['all', 'All Roles'], ...order.map((r): [string, string] => [r, roleNames[r]])]} className="ml-auto w-[170px]" />
                 <FilterSelect label="Status" value={statusF} onChange={(v) => { setStatusF(v); pg.reset(); }} options={[['all', 'All Status'], ['active', 'Active'], ['inactive', 'Inactive']]} className="w-[140px]" />
               </div>
-              <Table head={['#', 'User', 'Role', 'Email / Phone', 'Status', 'Joined Date', 'Actions']}>
+              <Table head={['#', 'User', 'Role', 'Store', 'Email / Phone', 'Status', 'Joined Date', 'Actions']}>
                 {pg.shown.map((u, i) => {
                   const role = mainRole(u);
                   return (
@@ -81,6 +92,9 @@ function Page() {
                       <Td>{pg.from + i}</Td>
                       <Td><span className="flex items-center gap-3"><Avatar src={u.avatar ?? undefined} name={u.name} /><span className="leading-tight"><span className="block whitespace-nowrap">{u.name}</span><span className="text-[12.5px] text-slate">{u.phone}</span></span></span></Td>
                       <Td><span className="block w-[150px]"><Select value={role} onChange={(v) => void changeRole(u, v as Role)}>{order.map((r) => <option key={r} value={r}>{roleNames[r]}</option>)}</Select></span></Td>
+                      <Td>{role === 'CUSTOMER' ? <span className="text-slate">—</span> : role === 'SUPER_ADMIN' ? <span className="whitespace-nowrap text-[13px] text-slate">All stores</span> : isSuper ? (
+                        <span className="block w-[140px]"><Select value={storeValue(u)} onChange={(v) => void changeStores(u, v)}><option value="">No store</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.city}</option>)}{branches.length > 1 && <option value="both">Both stores</option>}</Select></span>
+                      ) : <span className="whitespace-nowrap text-[13px]">{u.stores.map((id) => branches.find((b) => b.id === id)?.city ?? id).join(' & ') || 'No store'}</span>}</Td>
                       <Td>{u.email}</Td>
                       <Td><Status value={u.status.toUpperCase() === 'ACTIVE' ? 'Active' : 'Inactive'} /></Td>
                       <Td className="whitespace-nowrap text-slate">{fmtDate(u.joined)}</Td>

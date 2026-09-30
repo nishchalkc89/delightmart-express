@@ -6,6 +6,8 @@ import { Avatar, Badge, Card, DataBadge, FilterBar, FilterSelect, PageHeader, Pa
 import { npr } from '@/components/delight/admin-data';
 import { fetchAdminOrders, fmtDate, fmtTime, ORDER_STATUSES, statusLabel, updateOrderStatus, useAdminData, type AdminOrder, type OrderStatusDb } from '@/services/admin';
 import { STORE } from '@/lib/store-info';
+import type { Branch } from '@/lib/branch';
+import { useAdminScope } from '@/services/admin-scope';
 
 export const Route = createFileRoute('/admin/orders')({
   // ?id= opens one order (dashboard "View"); ?q= pre-fills the search (admin header search).
@@ -37,7 +39,7 @@ function exportCsv(rows: AdminOrder[]) {
 const esc = (t: string) => t.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
 
 /** Opens a clean, printable invoice for one order. */
-function printInvoice(o: AdminOrder) {
+function printInvoice(o: AdminOrder, store?: Branch) {
   const w = window.open('', '_blank', 'width=720,height=900');
   if (!w) { toast.error('Allow pop-ups to print the invoice'); return; }
   const rows = o.items.map((i) => `<tr><td>${esc(i.name)}</td><td class="r">${i.quantity}</td><td class="r">${npr(i.unitPrice)}</td><td class="r">${npr(i.lineTotal)}</td></tr>`).join('');
@@ -45,7 +47,7 @@ function printInvoice(o: AdminOrder) {
     body{font-family:Arial,sans-serif;color:#13213a;margin:32px}h1{margin:0;font-size:22px}table{width:100%;border-collapse:collapse;margin-top:18px}
     th,td{padding:8px;border-bottom:1px solid #e8ecf0;text-align:left;font-size:14px}.r{text-align:right}.muted{color:#6b7385;font-size:13px}.tot td{font-weight:bold;font-size:16px}
   </style></head><body>
-    <h1>${esc(STORE.name)}</h1><p class="muted">Tulsipur, Dang · ${esc(STORE.phone)} · ${esc(STORE.email)}</p>
+    <h1>${esc(STORE.name)}${store ? ` – ${esc(store.city)}` : ''}</h1><p class="muted">${esc(store?.address ?? 'Tulsipur, Dang')} · ${esc(store?.phone ?? STORE.phone)} · ${esc(store?.email ?? STORE.email)}</p>
     <h2 style="font-size:18px;margin-top:24px">Invoice ${esc(o.number)}</h2>
     <p class="muted">Date: ${fmtDate(o.createdAt)} ${fmtTime(o.createdAt)}<br>Customer: ${esc(o.customer.name)} ${esc(o.customer.phone)}<br>Deliver to: ${esc(addressOf(o))}<br>Payment: ${o.paymentMethod === 'COD' ? 'Cash on Delivery' : esc(o.paymentMethod)}</p>
     <table><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr></thead><tbody>${rows}
@@ -61,6 +63,9 @@ function printInvoice(o: AdminOrder) {
 function Page() {
   const search = Route.useSearch();
   const { rows, setRows, live, loading, reload } = useAdminData(fetchAdminOrders);
+  const { scope, allowed, branches } = useAdminScope();
+  const showStore = scope === 'all' && allowed.length > 1;
+  const storeOf = (id: string) => branches.find((b) => b.id === id);
   const [tab, setTab] = useState(0);
   const [query, setQuery] = useState(search.q ?? '');
   const [payment, setPayment] = useState('all');
@@ -116,10 +121,11 @@ function Page() {
                 <FilterSelect label="Payment" value={payment} onChange={(v) => { setPayment(v); pg.reset(); }} options={[['all', 'All Payments'], ['COD', 'Cash on Delivery'], ['online', 'Online']]} className="w-[170px]" />
                 <PeriodSelect value={period} onChange={(v) => { setPeriod(v); pg.reset(); }} />
               </FilterBar>
-              <Table head={['Order ID', 'Customer', 'Items', 'Amount', 'Payment', 'Status', 'Order Date', 'Action']}>
+              <Table head={['Order ID', ...(showStore ? ['Store'] : []), 'Customer', 'Items', 'Amount', 'Payment', 'Status', 'Order Date', 'Action']}>
                 {pg.shown.map((x) => (
                   <Tr key={x.id} active={x.id === o?.id} onClick={() => { setSelId(x.id); setNextStatus(''); }}>
                     <Td className="whitespace-nowrap">{x.number}</Td>
+                    {showStore && <Td><Badge tone={x.branch === 'ghorahi' ? 'purple' : 'blue'}>{storeOf(x.branch)?.city ?? x.branch}</Badge></Td>}
                     <Td><span className="flex items-center gap-3"><Avatar name={x.customer.name} /><span className="leading-tight"><span className="block">{x.customer.name}</span><span className="text-[12.5px] text-slate">{x.customer.phone}</span></span></span></Td>
                     <Td><span className="whitespace-nowrap text-slate">{x.items.reduce((s, it) => s + it.quantity, 0)} items</span></Td>
                     <Td className="whitespace-nowrap">{npr(x.total)}</Td>
@@ -179,7 +185,7 @@ function Page() {
               <button onClick={() => void saveStatus()} disabled={saving || !nextStatus || nextStatus === o.status} className="rounded-lg bg-[#077a52] px-6 text-[14px] font-semibold text-white disabled:opacity-50">{saving ? 'Saving…' : 'Update'}</button>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <button onClick={() => printInvoice(o)} className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line text-[13px] font-medium text-navy"><Printer className="size-4" /> Print Invoice</button>
+              <button onClick={() => printInvoice(o, storeOf(o.branch))} className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line text-[13px] font-medium text-navy"><Printer className="size-4" /> Print Invoice</button>
               <button onClick={() => { setNextStatus('OUT_FOR_DELIVERY'); toast.info('Status set to Out for Delivery — press Update to save.'); }} className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-[#0a8a5b] text-[13px] font-medium text-[#0a8a5b]"><Truck className="size-4 fill-[#0a8a5b]" /> Send to Delivery</button>
             </div>
           </Panel>

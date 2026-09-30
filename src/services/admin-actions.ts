@@ -1,5 +1,6 @@
 import type { Database } from '@/integrations/supabase/types';
 import { supabase } from './supabase';
+import { scopeBranchIds } from './admin-scope';
 
 type AppRole = Database['public']['Enums']['app_role'];
 type DeliveryStatus = Database['public']['Enums']['delivery_status'];
@@ -54,9 +55,10 @@ export type ProductInput = {
 };
 
 export async function fetchProductForEdit(id: string): Promise<ProductInput> {
-  const { data, error } = await supabase.from('products').select('id,name,sku,category_id,brand,description,price,sale_price,unit,featured,status,inventory(current_stock,low_stock_threshold),product_images(url,is_primary)').eq('id', id).single();
+  const { data, error } = await supabase.from('products').select('id,name,sku,category_id,brand,description,price,sale_price,unit,featured,status,branch_inventory(branch_id,current_stock,low_stock_threshold),product_images(url,is_primary)').eq('id', id).in('branch_inventory.branch_id', scopeBranchIds()).single();
   fail(error);
-  const inv = Array.isArray(data!.inventory) ? data!.inventory[0] : data!.inventory;
+  const rows = data!.branch_inventory ?? [];
+  const inv = rows.length === 1 ? rows[0] : { current_stock: rows.reduce((s, r) => s + r.current_stock, 0), low_stock_threshold: rows[0]?.low_stock_threshold ?? 10 };
   return {
     id: data!.id, name: data!.name, sku: data!.sku, categoryId: data!.category_id, brand: data!.brand ?? '', description: data!.description,
     price: Number(data!.price), salePrice: data!.sale_price === null ? null : Number(data!.sale_price), unit: data!.unit,
@@ -79,7 +81,9 @@ export async function saveProduct(p: ProductInput) {
     fail(error);
     id = data!.id;
   }
-  fail((await supabase.from('inventory').upsert({ product_id: id, current_stock: p.stock, low_stock_threshold: p.threshold, last_updated: new Date().toISOString() }, { onConflict: 'product_id' })).error);
+  // Stock belongs to one store; with "All stores" in view, stock is left unchanged.
+  const stores = scopeBranchIds();
+  if (stores.length === 1) fail((await supabase.from('branch_inventory').upsert({ branch_id: stores[0]!, product_id: id, current_stock: p.stock, low_stock_threshold: p.threshold, last_updated: new Date().toISOString() }, { onConflict: 'branch_id,product_id' })).error);
   if (p.imageUrl) await setProductPhoto(id, p.imageUrl, p.name);
   return id;
 }
@@ -150,18 +154,26 @@ export async function deleteBanner(id: string) {
 
 /* ---------------------------------- Staff, roles, delivery ---------------------------------- */
 
-export type StaffRow = { id: string; name: string; email: string; phone: string; status: string; joined: string; avatar: string | null; roles: AppRole[] };
+export type StaffRow = { id: string; name: string; email: string; phone: string; status: string; joined: string; avatar: string | null; roles: AppRole[]; stores: string[] };
 
 export async function fetchUsersWithRoles(): Promise<StaffRow[]> {
-  const [{ data: people, error }, { data: roles }] = await Promise.all([
+  const [{ data: people, error }, { data: roles }, { data: stores }] = await Promise.all([
     supabase.from('profiles').select('id,full_name,email,phone,status,created_at,avatar_url').order('created_at', { ascending: false }),
     supabase.from('user_roles').select('user_id,role'),
+    supabase.from('staff_branches').select('user_id,branch_id'),
   ]);
   fail(error);
   return (people ?? []).map((p) => ({
     id: p.id, name: p.full_name || p.email || 'User', email: p.email ?? '', phone: p.phone ?? '', status: p.status, joined: p.created_at, avatar: p.avatar_url,
     roles: (roles ?? []).filter((r) => r.user_id === p.id).map((r) => r.role),
+    stores: (stores ?? []).filter((s) => s.user_id === p.id).map((s) => s.branch_id),
   }));
+}
+
+/** Which stores a staff member works for (Super Admin only). */
+export async function setStaffStores(userId: string, storeIds: string[]) {
+  fail((await supabase.from('staff_branches').delete().eq('user_id', userId)).error);
+  if (storeIds.length) fail((await supabase.from('staff_branches').insert(storeIds.map((branch_id) => ({ user_id: userId, branch_id })))).error);
 }
 
 export async function setUserRole(userId: string, role: AppRole) {
@@ -175,11 +187,11 @@ export async function setProfileStatus(userId: string, active: boolean) {
   fail((await supabase.from('profiles').update({ status: active ? 'ACTIVE' : 'INACTIVE', updated_at: new Date().toISOString() }).eq('id', userId)).error);
 }
 
-export type DeliveryRow = { orderId: string; orderNumber: string; customer: string; phone: string; address: string; total: number; orderStatus: string; createdAt: string; staffId: string | null; status: DeliveryStatus | null; estimated: string | null };
+export type DeliveryRow = { branch: string; orderId: string; orderNumber: string; customer: string; phone: string; address: string; total: number; orderStatus: string; createdAt: string; staffId: string | null; status: DeliveryStatus | null; estimated: string | null };
 
 export async function fetchDeliveries(): Promise<DeliveryRow[]> {
   const [{ data: orders, error }, { data: assignments }] = await Promise.all([
-    supabase.from('orders').select('id,order_number,user_id,total,status,created_at,delivery_instructions,estimated_delivery_at').order('created_at', { ascending: false }).limit(100),
+    supabase.from('orders').select('id,order_number,user_id,total,status,created_at,delivery_instructions,estimated_delivery_at,branch_id').in('branch_id', scopeBranchIds()).order('created_at', { ascending: false }).limit(100),
     supabase.from('delivery_assignments').select('order_id,staff_id,status'),
   ]);
   fail(error);
@@ -190,7 +202,7 @@ export async function fetchDeliveries(): Promise<DeliveryRow[]> {
     const p = (people ?? []).find((x) => x.id === o.user_id);
     const text = o.delivery_instructions ?? '';
     return {
-      orderId: o.id, orderNumber: o.order_number, total: Number(o.total), orderStatus: o.status, createdAt: o.created_at, estimated: o.estimated_delivery_at,
+      branch: o.branch_id, orderId: o.id, orderNumber: o.order_number, total: Number(o.total), orderStatus: o.status, createdAt: o.created_at, estimated: o.estimated_delivery_at,
       customer: p?.full_name || /Recipient: ([^.]+)\./.exec(text)?.[1] || 'Customer',
       phone: p?.phone || /Phone: ([0-9+ ]+)/.exec(text)?.[1]?.trim() || '',
       address: /Deliver to: (.*?)\. Recipient:/.exec(text)?.[1] ?? 'Tulsipur',
@@ -209,15 +221,15 @@ export async function assignDelivery(orderId: string, staffId: string | null, st
 
 /* ---------------------------------- Payments & reviews ---------------------------------- */
 
-export type PaymentRow = { id: string; orderNumber: string; customer: string; provider: string; status: string; amount: number; createdAt: string; txn: string | null };
+export type PaymentRow = { branch: string; id: string; orderNumber: string; customer: string; provider: string; status: string; amount: number; createdAt: string; txn: string | null };
 
 export async function fetchPayments(): Promise<PaymentRow[]> {
-  const { data, error } = await supabase.from('payments').select('id,provider,provider_transaction_id,status,amount,created_at,orders(order_number,user_id,delivery_instructions)').order('created_at', { ascending: false }).limit(200);
+  const { data, error } = await supabase.from('payments').select('id,provider,provider_transaction_id,status,amount,created_at,orders!inner(order_number,user_id,delivery_instructions,branch_id)').in('orders.branch_id', scopeBranchIds()).order('created_at', { ascending: false }).limit(200);
   fail(error);
   const ids = [...new Set((data ?? []).map((p) => p.orders?.user_id).filter(Boolean) as string[])];
   const { data: people } = ids.length ? await supabase.from('profiles').select('id,full_name').in('id', ids) : { data: [] };
   return (data ?? []).map((p) => ({
-    id: p.id, orderNumber: p.orders?.order_number ?? '—', provider: p.provider, status: p.status, amount: Number(p.amount), createdAt: p.created_at, txn: p.provider_transaction_id,
+    branch: p.orders?.branch_id ?? '', id: p.id, orderNumber: p.orders?.order_number ?? '—', provider: p.provider, status: p.status, amount: Number(p.amount), createdAt: p.created_at, txn: p.provider_transaction_id,
     customer: (people ?? []).find((x) => x.id === p.orders?.user_id)?.full_name || /Recipient: ([^.]+)\./.exec(p.orders?.delivery_instructions ?? '')?.[1] || 'Customer',
   }));
 }

@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate, useRouter, useRouterState } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   BadgePercent, ChartColumn, LogOut, Mail, ChevronDown, ClipboardList, Folder, Images, LayoutDashboard, MapPin, Menu, Package,
   Search, Settings, Star, Store, Truck, UserRound, UsersRound, WalletCards, X,
@@ -8,6 +8,8 @@ import { Logo } from './logo';
 import { useAuth } from './auth-context';
 import { supabase } from '@/services/supabase';
 import { useStaffName } from '@/services/admin';
+import { AdminScopeProvider, fetchBranches, fetchStaffAccess, saveScope, savedScope, setAdminScopeValue, type AdminScope, type AdminScopeValue, type StaffAccess } from '@/services/admin-scope';
+import type { Branch } from '@/lib/branch';
 import { asset } from '@/lib/assets';
 
 const nav = [
@@ -84,31 +86,47 @@ export function AdminShell() {
   const [menu, setMenu] = useState(false);
   const { user, loading, signOut } = useAuth();
   const staffName = useStaffName();
-  const [role, setRole] = useState<string | null>(null);
+  const [access, setAccess] = useState<StaffAccess | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [checking, setChecking] = useState(true);
   const [pending, setPending] = useState(0);
+  const [scope, setScopeState] = useState<AdminScope>('all');
+  const role = access?.role ?? null;
 
   // Admin always needs a signed-in staff account (the database enforces the same rules).
   useEffect(() => {
     if (loading) return;
     if (!user) { router.history.replace(`/admin/login?redirect=${encodeURIComponent(path)}`); return; }
     setChecking(true);
-    void supabase.from('user_roles').select('role').eq('user_id', user.id).then(({ data }) => {
-      const staff = (data ?? []).map((r) => r.role).filter((r) => r !== 'CUSTOMER');
-      setRole(staff.includes('SUPER_ADMIN') ? 'SUPER_ADMIN' : staff[0] ?? null);
-      setChecking(false);
-    });
+    void Promise.all([fetchStaffAccess(user.id), fetchBranches()]).then(([a, b]) => {
+      setAccess(a);
+      setBranches(b);
+      const ids = a.isSuper ? b.map((x) => x.id) : a.branchIds;
+      const saved = savedScope();
+      setScopeState(saved && (ids.includes(saved) || (saved === 'all' && a.isSuper)) ? saved : a.isSuper ? 'all' : ids[0] ?? 'all');
+    }).finally(() => setChecking(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading]);
 
-  // Number of new orders waiting to be confirmed (shown next to Orders).
+  const allowed = useMemo(() => (access?.isSuper ? branches : branches.filter((b) => access?.branchIds.includes(b.id))), [access, branches]);
+  // Loaders read the scope when pages mount, so set it before rendering them.
+  setAdminScopeValue(scope, allowed.map((b) => b.id));
+  const scopeValue = useMemo<AdminScopeValue>(() => ({
+    branches, allowed, isSuper: Boolean(access?.isSuper), role: access?.role ?? null, scope,
+    setScope: (s) => { saveScope(s); setScopeState(s); },
+    stockBranch: scope === 'all' ? (allowed.length === 1 ? allowed[0]!.id : null) : scope,
+    label: scope === 'all' ? 'All stores' : `${branches.find((b) => b.id === scope)?.city ?? scope} store`,
+  }), [branches, allowed, access, scope]);
+
+  // Number of new orders waiting to be confirmed (shown next to Orders), for the stores in view.
   useEffect(() => {
     if (!role) return;
-    const load = () => void supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'PENDING').then(({ count }) => setPending(count ?? 0));
+    const ids = scope === 'all' ? allowed.map((b) => b.id) : [scope];
+    const load = () => void supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'PENDING').in('branch_id', ids).then(({ count }) => setPending(count ?? 0));
     load();
     const t = setInterval(load, 60_000);
     return () => clearInterval(t);
-  }, [role, path]);
+  }, [role, path, scope, allowed]);
 
   async function logout() {
     await signOut();
@@ -129,9 +147,24 @@ export function AdminShell() {
     );
   }
 
+  if (!allowed.length) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-page p-6">
+        <div className="max-w-md rounded-2xl border border-line bg-white p-8 text-center">
+          <Logo className="mx-auto h-16 w-auto" />
+          <h1 className="mt-5 text-[24px] font-extrabold text-navy">No store assigned</h1>
+          <p className="mt-2 text-slate">{user.email} is a staff account but is not linked to a store yet. Ask the owner to choose your store in Users &amp; Roles.</p>
+          <button onClick={() => void logout()} className="mt-5 inline-flex h-11 items-center rounded-lg bg-[#077a52] px-6 font-semibold text-white">Sign out</button>
+        </div>
+      </div>
+    );
+  }
+
   const name = staffName;
-  const roleLabel = role.split('_').map((w) => w[0] + w.slice(1).toLowerCase()).join(' ');
+  const roleWords = role.split('_').map((w) => w[0] + w.slice(1).toLowerCase()).join(' ');
+  const roleLabel = access?.isSuper ? 'Owner · All stores' : `${allowed.map((b) => b.city).join(' & ')} · ${roleWords}`;
   return (
+    <AdminScopeProvider value={scopeValue}>
     <div className="min-h-screen bg-page">
       {open && <div className="fixed inset-0 z-40 bg-navy/50 xl:hidden" onClick={() => setOpen(false)} />}
       <aside className={`fixed inset-y-0 left-0 z-50 w-[243px] transition-transform xl:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -142,7 +175,8 @@ export function AdminShell() {
         <header className="sticky top-0 z-30 flex h-[72px] items-center gap-5 bg-white px-5 shadow-[0_1px_0_#eef1f4]">
           <button aria-label="Toggle menu" onClick={() => setOpen(!open)} className="text-navy"><Menu className="size-7" strokeWidth={1.7} /></button>
           <HeaderSearch key={path} path={path} />
-          <div className="ml-auto flex items-center gap-7">
+          <div className="ml-auto flex items-center gap-5">
+            <StoreSwitcher value={scopeValue} />
             <Link to="/" target="_blank" className="hidden h-[42px] items-center gap-2.5 rounded-lg border border-line px-4 text-[15px] text-navy sm:flex"><MapPin className="size-5 fill-[#0a8a5b] text-white" /> View Store</Link>
             <div className="relative">
               <button onClick={() => setMenu(!menu)} aria-expanded={menu} className="flex items-center gap-3">
@@ -160,8 +194,27 @@ export function AdminShell() {
             </div>
           </div>
         </header>
-        <main className="px-4 pb-8 pt-4"><Outlet /></main>
+        <main key={scope} className="px-4 pb-8 pt-4"><Outlet /></main>
       </div>
     </div>
+    </AdminScopeProvider>
+  );
+}
+
+/** Store switcher for the owner (All stores / each store); a fixed label for store staff. */
+function StoreSwitcher({ value }: { value: AdminScopeValue }) {
+  const { allowed, isSuper, scope, setScope } = value;
+  const options: Array<[string, string]> = [...(isSuper || allowed.length > 1 ? [['all', 'All stores'] as [string, string]] : []), ...allowed.map((b): [string, string] => [b.id, `${b.city} store`])];
+  if (options.length === 1) {
+    return <span className="flex h-[42px] items-center gap-2 rounded-lg bg-[#e3f6ec] px-4 text-[14px] font-semibold text-[#077a52]"><Store className="size-4" /> {allowed[0]!.city} store</span>;
+  }
+  return (
+    <label className="relative flex h-[42px] items-center rounded-lg border border-[#0a8a5b] bg-[#f0fbf5] text-[14px] font-semibold text-[#077a52]">
+      <Store className="pointer-events-none absolute left-3 size-4" />
+      <select aria-label="Store" value={scope} onChange={(e) => setScope(e.target.value)} className="h-full cursor-pointer appearance-none rounded-lg bg-transparent pl-9 pr-9 outline-none">
+        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 size-4" />
+    </label>
   );
 }

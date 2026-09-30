@@ -8,6 +8,7 @@ import { fmtDate, useAdminData } from '@/services/admin';
 import { assignDelivery, fetchDeliveries, fetchUsersWithRoles, type DeliveryRow, type StaffRow } from '@/services/admin-actions';
 import { asset } from '@/lib/assets';
 import { STORE } from '@/lib/store-info';
+import { useAdminScope } from '@/services/admin-scope';
 
 export const Route = createFileRoute('/admin/delivery')({
   head: () => ({ meta: [{ title: 'Delivery Management — Delight Admin' }, { name: 'description', content: 'Manage deliveries and delivery staff.' }, { property: 'og:title', content: 'Delivery Management — Delight Admin' }, { property: 'og:description', content: 'Delivery operations.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
@@ -30,6 +31,9 @@ function statusOf(r: DeliveryRow): string {
 
 function Page() {
   const { rows, setRows, live, loading } = useAdminData<DeliveryRow>(fetchDeliveries);
+  const { scope, allowed, branches } = useAdminScope();
+  const viewStore = branches.find((b) => b.id === scope) ?? allowed[0];
+  const mapsUrl = viewStore?.mapsUrl ?? STORE.mapsUrl;
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [tab, setTab] = useState(0);
   const [query, setQuery] = useState('');
@@ -42,7 +46,7 @@ function Page() {
   const [nextStatus, setNextStatus] = useState<Status>('OUT_FOR_DELIVERY');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { if (live) void fetchUsersWithRoles().then((u) => setStaff(u.filter((x) => x.roles.includes('DELIVERY_STAFF')))).catch(() => setStaff([])); }, [live]);
+  useEffect(() => { if (live) void fetchUsersWithRoles().then((u) => setStaff(u.filter((x) => x.roles.includes('DELIVERY_STAFF') && (scope === 'all' ? x.stores.some((s) => allowed.some((b) => b.id === s)) : x.stores.includes(scope))))).catch(() => setStaff([])); }, [live, scope, allowed]);
   const staffName = (id: string | null) => (staff.find((s) => s.id === id)?.name ?? (id ? 'Staff' : 'Not assigned'));
 
   const tabs: Array<[string, (r: DeliveryRow) => boolean]> = [
@@ -152,8 +156,8 @@ function Page() {
               )}
             </Panel>
             <Panel>
-              <div className="mb-3 flex items-center justify-between"><h2 className="text-[17px] font-bold text-navy">Delivery Area Map</h2><a href={STORE.mapsUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[13px] font-medium text-[#077a52]">Open in Maps <ExternalLink className="size-3.5" /></a></div>
-              <a href={STORE.mapsUrl} target="_blank" rel="noreferrer" aria-label="Open the store location in Google Maps"><img src={asset('delivery-map')} alt="Delivery area map around Tulsipur" className="w-full rounded-lg" /></a>
+              <div className="mb-3 flex items-center justify-between"><h2 className="text-[17px] font-bold text-navy">Delivery Area Map</h2><a href={mapsUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[13px] font-medium text-[#077a52]">Open in Maps <ExternalLink className="size-3.5" /></a></div>
+              <a href={mapsUrl} target="_blank" rel="noreferrer" aria-label="Open the store location in Google Maps"><img src={asset('delivery-map')} alt="Delivery area map around Tulsipur" className="w-full rounded-lg" /></a>
               <div className="mb-2 mt-5 flex items-center justify-between"><h3 className="text-[15px] font-bold text-navy">Delivery Partner Performance</h3><button onClick={() => setTab(4)} className="text-[13px] font-medium text-[#2f73d9]">View All</button></div>
               <ul className="space-y-2.5">
                 {partners.slice(0, 4).map(([p, name, count, rate]) => (

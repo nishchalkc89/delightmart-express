@@ -6,6 +6,8 @@ import { Badge, Card, downloadCsv, Field, PageHeader, Toggle } from '@/component
 import { paymentOptions } from '@/components/delight/checkout-ui';
 import { fetchAdminCustomers, fetchAdminOrders, fetchAdminProducts, fmtDate, statusLabel } from '@/services/admin';
 import { supabase } from '@/services/supabase';
+import { useAdminScope } from '@/services/admin-scope';
+import { BRANCH_COLUMNS, branchFromRow, type Branch } from '@/lib/branch';
 import { asset } from '@/lib/assets';
 
 export const Route = createFileRoute('/admin/settings')({
@@ -13,12 +15,19 @@ export const Route = createFileRoute('/admin/settings')({
   component: Page,
 });
 
-type Settings = { id: string; store_name: string; address: string; phone: string | null; email: string | null; opening_time: string | null; closing_time: string | null; currency: string; timezone: string; delivery_radius_km: number | null; delivery_fee: number | null; min_order: number | null; estimated_delivery_minutes: number | null; delivery_available: boolean };
+// Each store keeps its own details, hours and delivery fees (table public.branches).
+type StoreForm = {
+  id: string; name: string; city: string; address: string; phone: string; whatsapp: string; email: string; mapsUrl: string; lat: string; lng: string;
+  opens: string; closes: string; deliveryFee: string; crossFee: string; minOrder: string; minutes: string; deliveryAvailable: boolean; acceptingOrders: boolean;
+};
+const toForm = (b: Branch): StoreForm => ({
+  id: b.id, name: b.name, city: b.city, address: b.address, phone: b.phone ?? '', whatsapp: b.whatsapp ?? '', email: b.email ?? '', mapsUrl: b.mapsUrl ?? '',
+  lat: b.lat === null ? '' : String(b.lat), lng: b.lng === null ? '' : String(b.lng), opens: b.opens ?? '', closes: b.closes ?? '',
+  deliveryFee: String(b.deliveryFee), crossFee: String(b.crossFee), minOrder: String(b.minOrder), minutes: String(b.minutes), deliveryAvailable: b.deliveryAvailable, acceptingOrders: b.acceptingOrders,
+});
+const num = (v: string) => (v.trim() === '' ? null : Number(v));
 
-// Values shown in the approved Settings screen, used until the store's saved settings load.
-const defaults: Settings = { id: '', store_name: 'Delight Shopping Mart', address: 'Tulsipur Sub-Metropolitan City, Ward No. 6\nDang, Lumbini Province, Nepal', phone: '+977 9841234567', email: 'info@delightshoppingmart.com', opening_time: '07:00', closing_time: '21:00', currency: 'NPR', timezone: 'Asia/Kathmandu', delivery_radius_km: 5, delivery_fee: 0, min_order: 0, estimated_delivery_minutes: 20, delivery_available: true };
-
-const tabs = [[Store, 'Store Information'], [Truck, 'Delivery & Hours'], [CreditCard, 'Payment Methods']] as const;
+const tabs = [[Store, 'Store Details'], [Truck, 'Delivery & Hours'], [CreditCard, 'Payment Methods']] as const;
 
 function Section({ icon: Icon, title, sub, action, children }: { icon: typeof Store; title: string; sub: string; action?: ReactNode; children: ReactNode }) {
   return (
@@ -42,25 +51,42 @@ function Input({ value, onChange, type = 'text', multiline = false }: { value: s
 
 function Page() {
   const [tab, setTab] = useState(0);
-  const [s, setS] = useState<Settings>(defaults);
+  const { allowed, scope, isSuper, role } = useAdminScope();
+  const [storeId, setStoreId] = useState(scope !== 'all' ? scope : allowed[0]?.id ?? 'tulsipur');
+  const [s, setS] = useState<StoreForm | null>(null);
   const [exporting, setExporting] = useState(false);
   const [busy, setBusy] = useState(false);
+  const canEdit = isSuper || role === 'MANAGER';
 
   useEffect(() => {
-    void supabase.from('store_settings').select('id,store_name,address,phone,email,opening_time,closing_time,currency,timezone,delivery_radius_km,delivery_fee,min_order,estimated_delivery_minutes,delivery_available').order('updated_at', { ascending: false }).limit(1).maybeSingle().then(({ data }) => {
-      if (data) setS(data);
+    setS(null);
+    void supabase.from('branches').select(BRANCH_COLUMNS).eq('id', storeId).maybeSingle().then(({ data, error }) => {
+      if (error) { toast.error(`Could not load the store: ${error.message}`); return; }
+      if (data) setS(toForm(branchFromRow(data)));
     });
-  }, []);
+  }, [storeId]);
 
-  function update<K extends keyof Settings>(key: K, value: Settings[K]) { setS((v) => ({ ...v, [key]: value })); }
+  function update<K extends keyof StoreForm>(key: K, value: StoreForm[K]) { setS((v) => (v ? { ...v, [key]: value } : v)); }
 
   async function save() {
-    if (!s.id) { toast.error('Store settings have not loaded yet. Refresh the page and try again.'); return; }
-    if (!s.store_name.trim()) { toast.error('Store name is required'); return; }
+    if (!s) return;
+    if (!s.name.trim() || !s.city.trim()) { toast.error('Store name and town are required'); return; }
+    const money = [s.deliveryFee, s.crossFee, s.minOrder].map((v) => Number(v || 0));
+    if (money.some((v) => !(v >= 0))) { toast.error('Fees and minimum order must be 0 or more'); return; }
+    const minutes = Number(s.minutes || 45);
+    if (!(minutes >= 5 && minutes <= 1440)) { toast.error('Delivery time must be between 5 and 1440 minutes'); return; }
+    if ((s.lat && !Number.isFinite(Number(s.lat))) || (s.lng && !Number.isFinite(Number(s.lng)))) { toast.error('Map latitude/longitude must be numbers'); return; }
     setBusy(true);
-    const { error } = await supabase.from('store_settings').update({ store_name: s.store_name, address: s.address, phone: s.phone, email: s.email, opening_time: s.opening_time, closing_time: s.closing_time, timezone: s.timezone, delivery_radius_km: s.delivery_radius_km, delivery_fee: s.delivery_fee, min_order: s.min_order, estimated_delivery_minutes: s.estimated_delivery_minutes, delivery_available: s.delivery_available, updated_at: new Date().toISOString() }).eq('id', s.id);
+    const { data, error } = await supabase.from('branches').update({
+      name: s.name.trim(), city: s.city.trim(), address: s.address.trim(), phone: s.phone.trim() || null, whatsapp: s.whatsapp.replace(/\D/g, '') || null,
+      email: s.email.trim() || null, maps_url: s.mapsUrl.trim() || null, latitude: num(s.lat), longitude: num(s.lng),
+      opening_time: s.opens || null, closing_time: s.closes || null, delivery_fee: money[0]!, cross_branch_fee: money[1]!, min_order: money[2]!,
+      estimated_delivery_minutes: minutes, delivery_available: s.deliveryAvailable, accepting_orders: s.acceptingOrders, updated_at: new Date().toISOString(),
+    }).eq('id', s.id).select('id');
     setBusy(false);
-    if (error) toast.error(error.message); else toast.success('Settings saved');
+    if (error) toast.error(error.message);
+    else if (!data?.length) toast.error('You can only change the settings of your own store');
+    else toast.success(`${s.city} store settings saved`);
   }
 
   async function exportAll() {
@@ -75,11 +101,18 @@ function Page() {
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not export the data'); } finally { setExporting(false); }
   }
 
-  const saveBtn = <button onClick={save} disabled={busy} className="rounded-lg bg-[#dcf2e6] px-5 py-2.5 text-[14.5px] font-medium text-[#077a52]">{busy ? 'Saving…' : 'Save Changes'}</button>;
+  const saveBtn = <button onClick={() => void save()} disabled={busy || !canEdit || !s} className="rounded-lg bg-[#dcf2e6] px-5 py-2.5 text-[14.5px] font-medium text-[#077a52]">{busy ? 'Saving…' : 'Save Changes'}</button>;
 
   return (
     <div>
-      <PageHeader title="Settings" subtitle="Manage your store preferences, configuration and system settings." />
+      <PageHeader title="Settings" subtitle="Each store has its own details, hours and delivery fees." actions={allowed.length > 1 ? (
+        <label className="flex h-[44px] items-center gap-2 rounded-lg border border-line bg-white px-3 text-[14px] text-navy">Store
+          <select aria-label="Store to edit" value={storeId} onChange={(e) => setStoreId(e.target.value)} className="h-full bg-transparent font-semibold outline-none">
+            {allowed.map((b) => <option key={b.id} value={b.id}>{b.city}</option>)}
+          </select>
+        </label>
+      ) : undefined} />
+      {!canEdit && <p className="mb-4 rounded-lg bg-[#fff8e6] p-3 text-[13.5px] text-[#8a5a00]">Only store managers and the owner can change these settings.</p>}
       <Card className="mb-4">
         <div className="flex gap-10 overflow-x-auto px-6">
           {tabs.map(([Icon, label], i) => (
@@ -92,23 +125,24 @@ function Page() {
       </Card>
 
       {tab === 1 ? (
+        !s ? <Card className="p-8 text-center text-slate">Loading store…</Card> :
         <div className="grid gap-4 xl:grid-cols-2">
-          <Section icon={Truck} title="Delivery Settings" sub="Control delivery area, fees and estimated time." action={saveBtn}>
+          <Section icon={Truck} title={`Delivery – ${s.city} store`} sub="Delivery fees and time for orders from this store." action={saveBtn}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Delivery Radius (km)"><Input type="number" value={String(s.delivery_radius_km ?? '')} onChange={(v) => update('delivery_radius_km', Number(v))} /></Field>
-              <Field label="Delivery Fee (NPR)"><Input type="number" value={String(s.delivery_fee ?? '')} onChange={(v) => update('delivery_fee', Number(v))} /></Field>
-              <Field label="Minimum Order (NPR)"><Input type="number" value={String(s.min_order ?? '')} onChange={(v) => update('min_order', Number(v))} /></Field>
-              <Field label="Estimated Delivery (minutes)"><Input type="number" value={String(s.estimated_delivery_minutes ?? '')} onChange={(v) => update('estimated_delivery_minutes', Number(v))} /></Field>
+              <Field label="Delivery Fee (NPR)" hint="0 = free delivery"><Input type="number" value={s.deliveryFee} onChange={(v) => update('deliveryFee', v)} /></Field>
+              <Field label="Other-town delivery fee (NPR)" hint="Added when delivering to another store’s town"><Input type="number" value={s.crossFee} onChange={(v) => update('crossFee', v)} /></Field>
+              <Field label="Minimum Order (NPR)"><Input type="number" value={s.minOrder} onChange={(v) => update('minOrder', v)} /></Field>
+              <Field label="Estimated Delivery (minutes)"><Input type="number" value={s.minutes} onChange={(v) => update('minutes', v)} /></Field>
             </div>
             <div className="mt-5 flex items-center justify-between border-t border-line pt-4">
-              <span><b className="block text-[15px] font-medium text-navy">Delivery Available</b><span className="text-[13px] text-slate">Accept delivery orders right now</span></span>
-              <Toggle on={s.delivery_available} onChange={(v) => update('delivery_available', v)} />
+              <span><b className="block text-[15px] font-medium text-navy">Delivery Available</b><span className="text-[13px] text-slate">Turn off to pause deliveries from this store for a while</span></span>
+              <Toggle key={`d${s.id}${s.deliveryAvailable}`} on={s.deliveryAvailable} onChange={(v) => update('deliveryAvailable', v)} />
             </div>
           </Section>
-          <Section icon={Clock} title="Opening Hours" sub="Customers see these hours across the store." action={saveBtn}>
+          <Section icon={Clock} title={`Opening Hours – ${s.city} store`} sub="Customers see these hours on the website." action={saveBtn}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Opens"><Input type="time" value={s.opening_time ?? ''} onChange={(v) => update('opening_time', v)} /></Field>
-              <Field label="Closes"><Input type="time" value={s.closing_time ?? ''} onChange={(v) => update('closing_time', v)} /></Field>
+              <Field label="Opens"><Input type="time" value={s.opens} onChange={(v) => update('opens', v)} /></Field>
+              <Field label="Closes"><Input type="time" value={s.closes} onChange={(v) => update('closes', v)} /></Field>
             </div>
           </Section>
         </div>
@@ -127,14 +161,27 @@ function Page() {
         </Section>
       ) : (
         <div className="grid gap-4 xl:grid-cols-[1.12fr_1fr]">
-          <Section icon={Store} title="Store Information" sub="Update your store details and contact information." action={saveBtn}>
+          {!s ? <Card className="p-8 text-center text-slate">Loading store…</Card> : (
+          <Section icon={Store} title={`${s.city} store`} sub="Contact details customers see for this store." action={saveBtn}>
+            <div className="mb-4 flex items-center justify-between rounded-lg border border-line bg-[#f8fafc] px-4 py-3">
+              <span><b className="block text-[15px] font-semibold text-navy">Taking online orders</b><span className="text-[13px] text-slate">{s.acceptingOrders ? 'Customers can choose this store and order from it.' : 'Shown as “opening soon”. Customers cannot order from it yet.'}</span></span>
+              <Toggle key={`a${s.id}${s.acceptingOrders}`} on={s.acceptingOrders} onChange={(v) => update('acceptingOrders', v)} />
+            </div>
             <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
-              <Field label="Store Name" required><Input value={s.store_name} onChange={(v) => update('store_name', v)} /></Field>
-              <Field label="Email Address" required><Input type="email" value={s.email ?? ''} onChange={(v) => update('email', v)} /></Field>
-              <Field label="Phone Number" required><Input value={s.phone ?? ''} onChange={(v) => update('phone', v)} /></Field>
+              <Field label="Store Name" required><Input value={s.name} onChange={(v) => update('name', v)} /></Field>
+              <Field label="Town" required hint="Delivery to this town counts as this store’s area"><Input value={s.city} onChange={(v) => update('city', v)} /></Field>
+              <Field label="Phone Number"><Input value={s.phone} onChange={(v) => update('phone', v)} /></Field>
+              <Field label="WhatsApp Number" hint="With country code, e.g. 9779800000000"><Input value={s.whatsapp} onChange={(v) => update('whatsapp', v)} /></Field>
+              <Field label="Email Address"><Input type="email" value={s.email} onChange={(v) => update('email', v)} /></Field>
+              <Field label="Google Maps Link"><Input value={s.mapsUrl} onChange={(v) => update('mapsUrl', v)} /></Field>
               <Field label="Store Address" required><Input multiline value={s.address} onChange={(v) => update('address', v)} /></Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Map latitude"><Input value={s.lat} onChange={(v) => update('lat', v)} /></Field>
+                <Field label="Map longitude"><Input value={s.lng} onChange={(v) => update('lng', v)} /></Field>
+              </div>
             </div>
           </Section>
+          )}
 
           <Section icon={Image} title="Store Logo & Branding" sub="The logo and colours used across the website and app.">
             <div className="grid gap-5 sm:grid-cols-[1fr_245px]">
