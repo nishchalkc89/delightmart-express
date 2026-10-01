@@ -153,7 +153,7 @@ function fromDb(row: DbProduct): Product {
   const images = [...(row.product_images ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order).map((i) => i.url);
   const selling = Number(row.sale_price ?? row.price);
   const onSale = row.sale_price !== null && Number(row.sale_price) < Number(row.price);
-  const spec = (row.specifications && typeof row.specifications === 'object' ? row.specifications : {}) as { subcategory?: string };
+  const spec = (row.specifications && typeof row.specifications === 'object' ? row.specifications : {}) as { subcategory?: string; tagline?: string };
   const categorySlug = row.categories?.slug ?? 'groceries';
   return {
     id: row.id,
@@ -171,6 +171,7 @@ function fromDb(row: DbProduct): Product {
     image: images[0] ?? demo?.image ?? NO_PHOTO,
     art: false,
     noPhoto: !images[0] && !demo?.image,
+    tagline: spec.tagline,
     gallery: images.length > 1 ? images : demo?.gallery,
     stock: inv ? Math.max(0, inv.current_stock - inv.reserved_stock) : 0,
     rating: demo?.rating ?? 0,

@@ -1,5 +1,5 @@
 import { CircleCheck, Loader2 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/services/supabase';
 
@@ -24,6 +24,12 @@ export function NewsletterForm({ size = 'md', source = 'home', className = '' }:
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  // The thank-you message shows for a few seconds, then the form is back (empty).
+  useEffect(() => {
+    if (!done) return;
+    const t = setTimeout(() => { setDone(false); setEmail(''); }, 5000);
+    return () => clearTimeout(t);
+  }, [done]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();

@@ -9,6 +9,29 @@ import { buildIndex, isCameraName, matchPhoto, photoChecklist, shrinkPhoto, type
 type Row = { file: File; preview: string; productId: string; how: string; extra: boolean; status: 'ready' | 'uploading' | 'done' | 'failed'; error?: string };
 
 const label = (p: PhotoProduct) => `${p.code} — ${p.name}`;
+const sameFile = (a: File, b: File) => a.name === b.name && a.size === b.size;
+
+/**
+ * Rows that must not be uploaded, so no product is updated twice in one batch:
+ * a second main photo for the same product, or the same extra photo twice.
+ * Returns row index → the file it repeats.
+ */
+function findDuplicates(rows: Row[]): Map<number, string> {
+  const dup = new Map<number, string>();
+  const mainFor = new Map<string, string>();
+  const extras: Array<{ productId: string; file: File }> = [];
+  rows.forEach((r, i) => {
+    if (!r.productId) return;
+    if (r.extra) {
+      const same = extras.find((e) => e.productId === r.productId && sameFile(e.file, r.file));
+      if (same) dup.set(i, same.file.name); else extras.push({ productId: r.productId, file: r.file });
+      return;
+    }
+    const first = mainFor.get(r.productId);
+    if (first !== undefined) dup.set(i, first); else mainFor.set(r.productId, r.file.name);
+  });
+  return dup;
+}
 
 export function BulkPhotoUpload({ products, onClose, onDone }: { products: AdminProduct[]; onClose: () => void; onDone: () => void }) {
   const input = useRef<HTMLInputElement>(null);
@@ -22,8 +45,12 @@ export function BulkPhotoUpload({ products, onClose, onDone }: { products: Admin
   const byLabel = useMemo(() => new Map(items.map((p) => [label(p), p])), [items]);
 
   function add(files: FileList | File[]) {
-    const images = [...files].filter((f) => f.type.startsWith('image/') || /\.(jpe?g|png|webp|heic)$/i.test(f.name));
-    if (!images.length) { toast.error('Choose photo files (JPG, PNG or WEBP)'); return; }
+    const picked = [...files].filter((f) => f.type.startsWith('image/') || /\.(jpe?g|png|webp|heic)$/i.test(f.name));
+    if (!picked.length) { toast.error('Choose photo files (JPG, PNG or WEBP)'); return; }
+    // The same file twice (already in the list, or picked twice) is added only once.
+    const images = picked.filter((f, k) => !rows.some((r) => sameFile(r.file, f)) && picked.findIndex((g) => sameFile(g, f)) === k);
+    if (images.length < picked.length) toast.info(`${picked.length - images.length} photo${picked.length - images.length === 1 ? ' was' : 's were'} already in the list and skipped.`);
+    if (!images.length) return;
     const next = images.map((file): Row => {
       const m = matchPhoto(file.name, items, index);
       return { file, preview: URL.createObjectURL(file), productId: m.product?.id ?? '', how: m.product ? m.how : '', extra: m.extra, status: 'ready' };
@@ -55,12 +82,10 @@ export function BulkPhotoUpload({ products, onClose, onDone }: { products: Admin
   }
 
   async function uploadAll() {
-    const todo = rows.map((r, i) => [r, i] as const).filter(([r]) => r.productId && r.status !== 'done');
+    // Each product is updated once: duplicates in this batch are skipped.
+    const todo = rows.map((r, i) => [r, i] as const).filter(([r, i]) => r.productId && r.status !== 'done' && !duplicates.has(i));
     if (!todo.length) { toast.info('Match each photo to a product first'); return; }
-    // Two "main" photos for one product in this batch: the later ones become extra photos.
-    const mainSeen = new Set<string>();
-    const extraFor = new Map<number, boolean>();
-    for (const [r, i] of todo) { const extra = r.extra || mainSeen.has(r.productId); extraFor.set(i, extra); if (!extra) mainSeen.add(r.productId); }
+    const extraFor = new Map<number, boolean>(todo.map(([r, i]) => [i, r.extra]));
     setRunning(true);
     let ok = 0;
     let failed = 0;
@@ -102,7 +127,8 @@ export function BulkPhotoUpload({ products, onClose, onDone }: { products: Admin
     }
   }
 
-  const matched = rows.filter((r) => r.productId && r.status !== 'done').length;
+  const duplicates = useMemo(() => findDuplicates(rows), [rows]);
+  const matched = rows.filter((r, i) => r.productId && r.status !== 'done' && !duplicates.has(i)).length;
   const unmatched = rows.length - matched;
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#0b1726]/45 p-4 sm:p-6" onClick={() => !running && onClose()}>
@@ -146,9 +172,12 @@ export function BulkPhotoUpload({ products, onClose, onDone }: { products: Admin
                           onChange={(e) => { const hit = byLabel.get(e.target.value) ?? items.find((x) => x.code === e.target.value.trim()); if (hit || !e.target.value) update(i, { productId: hit?.id ?? '', how: hit ? 'Chosen by you' : '', extra: false }); }}
                           className={`h-9 w-full max-w-[340px] rounded-md border px-2 text-[13px] outline-none ${r.productId ? 'border-line' : 'border-[#f3b3b6] bg-[#fff5f5]'}`} />
                         {r.extra && p && <span className="mt-0.5 block text-[11.5px] text-slate">Extra photo (added after the main photo)</span>}
+                        {!r.extra && p?.hasPhoto && !duplicates.has(i) && <span className="mt-0.5 block text-[11.5px] text-[#9a6200]">Replaces this product’s current photo</span>}
+                        {duplicates.has(i) && <span className="mt-0.5 block text-[11.5px] text-[#9a6200]">Same product as “{duplicates.get(i)}”: choose another product, or remove it</span>}
                       </td>
                       <td className={`text-[12.5px] ${r.how.startsWith('Checklist') ? 'font-semibold text-[#9a6200]' : 'text-slate'}`}>{r.how || 'Not matched'}</td>
                       <td>
+                        {duplicates.has(i) && r.status === 'ready' && <span className="block text-[12px] font-semibold text-[#9a6200]" title={`Same product as ${duplicates.get(i)}`}>Duplicate – skipped</span>}
                         {r.status === 'done' && <span className="flex items-center gap-1 text-[#077a52]"><CircleCheck className="size-4" /> Added</span>}
                         {r.status === 'uploading' && <span className="flex items-center gap-1 text-navy"><Loader2 className="size-4 animate-spin" /> Uploading</span>}
                         {r.status === 'failed' && <span className="flex items-center gap-1 text-[#e3101a]" title={r.error}><CircleX className="size-4" /> Failed</span>}

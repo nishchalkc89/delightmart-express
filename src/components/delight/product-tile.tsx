@@ -11,8 +11,9 @@ export function NameTile({ product, size = 'card' }: { product: Product; size?: 
   const large = size === 'large';
   return (
     <div className="flex h-full w-full flex-col items-center justify-center px-[10%] text-center" style={{ background: tint(product) }}>
-      {product.brand && <span className={`mb-1 font-semibold uppercase tracking-[0.14em] text-slate ${large ? 'text-[14px]' : 'text-[10.5px] lg:text-[11.5px]'}`}>{product.brand}</span>}
-      <span className={`line-clamp-4 font-extrabold leading-tight text-navy ${large ? 'text-[30px] lg:text-[36px]' : 'text-[15px] lg:text-[18px]'}`}>{product.name}</span>
+      {/* The product name is already printed under the tile, so the tile shows what the product is. */}
+      {product.subcategory && <span className={`mb-1.5 font-semibold uppercase tracking-[0.12em] text-slate ${large ? 'text-[13px]' : 'text-[9.5px] lg:text-[10.5px]'}`}>{product.subcategory}</span>}
+      <span className={`line-clamp-3 font-extrabold leading-tight text-navy ${large ? 'text-[30px] lg:text-[36px]' : 'text-[15px] lg:text-[18px]'}`}>{product.tagline ?? product.name}</span>
       {product.unit && product.unit !== '1 pc' && <span className={`mt-2 rounded-full bg-white/80 px-2.5 py-0.5 font-semibold text-ink ${large ? 'text-[15px]' : 'text-[11px] lg:text-[12px]'}`}>{product.unit}</span>}
     </div>
   );

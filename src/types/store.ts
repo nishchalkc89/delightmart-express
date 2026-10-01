@@ -14,6 +14,8 @@ export type Product = {
   art?: boolean | undefined;
   /** No real photo yet: shown as a name tile. */
   noPhoto?: boolean | undefined;
+  /** Short line about the product, shown on its tile until a photo is uploaded. */
+  tagline?: string | undefined;
   gallery?: string[] | undefined;
   discount?: number | undefined;
   stock: number;
