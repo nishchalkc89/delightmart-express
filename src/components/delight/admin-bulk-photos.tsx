@@ -63,6 +63,7 @@ export function BulkPhotoUpload({ products, onClose, onDone }: { products: Admin
     for (const [r, i] of todo) { const extra = r.extra || mainSeen.has(r.productId); extraFor.set(i, extra); if (!extra) mainSeen.add(r.productId); }
     setRunning(true);
     let ok = 0;
+    let failed = 0;
     // Main photos first, so extra photos are added after them.
     const queue = [...todo].sort(([, a], [, b]) => Number(extraFor.get(a)) - Number(extraFor.get(b)));
     const worker = async () => {
@@ -79,17 +80,29 @@ export function BulkPhotoUpload({ products, onClose, onDone }: { products: Admin
           ok++;
         } catch (e) {
           const msg = e instanceof Error ? e.message : 'Upload failed';
+          failed++;
           update(i, { status: 'failed', error: /heic|2MB/i.test(msg) || /\.heic$/i.test(r.file.name) ? `${msg}. iPhone HEIC photos: set Camera → Formats → Most Compatible, or send as JPG.` : msg });
         }
       }
     };
     await Promise.all([worker(), worker(), worker()]);
     setRunning(false);
-    toast.success(`${ok} photo${ok === 1 ? '' : 's'} added to products`);
-    if (ok) onDone();
+    if (ok) {
+      toast.success(`${ok} photo${ok === 1 ? '' : 's'} added to products`);
+      onDone();
+    }
+    if (!failed) {
+      // Everything uploaded: close the window.
+      rows.forEach((r) => URL.revokeObjectURL(r.preview));
+      onClose();
+    } else {
+      // Keep only the photos that failed, so they can be fixed and tried again.
+      setRows((list) => list.filter((r) => { if (r.status === 'done') URL.revokeObjectURL(r.preview); return r.status !== 'done'; }));
+      toast.error(`${failed} photo${failed === 1 ? '' : 's'} could not be uploaded. Point to “Failed” to see why, then try again.`);
+    }
   }
 
-  const matched = rows.filter((r) => r.productId).length;
+  const matched = rows.filter((r) => r.productId && r.status !== 'done').length;
   const unmatched = rows.length - matched;
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#0b1726]/45 p-4 sm:p-6" onClick={() => !running && onClose()}>
