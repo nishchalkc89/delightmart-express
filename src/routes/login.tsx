@@ -66,7 +66,7 @@ function Page() {
       </form>
 
       <Divider text="or continue with" />
-      <SocialButtons disabled={loading} onGoogle={google} onApple={() => toast.info('Apple sign-in will be available soon')} />
+      <SocialButtons disabled={loading} onGoogle={google} />
       <p className="mt-10 text-center text-[16px] text-slate">Don't have an account? <Link to="/signup" className="font-semibold text-brand">Sign Up</Link></p>
     </AuthShell>
   );
