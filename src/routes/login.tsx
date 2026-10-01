@@ -2,8 +2,7 @@ import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-r
 import { Lock, Mail } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
-import { AuthLogo, AuthShell, Divider, GreenButton, IconField, PhoneField } from '@/components/delight/auth-ui';
-import { GoogleSignIn } from '@/components/delight/google-signin';
+import { AuthLogo, AuthShell, Divider, GreenButton, IconField, PhoneField, SocialButtons } from '@/components/delight/auth-ui';
 import { supabase } from '@/services/supabase';
 
 export const Route = createFileRoute('/login')({
@@ -36,6 +35,12 @@ function Page() {
     else void nav({ to: '/account' });
   }
 
+  async function google() {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}${redirect ?? '/account'}` } });
+    if (error) { toast.error(error.message.includes('provider is not enabled') ? 'Google sign-in is not enabled yet. Please use email.' : error.message); setLoading(false); }
+  }
+
   return (
     <AuthShell>
       <AuthLogo />
@@ -61,7 +66,7 @@ function Page() {
       </form>
 
       <Divider text="or continue with" />
-      <GoogleSignIn disabled={loading} redirectTo={`${typeof window === 'undefined' ? '' : window.location.origin}${redirect ?? '/account'}`} onSignedIn={() => { if (redirect) router.history.push(redirect); else void nav({ to: '/account' }); }} />
+      <SocialButtons disabled={loading} onGoogle={google} />
       <p className="mt-10 text-center text-[16px] text-slate">Don't have an account? <Link to="/signup" className="font-semibold text-brand">Sign Up</Link></p>
     </AuthShell>
   );
