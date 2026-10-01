@@ -13,7 +13,7 @@ import { useAuth } from './auth-context';
 import { useWishlist } from './wishlist-context';
 import { StoreButton, useBranch } from './branch-context';
 import { hoursText } from '@/lib/branch';
-import { STORE, telLink } from '@/lib/store-info';
+import { STORE } from '@/lib/store-info';
 import { NAV_CATEGORIES, type Category } from '@/services/catalog';
 import { useCategories } from '@/hooks/use-catalog';
 import { asset } from '@/lib/assets';
@@ -39,12 +39,12 @@ function TopBar() {
             <Link to="/products" className="hover:text-brand">Shop Local</Link><span className="text-ink/40">|</span>
             <Link to="/account/help" className="hover:text-brand">Help</Link><span className="text-ink/40">|</span>
             <Link to="/orders" className="hover:text-brand">Track Order</Link><span className="text-ink/40">|</span>
-            <a href={telLink} className="hover:text-brand">Contact</a>
+            <Link to="/store-location" className="hover:text-brand">Contact</Link>
           </nav>
           <div className="flex items-center gap-4 text-navy">
-            <a href={STORE.socials.facebook} target="_blank" rel="noreferrer" aria-label="Facebook"><Facebook className="size-[18px] fill-navy" strokeWidth={0} /></a>
-            <a href={STORE.socials.instagram} target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram className="size-[18px]" /></a>
-            <a href={STORE.socials.youtube} target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube className="size-5 fill-navy text-[#f1f8f6]" /></a>
+            {STORE.socials.facebook && <a href={STORE.socials.facebook} target="_blank" rel="noreferrer" aria-label="Facebook"><Facebook className="size-[18px] fill-navy" strokeWidth={0} /></a>}
+            {STORE.socials.instagram && <a href={STORE.socials.instagram} target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram className="size-[18px]" /></a>}
+            {STORE.socials.youtube && <a href={STORE.socials.youtube} target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube className="size-5 fill-navy text-[#f1f8f6]" /></a>}
           </div>
           <span className="flex items-center gap-1.5 font-semibold text-brand">
             <span className="text-brand">❖</span> Happier Dang <Heart className="size-5 fill-red text-red" />
@@ -278,7 +278,8 @@ function MobileFooter({ socials }: { socials: ReadonlyArray<readonly [typeof Fac
 }
 
 export function StoreFooter() {
-  const socials = [[Facebook, STORE.socials.facebook, 'Facebook'], [Instagram, STORE.socials.instagram, 'Instagram'], [Youtube, STORE.socials.youtube, 'YouTube'], [Music2, STORE.socials.tiktok, 'TikTok'], [Linkedin, STORE.socials.linkedin, 'LinkedIn']] as const;
+  // Only icons with a real page link are shown.
+  const socials = ([[Facebook, STORE.socials.facebook, 'Facebook'], [Instagram, STORE.socials.instagram, 'Instagram'], [Youtube, STORE.socials.youtube, 'YouTube'], [Music2, STORE.socials.tiktok, 'TikTok'], [Linkedin, STORE.socials.linkedin, 'LinkedIn']] as const).filter(([, href]) => href);
   return (
     <footer className="bg-footer text-white standalone:hidden">
       <MobileFooter socials={socials} />

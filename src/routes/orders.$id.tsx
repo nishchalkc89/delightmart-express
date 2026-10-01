@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useCart } from '@/components/delight/cart-context';
 import { fetchProductsByIds } from '@/services/catalog';
 import { supabase } from '@/services/supabase';
-import { whatsappLink } from '@/lib/store-info';
+import { STORE, whatsappLink } from '@/lib/store-info';
 import { branchCity } from '@/lib/branch';
 import { useBranch } from '@/components/delight/branch-context';
 import { useEffect, useState } from 'react';
@@ -147,7 +147,7 @@ function Page() {
 
             <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
               <button onClick={() => void reorder()} disabled={busy !== ''} className="flex h-11 items-center justify-center gap-2 rounded-lg bg-brand text-[14.5px] font-semibold text-white disabled:opacity-60">{busy === 'reorder' ? <Loader2 className="size-4 animate-spin" /> : <RotateCcw className="size-4" />} Reorder</button>
-              <a href={orderStore?.whatsapp || orderStore?.phone ? `https://wa.me/${(orderStore.whatsapp || orderStore.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hello Delight, I need help with order #${order.order_number}.`)}` : whatsappLink(`Hello Delight, I need help with order #${order.order_number}.`)} target="_blank" rel="noreferrer" className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-[14.5px] font-semibold text-navy"><MessageCircle className="size-4 text-brand" /> Get help</a>
+              <a href={whatsappLink(`Hello Delight, I need help with order #${order.order_number}.`, orderStore?.whatsapp || STORE.whatsapp) || `tel:+${(orderStore?.phone || STORE.phone).replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-[14.5px] font-semibold text-navy"><MessageCircle className="size-4 text-brand" /> Get help</a>
               {cancellable && <button onClick={() => void cancel()} disabled={busy !== ''} className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-lg border border-[#f3b3b6] bg-white text-[14.5px] font-semibold text-red disabled:opacity-60 sm:col-span-1">{busy === 'cancel' ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />} Cancel order</button>}
             </div>
 

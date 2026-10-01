@@ -3,7 +3,7 @@ import { ChevronDown, Clock, Mail, MapPin, MessageCircle, Package, Phone } from 
 import { AccountCard, AccountTitle } from '@/components/delight/account-ui';
 import { useBranch } from '@/components/delight/branch-context';
 import { hoursText } from '@/lib/branch';
-import { STORE } from '@/lib/store-info';
+import { STORE, whatsappLink } from '@/lib/store-info';
 
 export const Route = createFileRoute('/account/help')({
   head: () => ({ meta: [{ title: 'Help & Support — Delight' }, { name: 'description', content: 'Contact Delight Shopping Mart and find answers to common questions.' }] }),
@@ -26,13 +26,13 @@ function Page() {
   const { branch } = useBranch();
   const phone = branch.phone || STORE.phone;
   const digits = phone.replace(/\D/g, '');
-  const whatsapp = (branch.whatsapp || branch.phone || STORE.whatsapp).replace(/\D/g, '');
+  const chat = whatsappLink('', branch.whatsapp || STORE.whatsapp);
   const email = branch.email || STORE.email;
   const hours = hoursText(branch) || '7:00 AM – 9:00 PM';
 
   const contacts = [
     [Phone, 'Call us', phone, `tel:+${digits}`],
-    [MessageCircle, 'WhatsApp', `Chat with the ${branch.city} store`, `https://wa.me/${whatsapp}`],
+    ...(chat ? [[MessageCircle, 'WhatsApp', `Chat with the ${branch.city} store`, chat] as const] : []),
     [Mail, 'Email', email, `mailto:${email}`],
   ] as const;
 

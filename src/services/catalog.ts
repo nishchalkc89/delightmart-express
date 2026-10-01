@@ -181,6 +181,11 @@ function fromDb(row: DbProduct): Product {
   };
 }
 
+/** True when the store's database is configured (then the sample catalogue is never shown). */
+async function isLive() {
+  return (await import('./supabase')).isSupabaseConfigured;
+}
+
 async function client() {
   const { supabase, isSupabaseConfigured } = await import('./supabase');
   return isSupabaseConfigured ? supabase : null;
@@ -249,9 +254,10 @@ export async function fetchStorefront(branch = currentBranchId()): Promise<Store
     ]);
     const rows = (r: { data: unknown; error: unknown }) => (r.error ? [] : ((r.data ?? []) as DbProduct[]).map(fromDb));
     const collections: Collections = { specialOffers: mixed(rows(offers)), popular: mixed(rows(popular)), justArrived: mixed(rows(fresh)), groceryPopular: rows(grocery) };
-    if (!collections.justArrived.length) return demo;
     return { categories: cats, banners: liveBanners(banners.error ? null : banners.data), collections, source: 'live' };
   } catch {
+    // With a real database, never show the sample catalogue: let the page show "try again".
+    if (await isLive()) throw new Error('Could not load the store. Please try again.');
     return demo;
   }
 }
@@ -296,6 +302,7 @@ export async function fetchProducts(f: ProductFilter): Promise<ProductPage> {
     const total = count ?? 0;
     return { products: ((data ?? []) as unknown as DbProduct[]).map(fromDb), total, page, pages: Math.max(1, Math.ceil(total / size)) };
   } catch {
+    if (await isLive()) throw new Error('Could not load products. Please try again.');
     return demoPage(f);
   }
 }
@@ -349,9 +356,10 @@ export async function fetchProduct(slug: string, branch = currentBranchId()): Pr
         return { product, related: ((related.data ?? []) as unknown as DbProduct[]).map(fromDb) };
       }
       if (!error) return null;
+      throw error;
     }
-  } catch {
-    // fall through to the demo catalogue
+  } catch (e) {
+    if (await isLive()) throw e instanceof Error ? e : new Error('Could not load the product. Please try again.');
   }
   const product = products.find((x) => x.slug === slug);
   return product ? { product, related: products.filter((x) => x.category === product.category && x.id !== product.id).slice(0, 4) } : null;

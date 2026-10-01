@@ -30,7 +30,7 @@ const VALID = /^[a-z][a-z0-9-]{1,30}$/;
 
 /** Used until the database answers (and if the stores table is not set up yet). */
 export const FALLBACK_BRANCHES: Branch[] = [
-  { id: 'tulsipur', name: 'Delight Shopping Mart – Tulsipur', city: 'Tulsipur', address: STORE.address, phone: STORE.phone, whatsapp: STORE.whatsapp, email: STORE.email, mapsUrl: STORE.mapsUrl, lat: STORE.lat, lng: STORE.lng, opens: '07:00', closes: '21:00', deliveryFee: 0, crossFee: 100, minOrder: 0, minutes: 45, deliveryAvailable: true, acceptingOrders: true },
+  { id: 'tulsipur', name: 'Delight Shopping Mart – Tulsipur', city: 'Tulsipur', address: STORE.address, phone: null, whatsapp: null, email: STORE.email, mapsUrl: STORE.mapsUrl, lat: STORE.lat, lng: STORE.lng, opens: '07:00', closes: '21:00', deliveryFee: 0, crossFee: 100, minOrder: 0, minutes: 45, deliveryAvailable: true, acceptingOrders: true },
   { id: 'ghorahi', name: 'Delight Shopping Mart – Ghorahi', city: 'Ghorahi', address: 'Ghorahi, Dang, Lumbini Province, Nepal', phone: null, whatsapp: null, email: null, mapsUrl: null, lat: null, lng: null, opens: '07:00', closes: '21:00', deliveryFee: 0, crossFee: 100, minOrder: 0, minutes: 45, deliveryAvailable: true, acceptingOrders: false },
 ];
 

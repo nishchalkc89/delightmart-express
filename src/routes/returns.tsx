@@ -21,7 +21,7 @@ function Page() {
         </ul>
       </section>
       <section><h2>How refunds are paid</h2><p>Cash on Delivery orders are refunded in cash at the store or on your next delivery, or credited to your next order, whichever you prefer.</p></section>
-      <section><h2>Start a return</h2><p>Open the order in <Link to="/account/orders" className="font-semibold text-brand">My Orders</Link> and tap “Get help”, <a href={whatsappLink('Hello Delight, I want to return an item.')} target="_blank" rel="noreferrer" className="font-semibold text-brand">message us on WhatsApp</a>, or call {STORE.phone}.</p></section>
+      <section><h2>Start a return</h2><p>Open the order in <Link to="/account/orders" className="font-semibold text-brand">My Orders</Link> and tap “Get help”{whatsappLink() ? <>, <a href={whatsappLink('Hello Delight, I want to return an item.')} target="_blank" rel="noreferrer" className="font-semibold text-brand">message us on WhatsApp</a>,</> : ','} or call <a href={`tel:+${STORE.phone.replace(/\D/g, '')}`} className="font-semibold text-brand">{STORE.phone}</a>.</p></section>
     </InfoPage>
   );
 }

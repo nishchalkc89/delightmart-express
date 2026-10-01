@@ -3,8 +3,10 @@
 
 export const STORE = {
   name: 'Delight Shopping Mart',
-  phone: '+977 9841234567',
-  whatsapp: '9779841234567',
+  // Real store number (Ghorahi). Each store's own number comes from Admin → Settings → Store Details.
+  phone: '+977 82-563923',
+  // No WhatsApp number yet: WhatsApp buttons are hidden until one is added (Admin → Settings).
+  whatsapp: '',
   email: 'info@delightshoppingmart.com.np',
   address: 'Ward No. 6, Tulsipur, Dang, Lumbini Province, Nepal',
   hours: 'Open daily, 7 AM – 9 PM',
@@ -12,14 +14,19 @@ export const STORE = {
   mapsUrl: 'https://maps.app.goo.gl/22sJUGhs3PJ9ZUtr8',
   lat: 28.1288489,
   lng: 82.2961992,
+  // Add the store's real page links here; icons with no link are hidden.
   socials: {
-    facebook: 'https://www.facebook.com/',
-    instagram: 'https://www.instagram.com/',
-    youtube: 'https://www.youtube.com/',
-    tiktok: 'https://www.tiktok.com/',
-    linkedin: 'https://www.linkedin.com/',
+    facebook: '',
+    instagram: '',
+    youtube: '',
+    tiktok: '',
+    linkedin: '',
   },
 } as const;
 
 export const telLink = `tel:+${STORE.phone.replace(/\D/g, '')}`;
-export const whatsappLink = (text = '') => `https://wa.me/${STORE.whatsapp}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+/** WhatsApp chat link, or '' when no WhatsApp number is set (callers hide the button then). */
+export const whatsappLink = (text = '', number: string = STORE.whatsapp) => {
+  const digits = number.replace(/\D/g, '');
+  return digits ? `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}` : '';
+};
