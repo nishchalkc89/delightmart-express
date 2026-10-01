@@ -17,7 +17,7 @@ export const Route = createFileRoute('/search')({
   component: Page,
 });
 
-const popular = ['Rice', 'Maggi', 'Oil', 'Diapers', 'Notebook', 'Lotion', 'Biscuit', 'Shampoo'];
+const popular = ['Chocolate', 'Candy', 'Biscuit', 'Noodles', 'Pen', 'Bottle', 'Diaper', 'Hair clip'];
 
 function Page() {
   const search = Route.useSearch();

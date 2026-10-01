@@ -38,7 +38,7 @@ function WelcomePanel() {
     <aside className="relative hidden overflow-hidden bg-[#eef8f3] px-10 py-10 lg:block">
       <p className="text-[13px] font-semibold tracking-[0.2em] text-brand">DELIGHT SHOPPING MART</p>
       <h2 className="mt-3 text-[36px] font-extrabold leading-[1.12] tracking-tight text-navy">Groceries Delivered in<br /><span className="text-brand">15–20 Minutes</span></h2>
-      <p className="mt-3 max-w-[330px] text-[16px] leading-6 text-slate">Fresh groceries, daily essentials and more from your local store in Tulsipur.</p>
+      <p className="mt-3 max-w-[330px] text-[16px] leading-6 text-slate">Groceries, snacks, daily essentials and more from your local store in Tulsipur and Ghorahi.</p>
       <ul className="relative z-10 mt-8 space-y-5">
         {([[Zap, 'Super Fast Delivery', '15–20 minutes across Tulsipur'], [Leaf, 'Fresh & Quality Products', 'Daily essentials you trust'], [Percent, 'Best Offers', 'Save more every day']] as const).map(([Icon, a, b]) => (
           <li key={a} className="flex items-center gap-4">

@@ -8,7 +8,8 @@ import { ART_BACKGROUND } from '@/lib/product-art';
 import { ProductThumb } from './product-tile';
 import type { Product } from '@/types/store';
 
-const WORDS = ['rice', 'noodles', 'Maggi', 'shampoo', 'diapers', 'biscuits', 'soap', 'chocolate', 'notebook', 'toothpaste', 'dal', 'detergent', 'tea', 'baby lotion'];
+// Words that match products the store sells now (update when the product list changes).
+const WORDS = ['chocolate', 'candy', 'biscuit', 'noodles', 'marshmallow', 'jelly', 'pen', 'pencil', 'bottle', 'diaper', 'wipes', 'hair clip', 'earing', 'tissue'];
 
 /** "Search for rice" typed and erased word by word, like quick-commerce apps. Static when motion is reduced. */
 function useTypingPlaceholder(enabled: boolean, prefix = 'Search for ') {

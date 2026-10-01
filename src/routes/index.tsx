@@ -14,7 +14,7 @@ import { shouldOnboard } from '@/lib/onboarding';
 import storeHero from '@/assets/store-hero.jpg';
 
 export const Route = createFileRoute('/')({
-  head: () => ({ meta: [{ title: 'Delight Shopping Mart — Tulsipur, Dang' }, { name: 'description', content: 'Shop groceries, fashion, baby care and home essentials locally in Tulsipur.' }, { property: 'og:title', content: 'Delight Shopping Mart — Tulsipur' }, { property: 'og:description', content: 'Everything you need under one roof.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
+  head: () => ({ meta: [{ title: 'Delight Shopping Mart — Tulsipur, Dang' }, { name: 'description', content: 'Shop groceries, snacks, baby care and beauty locally in Tulsipur.' }, { property: 'og:title', content: 'Delight Shopping Mart — Tulsipur' }, { property: 'og:description', content: 'Everything you need under one roof.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
   loader: ({ context }) => context.queryClient.ensureQueryData(storefrontQuery()),
   component: Index,
 });
@@ -37,7 +37,7 @@ function Index() {
 /* Desktop                                                             */
 /* ------------------------------------------------------------------ */
 
-const heroList = [['Groceries', 'Snacks', 'Baby Care', 'Stationery', 'Toys'], ['Kitchen Items', 'Beauty & Skincare', 'Fast Food', 'And More']];
+const heroList = [['Groceries', 'Snacks', 'Baby Care', 'Stationery', 'Toys'], ['Kitchen Items', 'Beauty & Personal Care', 'Gifts', 'And More']];
 
 function Bullets({ rows, className, gap = 'gap-x-3.5' }: { rows: string[][]; className: string; gap?: string }) {
   return (
@@ -334,7 +334,7 @@ function MobileHome({ categories, collections, banners }: Data) {
         <div className="relative z-10 flex h-full max-w-[56%] flex-col justify-center pl-4">
           <p className="text-[11.5px] font-semibold text-brand">Your Local Shopping Mart</p>
           <h1 className="mt-1 text-[19px] font-extrabold leading-[1.12] text-navy min-[480px]:text-[24px]">Everything You Need<br /><span className="text-red">Under One Roof</span></h1>
-          <Bullets rows={[['Groceries', 'Fashion', 'Baby Care'], ['Stationery', 'Toys', 'And More']]} className="mt-2 space-y-0.5 text-[11px] text-ink" gap="gap-x-1.5" />
+          <Bullets rows={[['Groceries', 'Snacks', 'Baby Care'], ['Stationery', 'Toys', 'And More']]} className="mt-2 space-y-0.5 text-[11px] text-ink" gap="gap-x-1.5" />
           <Link to="/products" className="mt-3 flex h-9 w-[112px] items-center justify-center gap-2 rounded-md bg-red text-[13px] font-semibold text-white">Shop Now <ArrowRight className="size-4" /></Link>
         </div>
         <div className="absolute bottom-2 left-[42%] z-10 flex h-5 items-center gap-2 rounded-full bg-white/90 px-3">

@@ -162,7 +162,7 @@ function MobileMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (v: b
   );
 }
 
-function MobileHeader({ variant = 'home', actions = ['wishlist', 'cart'], search = 'Search for groceries, fashion, baby products...' }: MobileHeaderProps) {
+function MobileHeader({ variant = 'home', actions = ['wishlist', 'cart'], search = 'Search for groceries, snacks, baby products...' }: MobileHeaderProps) {
   const { count } = useCart();
   const wishlist = useWishlist();
   const router = useRouter();

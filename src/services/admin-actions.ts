@@ -96,6 +96,13 @@ export async function setProductPhoto(productId: string, url: string, name: stri
   else if (existing.url !== url) fail((await supabase.from('product_images').update({ url, alt_text: name }).eq('id', existing.id)).error);
 }
 
+/** Adds another photo to a product's gallery (after its main photo). */
+export async function addProductPhoto(productId: string, url: string, name: string) {
+  const { count } = await supabase.from('product_images').select('id', { count: 'exact', head: true }).eq('product_id', productId);
+  if (!count) { await setProductPhoto(productId, url, name); return; }
+  fail((await supabase.from('product_images').insert({ product_id: productId, url, is_primary: false, alt_text: name, sort_order: count })).error);
+}
+
 export async function deleteProduct(id: string) {
   // Products referenced by past orders are deactivated instead of deleted to keep order history intact.
   const { count } = await supabase.from('order_items').select('id', { count: 'exact', head: true }).eq('product_id', id);
