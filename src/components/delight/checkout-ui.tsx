@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useBranch } from './branch-context';
 import { crossFeeFor } from '@/lib/branch';
 import { Briefcase, Check, ChevronRight, House, Loader2, MapPin, Plus, ShoppingBag, X } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { StorePage } from './store-shell';
 import { useCart } from './cart-context';
@@ -209,9 +209,13 @@ export function AddressSheet({ open, onOpenChange }: { open: boolean; onOpenChan
   const { data: saved = [], isLoading } = useAddresses();
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const { branches, branch } = useBranch();
+  // New addresses start in the chosen store's town, so no other-town fee is added by mistake.
+  const blankForm = { ...emptyForm, city: branch.city };
+  const [form, setForm] = useState(blankForm);
   const showForm = adding || (!isLoading && saved.length === 0);
-  const { branches } = useBranch();
+  // Keep the town in step with the store while the form is still untouched.
+  useEffect(() => { setForm((f) => (f.addressLine || f.recipientName ? f : { ...f, city: branch.city })); }, [branch.city]);
 
   function choose(a: SavedAddress) {
     checkout.setDetails({ ...checkout.details, recipientName: a.recipientName, phone: a.phone, addressLine: a.addressLine, city: a.city, province: a.province, label: a.label, addressId: a.id });
@@ -233,7 +237,7 @@ export function AddressSheet({ open, onOpenChange }: { open: boolean; onOpenChan
     if (error || !data) { toast.error(`Address not saved: ${error?.message ?? 'try again'}`); return; }
     await queryClient.invalidateQueries({ queryKey: ['addresses', user.id] });
     choose({ id: data.id, label: form.label, isDefault: saved.length === 0, recipientName: form.recipientName.trim(), phone: form.phone.replace(/\D/g, '').slice(-10), addressLine, city: form.city.trim() || 'Tulsipur', province: form.province.trim() || 'Lumbini Province', instructions: '' });
-    setForm(emptyForm);
+    setForm(blankForm);
     setAdding(false);
     toast.success('Address saved');
   }

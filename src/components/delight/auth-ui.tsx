@@ -40,7 +40,7 @@ function WelcomePanel() {
       <h2 className="mt-3 text-[36px] font-extrabold leading-[1.12] tracking-tight text-navy">Groceries Delivered in<br /><span className="text-brand">15–20 Minutes</span></h2>
       <p className="mt-3 max-w-[330px] text-[16px] leading-6 text-slate">Groceries, snacks, daily essentials and more from your local store in Tulsipur and Ghorahi.</p>
       <ul className="relative z-10 mt-8 space-y-5">
-        {([[Zap, 'Super Fast Delivery', '15–20 minutes across Tulsipur'], [Leaf, 'Fresh & Quality Products', 'Daily essentials you trust'], [Percent, 'Best Offers', 'Save more every day']] as const).map(([Icon, a, b]) => (
+        {([[Zap, 'Super Fast Delivery', '15–20 minutes in Tulsipur & Ghorahi'], [Leaf, 'Fresh & Quality Products', 'Daily essentials you trust'], [Percent, 'Best Offers', 'Save more every day']] as const).map(([Icon, a, b]) => (
           <li key={a} className="flex items-center gap-4">
             <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white shadow-sm"><Icon className="size-5 fill-brand text-brand" strokeWidth={2.4} /></span>
             <span className="text-[15px] leading-5"><b className="block font-semibold text-navy">{a}</b><span className="text-slate">{b}</span></span>

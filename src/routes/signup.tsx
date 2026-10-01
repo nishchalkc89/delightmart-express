@@ -17,7 +17,7 @@ function Page() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [agree, setAgree] = useState(true);
+  const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function submit(e: FormEvent) {

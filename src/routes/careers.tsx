@@ -4,13 +4,13 @@ import { InfoPage } from '@/components/delight/info-page';
 import { STORE } from '@/lib/store-info';
 
 export const Route = createFileRoute('/careers')({
-  head: () => ({ meta: [{ title: 'Careers — Delight Shopping Mart' }, { name: 'description', content: 'Work with Delight Shopping Mart in Tulsipur.' }] }),
+  head: () => ({ meta: [{ title: 'Careers — Delight Shopping Mart' }, { name: 'description', content: 'Work with Delight Shopping Mart in Tulsipur and Ghorahi.' }] }),
   component: Page,
 });
 
 function Page() {
   return (
-    <InfoPage title="Careers" intro="Join a friendly local team serving families across Tulsipur.">
+    <InfoPage title="Careers" intro="Join a friendly local team serving families across Tulsipur and Ghorahi.">
       <section>
         <h2>Roles we often hire for</h2>
         <ul>

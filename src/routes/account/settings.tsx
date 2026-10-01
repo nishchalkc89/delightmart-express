@@ -106,7 +106,7 @@ function Page() {
         </div>
       </AccountCard>
 
-      <p className="mt-4 text-center text-[12.5px] text-slate">Delight Shopping Mart · Tulsipur, Dang · App version 1.0</p>
+      <p className="mt-4 text-center text-[12.5px] text-slate">Delight Shopping Mart · Tulsipur &amp; Ghorahi, Dang · App version 1.0</p>
     </div>
   );
 }

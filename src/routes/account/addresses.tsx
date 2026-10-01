@@ -3,6 +3,7 @@ import { House, MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/delight/auth-context';
+import { useBranch } from '@/components/delight/branch-context';
 import { supabase } from '@/services/supabase';
 
 type Address = { id: string; label: string; recipient_name: string; phone: string; address_line: string; city: string; province: string; is_default: boolean };
@@ -19,6 +20,8 @@ function Page() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
+  const { branch } = useBranch();
+  // New addresses start in the chosen store's town (so no other-town fee is added by mistake).
   const [form, setForm] = useState(blank);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -61,7 +64,7 @@ function Page() {
           <h1 className="text-[28px] font-extrabold tracking-tight text-navy lg:text-[34px]">Manage Addresses</h1>
           <p className="text-[14.5px] text-slate">Save addresses for faster checkout.</p>
         </div>
-        <button onClick={() => { setEditing(null); setForm({ ...blank, recipient_name: displayName }); setOpen(true); }} className="flex items-center gap-1.5 text-[15px] font-medium text-brand"><Plus className="size-5" /> Add New Address</button>
+        <button onClick={() => { setEditing(null); setForm({ ...blank, city: branch.city, recipient_name: displayName }); setOpen(true); }} className="flex items-center gap-1.5 text-[15px] font-medium text-brand"><Plus className="size-5" /> Add New Address</button>
       </div>
 
       {open && (

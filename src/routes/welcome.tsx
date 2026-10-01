@@ -6,7 +6,7 @@ import { asset } from '@/lib/assets';
 import { markOnboarded } from '@/lib/onboarding';
 
 export const Route = createFileRoute('/welcome')({
-  head: () => ({ meta: [{ title: 'Welcome — Delight Shopping Mart' }, { name: 'description', content: 'Groceries delivered in 15-20 minutes across Tulsipur.' }, { property: 'og:title', content: 'Welcome to Delight Shopping Mart' }, { property: 'og:description', content: 'Fresh groceries, daily essentials and more.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
+  head: () => ({ meta: [{ title: 'Welcome — Delight Shopping Mart' }, { name: 'description', content: 'Groceries delivered in 15-20 minutes across Tulsipur and Ghorahi.' }, { property: 'og:title', content: 'Welcome to Delight Shopping Mart' }, { property: 'og:description', content: 'Fresh groceries, daily essentials and more.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
   component: Page,
 });
 

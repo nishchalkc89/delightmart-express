@@ -11,7 +11,7 @@ export const Route = createFileRoute('/account/help')({
 });
 
 const faqs = [
-  ['How long does delivery take?', 'Most orders inside Tulsipur arrive in 15–20 minutes. At busy times it can take a little longer; you can follow your order in My Orders.'],
+  ['How long does delivery take?', 'Most orders in Tulsipur and Ghorahi arrive in 15–20 minutes. At busy times it can take a little longer; you can follow your order in My Orders.'],
   ['Is there a delivery charge?', 'Delivery is free right now. If a delivery fee applies, it is always shown in the Bill Summary in your cart before you pay.'],
   ['How do I pay?', 'Pay with cash (or the store’s QR) when your order arrives. eSewa, Khalti and cards are coming soon.'],
   ['Can I cancel my order?', 'Yes, before it is packed. Call us or message us on WhatsApp with your order number. Once it is out for delivery you can refuse it at the door.'],

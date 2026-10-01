@@ -43,13 +43,15 @@ const readCookie = createIsomorphicFn()
 /** True once the shopper has picked a store (the cookie is set). */
 export function hasChosenBranch(): boolean {
   const v = readCookie();
-  return Boolean(v && VALID.test(v));
+  return Boolean(v && VALID.test(v) && FALLBACK_BRANCHES.some((b) => b.id === v));
 }
 
 /** The shopper's store, from the cookie (works on the server and in the browser). */
 export function currentBranchId(): string {
   const v = readCookie();
-  return v && VALID.test(v) ? v : DEFAULT_BRANCH;
+  // Only known stores: an old or mistyped value would otherwise show every product as out of stock.
+  // (Add a new store's id to FALLBACK_BRANCHES when a store is added.)
+  return v && VALID.test(v) && FALLBACK_BRANCHES.some((b) => b.id === v) ? v : DEFAULT_BRANCH;
 }
 
 export function writeBranchCookie(id: string) {

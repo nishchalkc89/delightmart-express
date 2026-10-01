@@ -22,6 +22,9 @@ function Page() {
     const query = new URLSearchParams(window.location.search);
     if (hash.get('type') === 'recovery' || query.get('type') === 'recovery') setRecovery(true);
     const { data } = supabase.auth.onAuthStateChange((event) => { if (event === 'PASSWORD_RECOVERY') setRecovery(true); });
+    // The reset link signs the customer in; Supabase may have handled the link (and cleared it from the
+    // address bar) before this page loaded, so a signed-in session also allows setting the new password.
+    void supabase.auth.getSession().then(({ data: s }) => { if (s.session) setRecovery(true); });
     return () => data.subscription.unsubscribe();
   }, []);
 

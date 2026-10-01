@@ -3,22 +3,22 @@ import { Heart, Leaf, MapPin, Truck } from 'lucide-react';
 import { InfoPage } from '@/components/delight/info-page';
 
 export const Route = createFileRoute('/about')({
-  head: () => ({ meta: [{ title: 'Our Story — Delight Shopping Mart' }, { name: 'description', content: 'Delight Shopping Mart is Tulsipur’s local one-stop shop for groceries and daily essentials.' }] }),
+  head: () => ({ meta: [{ title: 'Our Story — Delight Shopping Mart' }, { name: 'description', content: 'Delight Shopping Mart is Dang’s local one-stop shop, with stores in Tulsipur and Ghorahi for groceries and daily essentials.' }] }),
   component: Page,
 });
 
 const values = [
   [Leaf, 'Quality you can trust', 'Genuine brands and fresh stock, checked by our team.'],
   [Truck, 'Fast local delivery', 'Most orders reach you in 15–20 minutes.'],
-  [Heart, 'For a happier Tulsipur', 'Friendly service from neighbours who know the town.'],
+  [Heart, 'For a happier Dang', 'Friendly service from neighbours who know the town.'],
 ] as const;
 
 function Page() {
   return (
-    <InfoPage title="Our Story" intro="Delight Shopping Mart is Tulsipur’s local one-stop shop — everything your home needs, under one roof and now at your door.">
+    <InfoPage title="Our Story" intro="Delight Shopping Mart is Dang’s local one-stop shop, with stores in Tulsipur and Ghorahi — everything your home needs, under one roof and now at your door.">
       <section>
         <h2>Shop local, grow together</h2>
-        <p>We started Delight to make everyday shopping in Tulsipur simple: fresh groceries, trusted brands, baby care, beauty, stationery, kitchen and household essentials in one place, at fair local prices. Every order you place supports a local business and the people who work here.</p>
+        <p>We started Delight to make everyday shopping in Tulsipur and Ghorahi simple: fresh groceries, trusted brands, baby care, beauty, stationery, kitchen and household essentials in one place, at fair local prices. Every order you place supports a local business and the people who work here.</p>
       </section>
       <div className="grid gap-3 sm:grid-cols-3">
         {values.map(([Icon, a, b]) => (

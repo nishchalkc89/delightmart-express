@@ -120,7 +120,7 @@ function DesktopHero() {
 }
 
 function Services() {
-  const items = [['service-1', 'Great Offers', 'Every Week'], ['service-2', 'Fresh Products', 'Sourced with Care'], ['service-3', 'Local Delivery', 'Across Tulsipur'], ['service-4', 'Safe & Secure', 'Shopping'], ['service-5', 'Friendly Support', "We're here to help"]] as const;
+  const items = [['service-1', 'Great Offers', 'Every Week'], ['service-2', 'Fresh Products', 'Sourced with Care'], ['service-3', 'Local Delivery', 'Tulsipur & Ghorahi'], ['service-4', 'Safe & Secure', 'Shopping'], ['service-5', 'Friendly Support', "We're here to help"]] as const;
   return (
     <section className="site-width mt-4 grid grid-cols-5 gap-3">
       {items.map(([icon, a, b]) => (
@@ -134,7 +134,7 @@ function Services() {
 }
 
 function WhyShop() {
-  const items = [['why-1', 'Fast & Reliable Delivery', 'Across Tulsipur'], ['why-2', 'Quality Products', 'Trusted by Families'], ['why-3', 'Exciting Offers', 'Every Week'], ['why-4', 'Friendly Support', "We're here to help"], ['why-5', 'Your Local Store', 'Shop Local, Grow Together']] as const;
+  const items = [['why-1', 'Fast & Reliable Delivery', 'Tulsipur & Ghorahi'], ['why-2', 'Quality Products', 'Trusted by Families'], ['why-3', 'Exciting Offers', 'Every Week'], ['why-4', 'Friendly Support', "We're here to help"], ['why-5', 'Your Local Store', 'Shop Local, Grow Together']] as const;
   return (
     <section className="site-width mt-6 flex items-center rounded-2xl bg-[#eff8f3] px-6 py-5">
       <div className="w-[300px] shrink-0 border-r border-line pr-6">
@@ -229,7 +229,7 @@ function Brands() {
 }
 
 function TrustStrip() {
-  const items = [['trust-1', 'Free Delivery', 'On orders above NPR 1,000'], ['trust-2', 'Secure Payment', 'Safe & trusted'], ['trust-3', 'Easy Returns', 'Hassle-free returns'], ['trust-4', '24/7 Support', "We're here to help"], ['trust-5', 'Local Store', 'Proudly in Tulsipur']] as const;
+  const items = [['trust-1', 'Home Delivery', 'Tulsipur & Ghorahi'], ['trust-2', 'Secure Payment', 'Safe & trusted'], ['trust-3', 'Easy Returns', 'Hassle-free returns'], ['trust-4', '24/7 Support', "We're here to help"], ['trust-5', 'Local Store', 'Proudly in Tulsipur']] as const;
   return (
     <section className="site-width grid grid-cols-5 py-7">
       {items.map(([icon, a, b], i) => (
@@ -397,7 +397,7 @@ function MobileHome({ categories, collections, banners }: Data) {
       <section className="mt-6">
         <MobileHead title="Why Shop at" accent="Delight?" to="/categories" />
         <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4">
-          {([['why-1', 'Fast & Reliable Delivery', 'Across Tulsipur'], ['why-2', 'Quality Products', 'Trusted by Families'], ['why-3', 'Exciting Offers', 'Every Week'], ['why-4', 'Friendly Support', "We're here to help"], ['why-5', 'Your Local Store', 'Shop Local, Grow Together']] as const).map(([icon, a, b]) => (
+          {([['why-1', 'Fast & Reliable Delivery', 'Tulsipur & Ghorahi'], ['why-2', 'Quality Products', 'Trusted by Families'], ['why-3', 'Exciting Offers', 'Every Week'], ['why-4', 'Friendly Support', "We're here to help"], ['why-5', 'Your Local Store', 'Shop Local, Grow Together']] as const).map(([icon, a, b]) => (
             <div key={a} className="flex w-[150px] shrink-0 items-center gap-2 rounded-xl bg-[#eff8f3] px-3 py-3">
               <img src={asset(icon)} alt="" className="h-9 w-auto" />
               <span className="text-[11.5px] leading-4 text-ink"><b className="block text-[12.5px] font-semibold text-navy">{a}</b>{b}</span>
@@ -456,7 +456,7 @@ function MobileHome({ categories, collections, banners }: Data) {
       </section>
 
       <section className="mt-5 grid grid-cols-2 gap-2.5 pb-4">
-        {([['trust-1', 'Free Delivery', 'Orders above NPR 1,000'], ['trust-2', 'Secure Payment', 'Safe & trusted'], ['trust-3', 'Easy Returns', 'Hassle-free returns'], ['trust-4', '24/7 Support', "We're here to help"]] as const).map(([icon, a, b]) => (
+        {([['trust-1', 'Home Delivery', 'Tulsipur & Ghorahi'], ['trust-2', 'Secure Payment', 'Safe & trusted'], ['trust-3', 'Easy Returns', 'Hassle-free returns'], ['trust-4', '24/7 Support', "We're here to help"]] as const).map(([icon, a, b]) => (
           <div key={a} className="flex items-center gap-2.5 rounded-xl bg-[#f6f8fb] px-3 py-3">
             <img src={asset(icon)} alt="" className="h-8 w-auto" />
             <span className="text-[11.5px] leading-4 text-slate"><b className="block text-[12.5px] font-semibold text-navy">{a}</b>{b}</span>
