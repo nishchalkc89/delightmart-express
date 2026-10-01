@@ -66,9 +66,9 @@ export function InfiniteLoader({ hasMore, loading, onMore, shown, total, auto = 
         </div>
       )}
       {hasMore && !loading && (
-        <button type="button" onClick={onMore} className={`mx-auto mt-2 flex items-center gap-2 rounded-full border font-semibold ${auto ? 'h-10 border-line bg-white px-5 text-[13.5px] text-navy' : 'h-11 border-red bg-white px-7 text-[14.5px] text-red hover:bg-red-50'}`}>Show more products{!auto && ` (${(total - shown).toLocaleString('en-US')} more)`}</button>
+        <button type="button" onClick={onMore} className={`mx-auto mt-2 flex items-center gap-2 rounded-full border font-semibold ${auto ? 'h-10 border-line bg-white px-5 text-[13.5px] text-navy' : 'h-11 border-red bg-white px-7 text-[14.5px] text-red hover:bg-red-50'}`}>Show more products</button>
       )}
-      {!hasMore && <p className="py-5 text-center text-[13px] text-slate">You’ve seen all {total.toLocaleString('en-US')} products ✓</p>}
+      {!hasMore && <p className="py-5 text-center text-[13px] text-slate">You’ve seen all the products ✓</p>}
     </div>
   );
 }
